@@ -71,6 +71,15 @@ def view_worksheets(request):
     other_ws_list = []
 
     for w in worksheets:
+
+        # Determine if worksheet is for DNA or RNA samples
+        dna_or_rna="N/A"
+        samples = SampleAnalysis.objects.filter(worksheet = w)
+        for sample in samples:
+            dna_or_rna=sample.sample.sample_type
+
+
+
         # if first two characters are digits, add to diagnostics list, otherwise add to other list
         if w.ws_id[0:2].isdigit():
             diagnostics_ws_list.append({
@@ -78,6 +87,7 @@ def view_worksheets(request):
                 'run_id': w.run.run_id,
                 'assay': w.assay,
                 'status': w.get_status(),
+                'dna_or_rna': dna_or_rna
             })
         else:
             other_ws_list.append({
@@ -85,6 +95,7 @@ def view_worksheets(request):
                 'run_id': w.run.run_id,
                 'assay': w.assay,
                 'status': w.get_status(),
+                'dna_or_rna': dna_or_rna
             })
 
     ws_list = diagnostics_ws_list + other_ws_list
