@@ -48,9 +48,10 @@
 
 </div>
 
+
 <script>
     $(document).ready( function() {
-
+      
         // Inititialise DataTable
         $('#worksheets-table').DataTable({
             paging: true,
@@ -59,21 +60,43 @@
                 {orderable: true},
                 {orderable: true},
                 {orderable: true},
+                {orderable: true},
                 {orderable: false},
             ],
             info: true,
-            pageLength: 10,
+            pageLength: 25,
             searching: true,
             aaSorting: [],
             language: {
-                searchPlaceholder: "Search by run ID, worksheet ID, assay or status",
+                searchPlaceholder: "Search by worksheetid, runid, assay, status",
                 search: "",
             },
             initComplete: function () {
                 $('.dataTables_filter input[type="search"]').css({ 'width': '500px', 'display': 'inline-block' });
-            }
+            },
         });
     } );
+
+    // pull analysis PK into the unnassign modal
+    $('#unassign-modal').on('show.bs.modal', function (event) {
+        // extract variables from button tags
+        var button = $(event.relatedTarget);
+        var pk = button.data('pk');
+        var sample = button.data('worksheet_id');
+        var sample = button.data('run_id');
+        var sample = button.data('assay');
+        var sample = button.data('status');
+        var modal = $(this);
+
+        // fill out table of sample details
+        modal.find('.modal-sample').text(sample);
+        modal.find('.modal-panel').text(panel);
+        modal.find('.modal-status').text(status);
+        modal.find('.modal-assigned').text(assigned);
+
+        // put sample PK into hidden form so that it can be passed to backend
+        document.getElementById ('id_unassign').value = pk;
+    })
 </script>
 
 {% endblock %}
