@@ -39,7 +39,18 @@
           <td style="text-align:right">
             
             {% if analysis.checks.current_status == 'Complete' %}
-            <a class="btn btn-light btn-block" href="{% url 'analysis_sheet' analysis.analysis_id %}#report" role="button">View</a>
+            <div class="btn-group btn-block">
+              <a class="btn btn-light btn-block" href="{% url 'analysis_sheet' analysis.analysis_id %}#report" role="button">View</a>
+              <button type="button btn-block" class="btn btn-light dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="sr-only">Toggle Dropdown</span>
+              </button>
+              <div class="dropdown-menu">
+                <a class="dropdown-item" data-toggle="modal" data-target="#reopen-modal" data-pk="{{ analysis.analysis_id }}" data-sample="{{ sample }}" data-panel="{{ analysis.panel }}" data-user="{{ analysis.checks.assigned_to }}" data-status="{{ analysis.checks.current_status }}">
+                  Reopen
+                </a>
+              </div>
+            </div>
+
 
             {% elif 'Fail' in analysis.checks.current_status %}
               {% if analysis.checks.current_status == 'Fail' %}
@@ -92,6 +103,48 @@
   <br>
 
 </div>
+
+
+
+<!-- reopen modal -->
+<div class="modal fade" id="reopen-modal" tabindex="-1" role="dialog" aria-labelledby="reopen-modal-label" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reopen-modal-label">reopen</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger">
+          <strong>Warning!</strong> Are you sure you want to continue?<br>
+          You must be authorised to reopen the analysis
+        </div>
+        <table class="table table-sm table-striped table-hover">
+          <tbody>        
+            <tr>
+              <th>Sample</td>
+              <td class="modal-sample"></td>
+            </tr>
+            <tr>
+              <th>Panel</td>
+              <td class="modal-panel"></td>
+            </tr>
+            <tr>
+              <th>Current check</td>
+              <td class="modal-status"></td>
+            </tr>
+
+          </tbody>
+        </table>
+
+        {% crispy reopen_form %}
+
+      </div>
+    </div>
+  </div>
+
 
 
 <!-- Unassign modal -->
@@ -188,7 +241,36 @@
 
         // put sample PK into hidden form so that it can be passed to backend
         document.getElementById ('id_unassign').value = pk;
-    })
+
+
+    });
+
+
+    // pull analysis PK into the reopen modal
+    $('#reopen-modal').on('show.bs.modal', function (event) {
+        // extract variables from button tags
+        var button = $(event.relatedTarget);
+        var pk = button.data('pk');
+        var sample = button.data('sample');
+        var panel = button.data('panel');
+        var status = button.data('status');
+        var assigned = button.data('user');
+        var modal = $(this);
+
+
+
+        // fill out table of sample details
+        modal.find('.modal-sample').text(sample);
+        modal.find('.modal-panel').text(panel);
+        modal.find('.modal-status').text(status);
+
+
+        // put sample PK into hidden form so that it can be passed to backend
+        document.getElementById ('id_reopen').value = pk;
+      })
+
+
+
 </script>
 
 {% endblock %}

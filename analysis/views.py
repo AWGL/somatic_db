@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.template.loader import get_template
 from django.template import Context
 
-from .forms import NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatientName, CoverageCheckForm, FusionCommentForm, SampleCommentForm, UnassignForm
+from .forms import NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatientName, CoverageCheckForm, FusionCommentForm, SampleCommentForm, UnassignForm, ReopenForm
 from .models import *
 from .utils import link_callback, get_samples, unassign_check, signoff_check, make_next_check, get_variant_info, get_coverage_data, get_sample_info, get_fusion_info
 
@@ -121,12 +121,32 @@ def view_samples(request, worksheet_id):
                 samples = SampleAnalysis.objects.filter(worksheet = worksheet_id)
                 sample_dict = get_samples(samples)
 
+     # if reopen modal button is pressed
+    if request.method == 'POST':
+        if 'reopen' in request.POST:
+            reopen_form = ReopenForm(request.POST)
+            if reopen_form.is_valid():
+                # get sample analysis pk from form
+                sample_pk = reopen_form.cleaned_data['reopen']
+                print(sample_pk)
+                sample_analysis_obj = SampleAnalysis.objects.get(pk=sample_pk)
+                checks = sample_analysis_obj.get_checks()
+                current_check_object=checks.get("current_check_object")
+
+                current_check_object.status='P'
+                current_check_object.save()
+
+                # reload context
+                samples = SampleAnalysis.objects.filter(worksheet = worksheet_id)
+                sample_dict = get_samples(samples)
+
     
     # render context
     context = {
         'worksheet': worksheet_id,
         'samples': sample_dict,
         'unassign_form': UnassignForm(),
+        'reopen_form': ReopenForm(),
     }
 
     return render(request, 'analysis/view_samples.html', context)

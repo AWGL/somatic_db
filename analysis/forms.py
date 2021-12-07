@@ -19,6 +19,23 @@ class UnassignForm(forms.Form):
         )
 
 
+
+class ReopenForm(forms.Form):
+    """
+    Search bar for home page
+    """
+    reopen = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(ReopenForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.add_input(
+            Submit('submit', "I'm sure", css_class='btn btn-danger w-100')
+        )
+
+
+
 class NewVariantForm(forms.Form):
     """
     """
