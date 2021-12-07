@@ -112,6 +112,7 @@
   <!-- button to add new variant in case of miscalled indels -->
   {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail' %}
   <div class="float-right">
+    <button type="button" class="btn btn-light" data-toggle="modal" data-target="#add-variant-modal">Add fusion</button>
     <button type="button" class="btn btn-success variants-submit" id="variants-submit">Update selections</button>
   </div>
   <br>
@@ -122,9 +123,21 @@
 <!-- message that there are no fusions in sample -->
 <div class="alert alert-info">
   No calls in this sample
-</div>
+
+    <!-- button to add new variant in case of miscalled indels -->
+  {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail' %}
+  <div class="float-right">
+    <button type="button" class="btn btn-light" data-toggle="modal" data-target="#add-variant-modal">Add fusion</button>
+  </div>
+  <br>
+  <br>
+  <br>
+  {% endif %}
   
 {% endif %}
+
+
+
 
 
 
@@ -182,6 +195,27 @@
   </div>
 </div>
 {% endfor %}
+
+
+<!-- Add fusion modal -->
+<div class="modal fade" id="add-variant-modal" tabindex="-1" role="dialog" aria-labelledby="add-variant-modalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="add-variant-modalLabel">Add new fusion</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+        {% crispy new_fusion_form %}
+
+      </div>
+
+    </div>
+  </div>
+</div>
 
 
 

@@ -47,6 +47,30 @@ class NewVariantForm(forms.Form):
         )
 
 
+class NewFusionForm(forms.Form):
+    """
+    """
+    Fusion = forms.CharField(label='Fusion')
+    hgvs = forms.CharField(label='HGVS')
+    fusion_supporting_reads = forms.CharField(label='Fusion supporting reads')
+    left_breakpoint = forms.CharField(label='Left Breakpoint')
+    right_breakpoint = forms.CharField(label='Right Breakpoint')
+    ref_reads_1 = forms.CharField(label='ref_reads_1')
+
+
+
+    def __init__(self, *args, **kwargs):
+        super(NewFusionForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_id = 'new-fusion-form'
+
+        self.helper.form_method = 'POST'
+        self.helper.add_input(
+            Submit('submit', 'Submit', css_class='btn btn-info w-25')
+        )
+
+
+
 class SubmitForm(forms.Form):
     """
     """

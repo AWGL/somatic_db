@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.template.loader import get_template
 from django.template import Context
 
-from .forms import NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatientName, CoverageCheckForm, FusionCommentForm, SampleCommentForm, UnassignForm
+from .forms import NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatientName, CoverageCheckForm, FusionCommentForm, SampleCommentForm, UnassignForm, NewFusionForm
 from .models import *
 from .utils import link_callback, get_samples, unassign_check, signoff_check, make_next_check, get_variant_info, get_coverage_data, get_sample_info, get_fusion_info
 
@@ -160,6 +160,7 @@ def analysis_sheet(request, sample_id):
         'warning': [],
         'sample_data': sample_data,
         'new_variant_form': NewVariantForm(),
+        'new_fusion_form': NewFusionForm(),
         'submit_form': SubmitForm(),
         'update_name_form': UpdatePatientName(),
         'sample_comment_form': SampleCommentForm(
@@ -347,6 +348,43 @@ def analysis_sheet(request, sample_id):
 
                 # reload context
                 context['variant_data'] = get_variant_info(sample_data, sample_obj)
+
+        # if add new fusion form is clicked
+        if 'Fusion' in request.POST:
+            print("YES")
+            print(sample_obj)
+            new_fusion_form = NewFusionForm(request.POST)
+
+            if new_fusion_form.is_valid():
+
+                new_fusion_data = new_fusion_form.cleaned_data
+
+                new_fusion_object, created = Fusion.objects.get_or_create(
+                fusion_genes= new_fusion_data['Fusion'],
+                )
+                new_fusion_object.save()
+                new_fusion_instance_object = FusionAnalysis(
+                    fusion_genes = new_fusion_object,
+                    fusion_supporting_reads = new_fusion_data['fusion_supporting_reads'],
+                    ref_reads_1 = new_fusion_data['ref_reads_1'],
+                    sample = sample_obj, 
+                    manual_upload = True,
+                )
+                new_fusion_instance_object.save()
+                new_fusion_panel_object = FusionPanelAnalysis(
+                    fusion_instance=new_fusion_instance_object, 
+                    sample_analysis=sample_obj
+                )
+                new_fusion_panel_object.save()
+                new_fusion_check_object = FusionCheck(
+                    fusion_analysis=new_fusion_panel_object, 
+                    check_object=sample_obj.get_checks().get('current_check_object')
+                )
+                new_fusion_check_object.save()
+
+                # reload context
+                context['variant_data'] = get_fusion_info(sample_data, sample_obj)
+
 
 
         # overall sample comments form

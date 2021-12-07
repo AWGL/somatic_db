@@ -385,7 +385,8 @@ def get_fusion_info(sample_data,sample_obj):
             'latest_checks_agree': last_two_checks_agree,
             'comment_form': fusion_comment_form,
             'comments': fusion_comments_list,
-            'final_decision': fusion_object.fusion_instance.get_final_decision_display()
+            'final_decision': fusion_object.fusion_instance.get_final_decision_display(),
+            'manual_upload': fusion_object.fusion_instance.manual_upload,
                 
 
         }
