@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.template.loader import get_template
 from django.template import Context
 
-from .forms import NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatientName, CoverageCheckForm, FusionCommentForm, SampleCommentForm, UnassignForm
+from .forms import NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatientName, CoverageCheckForm, FusionCommentForm, SampleCommentForm, UnassignForm, PolyForm
 from .models import *
 from .utils import link_callback, get_samples, unassign_check, signoff_check, make_next_check, get_variant_info, get_coverage_data, get_sample_info, get_fusion_info
 
@@ -56,6 +56,27 @@ def home(request):
     TODO - no home page yet, just redirect to list of worksheets
     """
     return redirect('view_worksheets')
+
+
+
+
+@login_required
+def add_polys(request):
+    context={'poly_form': PolyForm() }
+
+    # if add new variant form is clicked
+    if 'poly' in request.POST:
+        poly_form = PolyForm(request.POST)
+
+        if poly_form.is_valid():
+
+            new_poly = poly_form.cleaned_data
+            print("SUCCESS")
+
+    context={ 'poly_form': PolyForm() }
+
+    return render(request, 'analysis/polys.html', context)
+
 
 
 @login_required

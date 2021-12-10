@@ -81,6 +81,10 @@
         <span class="navbar-brand">Somatic variant database</span>
         <ul class="navbar-nav ml-auto">
 
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'polys' %}">Add Poly</a>
+          </li>
+
           {% if request.user.is_authenticated %}
           <li class="nav-item">
             <span class="navbar-text">{{request.user}}</span>
