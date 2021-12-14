@@ -63,6 +63,8 @@ def home(request):
 @login_required
 def add_polys(request):
     context={'poly_form': PolyForm() }
+    new_polys= {}
+    poly_list=[]
 
     # if add new variant form is clicked
     if 'poly' in request.POST:
@@ -70,10 +72,16 @@ def add_polys(request):
 
         if poly_form.is_valid():
 
-            new_poly = poly_form.cleaned_data
+            new_poly = poly_form.cleaned_data['poly']
             print("SUCCESS")
+            polys = Variant.objects.get(genomic_37=new_poly)
+            print(polys)
+            poly_list.append(polys)
 
-    context={ 'poly_form': PolyForm() }
+
+
+
+    context={ 'poly_form': PolyForm(), 'poly_list' : poly_list }
 
     return render(request, 'analysis/polys.html', context)
 
