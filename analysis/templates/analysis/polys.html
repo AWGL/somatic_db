@@ -1,0 +1,53 @@
+{% extends 'analysis/base.html' %}
+
+
+{% load crispy_forms_tags %}
+{% block breadcrumbs %}
+<nav class="breadcrumb flex-nowrap" aria-label="breadcrumb">
+  <div class="container">
+    <a class="breadcrumb-item active" href="{% url 'home' %}" aria-current="page"><span class="fa fa-home"></span></a>
+    <a class="breadcrumb-item active" aria-current="page">Polys</a>
+  </div>
+</nav>
+
+{% endblock %}
+
+
+
+{% block content %}
+
+<div class="container">
+  <h5>Search by variant:</h5>
+  <br>
+
+  </div>
+
+
+<div>
+  {% crispy poly_form %}
+</div>
+
+
+
+<h5>Variants</h5>
+<table class="table table-sm table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">Variant</th>
+
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for p in poly_list %}
+
+    <tr>
+      <td>{{ v.genomic_37 }}</td>
+
+
+
+
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
