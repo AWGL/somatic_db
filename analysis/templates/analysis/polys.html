@@ -42,7 +42,15 @@
     {% for p in poly_list %}
 
     <tr>
-      <td>{{ v.genomic_37 }}</td>
+      <td>{{ p.genomic_37 }}</td>
+      <td class=genuine-dropdown>
+        <select name="variant" id="variant" style="width:200px;">
+          {% for option in type_choices.check_options %}
+            <option value="{{ option.0 }}">{{ option.1 }}</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td> {% crispy poly_type_form %}
 
 
 

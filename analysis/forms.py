@@ -24,11 +24,34 @@ class PolyForm(forms.Form):
     """
 
     """
-    poly= forms.CharField(widget=forms.Textarea(attrs={'rows': 1}), required=False, label="")
+
+
+    poly = forms.CharField(widget=forms.Textarea(attrs={'rows': 1}), required=False, label="")
     
     def __init__(self, *args, **kwargs):
 
         super(PolyForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.add_input(Submit('submit', 'Submit', css_class='btn btn-success'))
+
+
+class PolyTypeForm(forms.Form):
+    """
+
+    """
+    TYPE_CHOICES = (
+        ('-', 'Pending'),
+        ('P', 'Poly'),
+        ('K', 'Known'),
+        ('A', 'Artefact'),
+    )
+
+    list_type = forms.ChoiceField(choices=TYPE_CHOICES)
+    
+    def __init__(self, *args, **kwargs):
+
+        super(PolyTypeForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
 
         self.helper.add_input(Submit('submit', 'Submit', css_class='btn btn-success'))

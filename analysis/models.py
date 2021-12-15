@@ -211,12 +211,13 @@ class VariantList(models.Model):
 
     """
     TYPE_CHOICES = (
+        ('-', 'Pending'),
         ('P', 'Poly'),
         ('K', 'Known'),
         ('A', 'Artefact'),
     )
     name = models.CharField(max_length=50, primary_key=True)
-    list_type = models.CharField(max_length=1, choices=TYPE_CHOICES)
+    list_type = models.CharField(max_length=1, default='-', choices=TYPE_CHOICES)
 
 
 class VariantToVariantList(models.Model):

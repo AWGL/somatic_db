@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.template.loader import get_template
 from django.template import Context
 
-from .forms import NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatientName, CoverageCheckForm, FusionCommentForm, SampleCommentForm, UnassignForm, PolyForm
+from .forms import NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatientName, CoverageCheckForm, FusionCommentForm, SampleCommentForm, UnassignForm, PolyForm, PolyTypeForm
 from .models import *
 from .utils import link_callback, get_samples, unassign_check, signoff_check, make_next_check, get_variant_info, get_coverage_data, get_sample_info, get_fusion_info
 
@@ -62,7 +62,7 @@ def home(request):
 
 @login_required
 def add_polys(request):
-    context={'poly_form': PolyForm() }
+    context={'poly_form': PolyForm(), 'poly_type_form': PolyTypeForm() }
     new_polys= {}
     poly_list=[]
 
@@ -78,10 +78,26 @@ def add_polys(request):
             print(polys)
             poly_list.append(polys)
 
+    if 'list_type' in request.POST:
+        poly_type_form = PolyTypeForm(request.POST)
+
+        if poly_type_form.is_valid():
+            #poly_type_form.save()
+
+            new_variant_type = poly_type_form.cleaned_data['list_type']
+            #new_variant_type.save()
+
+            return redirect('home')
+            print(new_variant_type)
+            print("IT HAS WORKED")
 
 
 
-    context={ 'poly_form': PolyForm(), 'poly_list' : poly_list }
+    type_choices={'check_options' : VariantList.TYPE_CHOICES}
+    
+
+
+    context={ 'poly_form': PolyForm(), 'poly_type_form': PolyTypeForm(), 'poly_list' : poly_list, 'type_choices' : type_choices }
 
     return render(request, 'analysis/polys.html', context)
 
