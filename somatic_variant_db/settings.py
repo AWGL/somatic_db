@@ -153,3 +153,6 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 LOGIN_URL = '/login/'
+
+ROI_PATH_DNA = '/home/ew/somatic_db/roi/variant_calling'
+ROI_PATH_RNA = '/home/ew/somatic_db/roi/rna_panels.yaml'

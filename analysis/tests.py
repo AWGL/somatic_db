@@ -1,6 +1,8 @@
 from django.test import TestCase
 from analysis.utils import *
 
+from decimal import Decimal
+
 
 class TestViews(TestCase):
 	"""
@@ -120,7 +122,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_0.get('exon'), '1/20')
 		self.assertEqual(variant_0.get('hgvs_c'), 'NM_006015.4:c.318C>T')
 		self.assertEqual(variant_0.get('hgvs_p'), 'NM_006015.4:c.318C>T(p.(Asn106=))')
-		self.assertEqual((variant_0.get('vaf').get('vaf')), 7)
+		self.assertEqual((variant_0.get('vaf').get('vaf')), Decimal('7.71'))
 		self.assertEqual((variant_0.get('vaf').get('total_count')), 363)
 		self.assertEqual((variant_0.get('vaf').get('alt_count')), 28)
 		self.assertEqual(variant_0.get('checks'), ['Pending'])
@@ -130,7 +132,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_5.get('exon'), '20/20')
 		self.assertEqual(variant_5.get('hgvs_c'), 'NM_006015.4:c.5548del')
 		self.assertEqual(variant_5.get('hgvs_p'), 'NP_006006.3:p.(Asp1850ThrfsTer33)')
-		self.assertEqual((variant_5.get('vaf').get('vaf')), 10)
+		self.assertEqual((variant_5.get('vaf').get('vaf')), Decimal('10.39'))
 		self.assertEqual((variant_5.get('vaf').get('total_count')), 1587)
 		self.assertEqual((variant_5.get('vaf').get('alt_count')), 165)
 		self.assertEqual(variant_5.get('checks'), ['Pending'])
@@ -140,7 +142,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_14.get('exon'), '18/28')
 		self.assertEqual(variant_14.get('hgvs_c'), 'NM_005228.4:c.2155G>A')
 		self.assertEqual(variant_14.get('hgvs_p'), 'NP_005219.2:p.(Gly719Ser)')
-		self.assertEqual((variant_14.get('vaf').get('vaf')), 3)
+		self.assertEqual((variant_14.get('vaf').get('vaf')), Decimal('3.67'))
 		self.assertEqual((variant_14.get('vaf').get('total_count')), 1471)
 		self.assertEqual((variant_14.get('vaf').get('alt_count')), 54)
 		self.assertEqual(variant_14.get('checks'), ['Pending'])
@@ -150,7 +152,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_22.get('exon'), '2/20')
 		self.assertEqual(variant_22.get('hgvs_c'), 'NM_020975.4:c.135=')
 		self.assertEqual(variant_22.get('hgvs_p'), 'NM_020975.4:c.135=(p.(Ala45=))')
-		self.assertEqual((variant_22.get('vaf').get('vaf')), 76)
+		self.assertEqual((variant_22.get('vaf').get('vaf')), Decimal('76.27'))
 		self.assertEqual((variant_22.get('vaf').get('total_count')), 1450)
 		self.assertEqual((variant_22.get('vaf').get('alt_count')), 1106)
 		self.assertEqual(variant_22.get('checks'), ['Pending'])
@@ -160,7 +162,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_37.get('exon'), '11/27')
 		self.assertEqual(variant_37.get('hgvs_c'), 'NM_000059.3:c.2971A>G')
 		self.assertEqual(variant_37.get('hgvs_p'), 'NP_000050.2:p.(Asn991Asp)')
-		self.assertEqual((variant_37.get('vaf').get('vaf')), 8)
+		self.assertEqual((variant_37.get('vaf').get('vaf')), Decimal('8.44'))
 		self.assertEqual((variant_37.get('vaf').get('total_count')), 876)
 		self.assertEqual((variant_37.get('vaf').get('alt_count')), 74)
 		self.assertEqual(variant_37.get('checks'), ['Pending'])
@@ -170,7 +172,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_44.get('exon'), '11/27')
 		self.assertEqual(variant_44.get('hgvs_c'), 'NM_000059.3:c.5351del')
 		self.assertEqual(variant_44.get('hgvs_p'), 'NP_000050.2:p.(Asn1784ThrfsTer7)')
-		self.assertEqual((variant_44.get('vaf').get('vaf')), 15)
+		self.assertEqual((variant_44.get('vaf').get('vaf')), Decimal('15.09'))
 		self.assertEqual((variant_44.get('vaf').get('total_count')), 795)
 		self.assertEqual((variant_44.get('vaf').get('alt_count')), 120)
 		self.assertEqual(variant_44.get('checks'), ['Pending'])
@@ -180,7 +182,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_58.get('exon'), '12/23')
 		self.assertEqual(variant_58.get('hgvs_c'), 'NM_007294.3:c.4308T>C')
 		self.assertEqual(variant_58.get('hgvs_p'), 'NM_007294.3:c.4308T>C(p.(Ser1436=))')
-		self.assertEqual((variant_58.get('vaf').get('vaf')), 20)
+		self.assertEqual((variant_58.get('vaf').get('vaf')), Decimal('20.63'))
 		self.assertEqual((variant_58.get('vaf').get('total_count')), 1565)
 		self.assertEqual((variant_58.get('vaf').get('alt_count')), 323)
 		self.assertEqual(variant_58.get('checks'), ['Pending'])
@@ -190,7 +192,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_63.get('exon'), '10/23')
 		self.assertEqual(variant_63.get('hgvs_c'), 'NM_007294.3:c.2458A>G')
 		self.assertEqual(variant_63.get('hgvs_p'), 'NP_009225.1:p.(Lys820Glu)')
-		self.assertEqual((variant_63.get('vaf').get('vaf')), 9)
+		self.assertEqual((variant_63.get('vaf').get('vaf')), Decimal('9.39'))
 		self.assertEqual((variant_63.get('vaf').get('total_count')), 1480)
 		self.assertEqual((variant_63.get('vaf').get('alt_count')), 139)
 		self.assertEqual(variant_63.get('checks'), ['Pending'])
@@ -200,7 +202,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_72.get('exon'), '9/35')
 		self.assertEqual(variant_72.get('hgvs_c'), 'NM_000489.4:c.2785=')
 		self.assertEqual(variant_72.get('hgvs_p'), 'NM_000489.4:c.2785=(p.(Glu929=))')
-		self.assertEqual((variant_72.get('vaf').get('vaf')), 30)
+		self.assertEqual((variant_72.get('vaf').get('vaf')), Decimal('30.72'))
 		self.assertEqual((variant_72.get('vaf').get('total_count')), 742)
 		self.assertEqual((variant_72.get('vaf').get('alt_count')), 228)
 		self.assertEqual(variant_72.get('checks'), ['Pending'])
@@ -210,7 +212,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_77.get('exon'), '')
 		self.assertEqual(variant_77.get('hgvs_c'), '')
 		self.assertEqual(variant_77.get('hgvs_p'), '')
-		self.assertEqual((variant_77.get('vaf').get('vaf')), 4)
+		self.assertEqual((variant_77.get('vaf').get('vaf')), Decimal('4.45'))
 		self.assertEqual((variant_77.get('vaf').get('total_count')), 292)
 		self.assertEqual((variant_77.get('vaf').get('alt_count')), 13)
 		self.assertEqual(variant_77.get('checks'), ['Pending'])
@@ -237,7 +239,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_0.get('exon'), '12/23')
 		self.assertEqual(variant_0.get('hgvs_c'), 'NM_006206.5:c.1701A>G')
 		self.assertEqual(variant_0.get('hgvs_p'), 'NM_006206.5:c.1701A>G(p.(Pro567=))')
-		self.assertEqual((variant_0.get('vaf').get('vaf')), 99)
+		self.assertEqual((variant_0.get('vaf').get('vaf')), Decimal('99.85'))
 		self.assertEqual((variant_0.get('vaf').get('total_count')), 1404)
 		self.assertEqual((variant_0.get('vaf').get('alt_count')), 1402)
 		self.assertEqual(variant_0.get('checks'), ['Pending'])
@@ -247,7 +249,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_1.get('exon'), '18/23')
 		self.assertEqual(variant_1.get('hgvs_c'), 'NM_006206.5:c.2472C>T')
 		self.assertEqual(variant_1.get('hgvs_p'), 'NM_006206.5:c.2472C>T(p.(Val824=))')
-		self.assertEqual((variant_1.get('vaf').get('vaf')), 18)
+		self.assertEqual((variant_1.get('vaf').get('vaf')), Decimal('18.75'))
 		self.assertEqual((variant_1.get('vaf').get('total_count')), 1445)
 		self.assertEqual((variant_1.get('vaf').get('alt_count')), 271)
 		self.assertEqual(variant_1.get('checks'), ['Pending'])
@@ -257,7 +259,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_2.get('exon'), '17/21')
 		self.assertEqual(variant_2.get('hgvs_c'), 'NM_000222.2:c.2394C>T')
 		self.assertEqual(variant_2.get('hgvs_p'), 'NM_000222.2:c.2394C>T(p.(Ile798=))')
-		self.assertEqual((variant_2.get('vaf').get('vaf')), 3)
+		self.assertEqual((variant_2.get('vaf').get('vaf')), Decimal('3.57'))
 		self.assertEqual((variant_2.get('vaf').get('total_count')), 1090)
 		self.assertEqual((variant_2.get('vaf').get('alt_count')), 39)
 		self.assertEqual(variant_2.get('checks'), ['Pending'])
@@ -285,7 +287,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_0.get('exon'), '4/10')
 		self.assertEqual(variant_0.get('hgvs_c'), 'NM_005896.3:c.315C>T')
 		self.assertEqual(variant_0.get('hgvs_p'), 'NM_005896.3:c.315C>T(p.(Gly105=))')
-		self.assertEqual((variant_0.get('vaf').get('vaf')), 15)
+		self.assertEqual((variant_0.get('vaf').get('vaf')), Decimal('15.55'))
 		self.assertEqual((variant_0.get('vaf').get('total_count')), 1234)
 		self.assertEqual((variant_0.get('vaf').get('alt_count')), 192)
 		self.assertEqual(variant_0.get('checks'), ['Pending'])
@@ -295,7 +297,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_6.get('exon'), '2/3')
 		self.assertEqual(variant_6.get('hgvs_c'), 'NM_000077.4:c.442G>A')
 		self.assertEqual(variant_6.get('hgvs_p'), 'NP_000068.1:p.(Ala148Thr)')
-		self.assertEqual((variant_6.get('vaf').get('vaf')), 7)
+		self.assertEqual((variant_6.get('vaf').get('vaf')), Decimal('7.71'))
 		self.assertEqual((variant_6.get('vaf').get('total_count')), 687)
 		self.assertEqual((variant_6.get('vaf').get('alt_count')), 53)
 		self.assertEqual(variant_6.get('checks'), ['Pending'])
@@ -305,7 +307,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_12.get('exon'), '5/11')
 		self.assertEqual(variant_12.get('hgvs_c'), 'NM_000546.5:c.511G>T')
 		self.assertEqual(variant_12.get('hgvs_p'), 'NP_000537.3:p.(Glu171Ter)')
-		self.assertEqual((variant_12.get('vaf').get('vaf')), 16)
+		self.assertEqual((variant_12.get('vaf').get('vaf')), Decimal('15.95'))
 		self.assertEqual((variant_12.get('vaf').get('total_count')), 1460)
 		self.assertEqual((variant_12.get('vaf').get('alt_count')), 233)
 		self.assertEqual(variant_12.get('checks'), ['Pending'])
@@ -315,7 +317,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_19.get('exon'), '9/35')
 		self.assertEqual(variant_19.get('hgvs_c'), 'NM_000489.4:c.2540T>C')
 		self.assertEqual(variant_19.get('hgvs_p'), 'NP_000480.3:p.(Phe847Ser)')
-		self.assertEqual((variant_19.get('vaf').get('vaf')), 6)
+		self.assertEqual((variant_19.get('vaf').get('vaf')), Decimal('6.65'))
 		self.assertEqual((variant_19.get('vaf').get('total_count')), 526)
 		self.assertEqual((variant_19.get('vaf').get('alt_count')), 35)
 		self.assertEqual(variant_19.get('checks'), ['Pending'])
@@ -335,8 +337,6 @@ class TestDna(TestCase):
 
 		variant_0 = variant_calls[0]
 		variant_1 = variant_calls[1]
-		variant_2 = variant_calls[2]
-		variant_3 = variant_calls[3]
 		variant_4 = variant_calls[4]
 		variant_5 = variant_calls[5]
 
@@ -345,7 +345,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_0.get('exon'), '18/28')
 		self.assertEqual(variant_0.get('hgvs_c'), 'NM_005228.4:c.2155G>A')
 		self.assertEqual(variant_0.get('hgvs_p'), 'NP_005219.2:p.(Gly719Ser)')
-		self.assertEqual((variant_0.get('vaf').get('vaf')), 3)
+		self.assertEqual((variant_0.get('vaf').get('vaf')), Decimal('3.67'))
 		self.assertEqual((variant_0.get('vaf').get('total_count')), 1471)
 		self.assertEqual((variant_0.get('vaf').get('alt_count')), 54)
 		self.assertEqual(variant_0.get('checks'), ['Pending'])
@@ -355,7 +355,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_1.get('exon'), '19/28')
 		self.assertEqual(variant_1.get('hgvs_c'), 'NM_005228.4:c.2235_2249del')
 		self.assertEqual(variant_1.get('hgvs_p'), 'NP_005219.2:p.(Glu746_Ala750del)')
-		self.assertEqual((variant_1.get('vaf').get('vaf')), 3)
+		self.assertEqual((variant_1.get('vaf').get('vaf')), Decimal('3.78'))
 		self.assertEqual((variant_1.get('vaf').get('total_count')), 1742)
 		self.assertEqual((variant_1.get('vaf').get('alt_count')), 66)
 		self.assertEqual(variant_1.get('checks'), ['Pending'])
@@ -365,7 +365,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_4.get('exon'), '15/18')
 		self.assertEqual(variant_4.get('hgvs_c'), 'NM_004333.4:c.1799T>A')
 		self.assertEqual(variant_4.get('hgvs_p'), 'NP_004324.2:p.(Val600Glu)')
-		self.assertEqual((variant_4.get('vaf').get('vaf')), 14)
+		self.assertEqual((variant_4.get('vaf').get('vaf')), Decimal('14.41'))
 		self.assertEqual((variant_4.get('vaf').get('total_count')), 1283)
 		self.assertEqual((variant_4.get('vaf').get('alt_count')), 185)
 		self.assertEqual(variant_4.get('checks'), ['Pending'])
@@ -375,7 +375,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_5.get('exon'), '2/6')
 		self.assertEqual(variant_5.get('hgvs_c'), 'NM_033360.3:c.38G>A')
 		self.assertEqual(variant_5.get('hgvs_p'), 'NP_203524.1:p.(Gly13Asp)')
-		self.assertEqual((variant_5.get('vaf').get('vaf')), 5)
+		self.assertEqual((variant_5.get('vaf').get('vaf')), Decimal('5.02'))
 		self.assertEqual((variant_5.get('vaf').get('total_count')), 1015)
 		self.assertEqual((variant_5.get('vaf').get('alt_count')), 51)
 		self.assertEqual(variant_5.get('checks'), ['Pending'])
@@ -401,7 +401,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_0.get('exon'), '17/21')
 		self.assertEqual(variant_0.get('hgvs_c'), 'NM_000222.2:c.2394C>T')
 		self.assertEqual(variant_0.get('hgvs_p'), 'NM_000222.2:c.2394C>T(p.(Ile798=))')
-		self.assertEqual((variant_0.get('vaf').get('vaf')), 3)
+		self.assertEqual((variant_0.get('vaf').get('vaf')), Decimal('3.57'))
 		self.assertEqual((variant_0.get('vaf').get('total_count')), 1090)
 		self.assertEqual((variant_0.get('vaf').get('alt_count')), 39)
 		self.assertEqual(variant_0.get('checks'), ['Pending'])
@@ -411,7 +411,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_1.get('exon'), '15/18')
 		self.assertEqual(variant_1.get('hgvs_c'), 'NM_004333.4:c.1799T>A')
 		self.assertEqual(variant_1.get('hgvs_p'), 'NP_004324.2:p.(Val600Glu)')
-		self.assertEqual((variant_1.get('vaf').get('vaf')), 14)
+		self.assertEqual((variant_1.get('vaf').get('vaf')), Decimal('14.41'))
 		self.assertEqual((variant_1.get('vaf').get('total_count')), 1283)
 		self.assertEqual((variant_1.get('vaf').get('alt_count')), 185)
 		self.assertEqual(variant_1.get('checks'), ['Pending'])
@@ -438,7 +438,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_0.get('exon'), '10/21')
 		self.assertEqual(variant_0.get('hgvs_c'), 'NM_006218.3:c.1633G>A')
 		self.assertEqual(variant_0.get('hgvs_p'), 'NP_006209.2:p.(Glu545Lys)')
-		self.assertEqual((variant_0.get('vaf').get('vaf')), 3)
+		self.assertEqual((variant_0.get('vaf').get('vaf')), Decimal('3.46'))
 		self.assertEqual((variant_0.get('vaf').get('total_count')), 1040)
 		self.assertEqual((variant_0.get('vaf').get('alt_count')), 36)
 		self.assertEqual(variant_0.get('checks'), ['Pending'])
@@ -448,7 +448,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_8.get('exon'), '7/11')
 		self.assertEqual(variant_8.get('hgvs_c'), 'NM_000546.5:c.722C>T')
 		self.assertEqual(variant_8.get('hgvs_p'), 'NP_000537.3:p.(Ser241Phe)')
-		self.assertEqual((variant_8.get('vaf').get('vaf')), 9)
+		self.assertEqual((variant_8.get('vaf').get('vaf')), Decimal('9.18'))
 		self.assertEqual((variant_8.get('vaf').get('total_count')), 1089)
 		self.assertEqual((variant_8.get('vaf').get('alt_count')), 100)
 		self.assertEqual(variant_8.get('checks'), ['Pending'])
@@ -458,11 +458,10 @@ class TestDna(TestCase):
 		self.assertEqual(variant_11.get('exon'), '4/11')
 		self.assertEqual(variant_11.get('hgvs_c'), 'NM_000546.5:c.215C>G')
 		self.assertEqual(variant_11.get('hgvs_p'), 'NP_000537.3:p.(Pro72Arg)')
-		self.assertEqual((variant_11.get('vaf').get('vaf')), 82)
+		self.assertEqual((variant_11.get('vaf').get('vaf')), Decimal('82.79'))
 		self.assertEqual((variant_11.get('vaf').get('total_count')), 1412)
 		self.assertEqual((variant_11.get('vaf').get('alt_count')), 1169)
 		self.assertEqual(variant_11.get('checks'), ['Pending'])
-
 
 
 	def test_get_variant_info_thyroid(self):
@@ -486,7 +485,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_1.get('exon'), '2/20')
 		self.assertEqual(variant_1.get('hgvs_c'), 'NM_020975.4:c.135=')
 		self.assertEqual(variant_1.get('hgvs_p'), 'NM_020975.4:c.135=(p.(Ala45=))')
-		self.assertEqual((variant_1.get('vaf').get('vaf')), 76)
+		self.assertEqual((variant_1.get('vaf').get('vaf')), Decimal('76.27'))
 		self.assertEqual((variant_1.get('vaf').get('total_count')), 1450)
 		self.assertEqual((variant_1.get('vaf').get('alt_count')), 1106)
 		self.assertEqual(variant_1.get('checks'), ['Pending'])
@@ -496,7 +495,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_9.get('exon'), '2/6')
 		self.assertEqual(variant_9.get('hgvs_c'), 'NM_005343.3:c.81T>C')
 		self.assertEqual(variant_9.get('hgvs_p'), 'NM_005343.3:c.81T>C(p.(His27=))')
-		self.assertEqual((variant_9.get('vaf').get('vaf')), 25)
+		self.assertEqual((variant_9.get('vaf').get('vaf')), Decimal('25.84'))
 		self.assertEqual((variant_9.get('vaf').get('total_count')), 1180)
 		self.assertEqual((variant_9.get('vaf').get('alt_count')), 305)
 		self.assertEqual(variant_9.get('checks'), ['Pending'])
@@ -506,7 +505,7 @@ class TestDna(TestCase):
 		self.assertEqual(variant_14.get('exon'), '4/11')
 		self.assertEqual(variant_14.get('hgvs_c'), 'NM_000546.5:c.215C>G')
 		self.assertEqual(variant_14.get('hgvs_p'), 'NP_000537.3:p.(Pro72Arg)')
-		self.assertEqual((variant_14.get('vaf').get('vaf')), 82)
+		self.assertEqual((variant_14.get('vaf').get('vaf')), Decimal('82.79'))
 		self.assertEqual((variant_14.get('vaf').get('total_count')), 1412)
 		self.assertEqual((variant_14.get('vaf').get('alt_count')), 1169)
 		self.assertEqual(variant_14.get('checks'), ['Pending'])
@@ -1032,6 +1031,77 @@ class TestDna(TestCase):
 		self.assertEqual(KRAS_coverage.get('percent_ntc'), 0)
 
 
+class TestNTCCalls(TestCase):
+	"""
+	Load in DNA control sample with NTC contamination spiked in, test that 
+	NTC variants are called correctly and at correct VAFs
+
+	"""
+
+	# load in test data
+	fixtures = ['dna_test_1.json']
+
+	# dictionary of expected data for comparison later on
+	model_data = {
+		'7:55241707G>A': {
+			'in_ntc': True,
+			'ntc_total': 1,
+			'ntc_alt': 1,
+			'ntc_vaf': Decimal('100.00'),
+		},
+		'7:55242464AGGAATTAAGAGAAGC>A': {
+			'in_ntc': False,
+			'ntc_total': None,
+			'ntc_alt': None,
+			'ntc_vaf': None,
+		},
+		'7:55248998A>ATGGCCAGCG': {
+			'in_ntc': False,
+			'ntc_total': None,
+			'ntc_alt': None,
+			'ntc_vaf': None,
+		},
+		'7:55249063G>A': {
+			'in_ntc': False,
+			'ntc_total': None,
+			'ntc_alt': None,
+			'ntc_vaf': None,
+		},
+		'7:140453136A>T': {
+			'in_ntc': True,
+			'ntc_total': 4,
+			'ntc_alt': 1,
+			'ntc_vaf': Decimal('25.00'),
+		},
+		'12:25398281C>T': {
+			'in_ntc': True,
+			'ntc_total': 1015,
+			'ntc_alt': 281,
+			'ntc_vaf': Decimal('27.68'),
+		},
+	}
+
+	def test_ntc_calls(self):
+		'''
+		Check a subset of variant calls with fake NTC contamination
+
+		'''
+		# load sample objects
+		panel_obj = Panel.objects.get(panel_name='Lung', dna_or_rna='DNA')
+
+		sample = SampleAnalysis.objects.get(sample_id='dna_test_2', panel=panel_obj)
+		sample_data = get_sample_info(sample)
+
+		variant_calls = get_variant_info(sample_data, sample)['variant_calls']
+
+		# loop through each call and compare to expected answer dict
+		for v in variant_calls:
+			model_answers = self.model_data[ v['genomic'] ]
+
+			self.assertEqual(v['this_run']['ntc'], model_answers['in_ntc'])
+			self.assertEqual(v['this_run']['alt_count_ntc'], model_answers['ntc_alt'])
+			self.assertEqual(v['this_run']['total_count_ntc'], model_answers['ntc_total'])
+			self.assertEqual(v['this_run']['vaf_ntc'], model_answers['ntc_vaf'])
 
 
 class TestRna(TestCase):

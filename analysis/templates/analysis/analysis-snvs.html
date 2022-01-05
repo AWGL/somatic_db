@@ -39,6 +39,7 @@
 
         {% if v.this_run.ntc %}
         <b>Present in NTC</b> <span class="fa fa-exclamation-triangle" style="color:firebrick"></span>
+        <br>{{ v.this_run.alt_count_ntc }} of {{ v.this_run.total_count_ntc }} reads ({{ v.this_run.vaf_ntc }}%)</td>
 
         {% else %}
         Not in NTC

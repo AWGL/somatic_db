@@ -1,6 +1,7 @@
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.conf import settings
 
 from analysis.models import *
 
@@ -38,7 +39,7 @@ class Command(BaseCommand):
         # hard coded variables
         dna_or_rna = 'DNA'
         assay = 'TSO500'
-        panel_folder = '/home/ew/somatic_db/roi/variant_calling'
+        panel_folder = settings.ROI_PATH_DNA
         panel_bed_file = f'{panel_folder}/{panel}.bed' 
 
         # check that inputs are valid
@@ -97,14 +98,9 @@ class Command(BaseCommand):
                 # format pos, chr, ref etc as genomic coords
                 genomic_coords = f"{v['chr'].strip('chr')}:{v['pos']}{v['ref']}>{v['alt']}"
 
-                # convert vaf to percentage
-                vaf = round(float(v['vaf']) * 100, 1)
-
-                # TODO VAF being inputted as an int, this should be changed to a float but needs model changes
-                vaf_float = float(v['vaf']) * 100
-
-                # boolean whether or not VAF is above threshold
-                above_vaf_threshold = (vaf_float >= 1.4)
+                # determine whether or not VAF is above threshold
+                vaf = float(v['vaf']) * 100
+                above_vaf_threshold = (vaf >= 1.4)
 
                 # variant object is created for all variants across whole panel
                 new_var, created = Variant.objects.get_or_create(
@@ -113,7 +109,6 @@ class Command(BaseCommand):
                 )
 
                 ## check if variant is within the virtual panel
-
                 # format variant pos as a line of bed file 
                 variant_as_bed=f"{v['chr'].strip('chr')}\t{int(v['pos']) -1}\t{v['pos']}"
                 variant_bed_region = pybedtools.BedTool(variant_as_bed, from_string=True)
@@ -133,11 +128,16 @@ class Command(BaseCommand):
                         exon = v['exon'],
                         hgvs_c = v['hgvs_c'],
                         hgvs_p = v['hgvs_p'],
-                        vaf = vaf,
                         total_count = v['depth'],
                         alt_count = v['alt_reads'],
                         in_ntc = v['in_ntc'],
                     )
+
+                    # add NTC read counts if the variant is seen in the NTC
+                    if v['in_ntc']:
+                        new_var_instance.total_count_ntc = v['ntc_depth']
+                        new_var_instance.alt_count_ntc = v['ntc_alt_reads']
+
                     new_var_instance.save()
 
                     # put on panel

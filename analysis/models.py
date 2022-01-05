@@ -1,6 +1,9 @@
 from auditlog.registry import auditlog
 from django.db import models
 
+import decimal
+
+
 # Create your models here.
 class Run(models.Model):
     """
@@ -164,12 +167,37 @@ class VariantInstance(models.Model):
     exon = models.CharField(max_length=50)
     hgvs_c = models.CharField(max_length=200)
     hgvs_p = models.CharField(max_length=200)
-    vaf = models.IntegerField()
     total_count = models.IntegerField()
     alt_count = models.IntegerField()
     in_ntc = models.BooleanField()
+    total_count_ntc = models.IntegerField(blank=True, null=True)
+    alt_count_ntc = models.IntegerField(blank=True, null=True)
     manual_upload = models.BooleanField(default=False)
     final_decision = models.CharField(max_length=1, default='-', choices=DECISION_CHOICES)
+
+    def vaf(self):
+        """
+        calculate VAF of variant from total and alt read counts
+        VAF is always displayed to two decimal places
+
+        """
+        vaf = decimal.Decimal(self.alt_count / self.total_count) * 100
+        vaf_rounded = vaf.quantize(decimal.Decimal('.01'), rounding = decimal.ROUND_DOWN)
+
+        return vaf_rounded
+
+    def vaf_ntc(self):
+        """
+        calculate VAF of NTC variant if its seen in NTC, otherwise return None
+        VAF is always displayed to two decimal places
+
+        """
+        if self.in_ntc:
+            vaf = decimal.Decimal(self.alt_count_ntc / self.total_count_ntc) * 100
+            vaf_rounded = vaf.quantize(decimal.Decimal('.01'), rounding = decimal.ROUND_DOWN)
+            return vaf_rounded
+        else:
+            return None
 
 
 class VariantPanelAnalysis(models.Model):
@@ -274,7 +302,7 @@ class RegionCoverageAnalysis(models.Model):
     percent_ntc = models.IntegerField()
 
     def genomic(self):
-        return f'{chr_start}:{pos_start}_{chr_end}:{pos_end}'
+        return f'{self.chr_start}:{self.pos_start}_{self.chr_end}:{self.pos_end}'
 
 
 class GapsAnalysis(models.Model):

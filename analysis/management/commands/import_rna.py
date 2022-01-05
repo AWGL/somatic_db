@@ -1,6 +1,7 @@
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.conf import settings
 
 from analysis.models import *
 
@@ -40,7 +41,7 @@ class Command(BaseCommand):
         # hard coded variables
         dna_or_rna = 'RNA'
         assay = 'TSO500'
-        panels_file = '/home/ew/somatic_db/roi/rna_panels.yaml'
+        panels_file = settings.ROI_PATH_RNA
 
         # check that inputs are valid
         if not os.path.isfile(fusions_file):
