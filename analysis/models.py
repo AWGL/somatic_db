@@ -274,7 +274,7 @@ class RegionCoverageAnalysis(models.Model):
     percent_ntc = models.IntegerField()
 
     def genomic(self):
-        return f'{chr_start}:{pos_start}_{chr_end}:{pos_end}'
+        return f'{self.chr_start}:{self.pos_start}_{self.chr_end}:{self.pos_end}'
 
 
 class GapsAnalysis(models.Model):
