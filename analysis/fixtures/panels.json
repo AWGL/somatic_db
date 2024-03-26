@@ -1,4 +1,54 @@
 [
+	{
+	"model": "analysis.panel",
+	"pk": 58,
+	"fields": {
+		"panel_name": "cholangiocarcinoma",
+		"pretty_print": "Cholangiocarcinoma",
+		"version": 1,
+		"live": true, 
+		"assay": "4",
+		"genome_build": 37,
+		"lims_test_code": "CRM",
+		"show_snvs": true, 
+		"show_myeloid_gaps_summary": false, 
+		"depth_cutoffs": "500", 
+		"vaf_cutoff": "5.00000", 
+		"manual_review_required": false,
+		"manual_review_desc": null, 
+		"bed_file": "roi/b37/GeneRead_CRM/cholangiocarcinoma_variants_b37_v1.bed",
+		"show_fusions": false, 
+		"show_fusion_coverage": false, 
+		"fusion_genes": null,
+		"splice_genes": null, 
+		"show_fusion_vaf": false
+	}
+},
+{
+	"model": "analysis.panel", 
+	"pk": 57, 
+	"fields": {
+		"panel_name": "cholangiocarcinoma",
+		"pretty_print": "Cholangiocarcinoma", 
+		"version": 1, 
+		"live": true,
+		"assay": "1", 
+		"genome_build": 38,
+		"lims_test_code": "TSO500DNA",
+		"show_snvs": true,
+		"show_myeloid_gaps_summary": false, 
+		"depth_cutoffs": "135,270", 
+		"vaf_cutoff": "1.40000", 
+		"manual_review_required": false,
+		"manual_review_desc": null,
+		"bed_file": "roi/b38/TSO500_DNA/cholangiocarcinoma_variants_b38_v1.bed", 
+		"show_fusions": false, 
+		"show_fusion_coverage": false, 
+		"fusion_genes": null,
+		"splice_genes": null,
+		"show_fusion_vaf": false
+	}
+},
 {
     "model": "analysis.panel",
     "pk": 1,
@@ -1425,3 +1475,5 @@
     }
 }
 ]
+
+
