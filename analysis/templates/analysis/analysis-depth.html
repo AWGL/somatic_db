@@ -412,7 +412,7 @@
       </table>
 
     </div>
-    {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail'%}
+    {% if 'IGV' in sample_data.status %}
     <div class="col-sm">
       <div class="card">
         <div class="card-body">

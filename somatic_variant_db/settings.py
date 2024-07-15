@@ -153,3 +153,5 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 LOGIN_URL = '/login/'
+
+AUTOQC_URL = 'http://10.59.210.245:5000'

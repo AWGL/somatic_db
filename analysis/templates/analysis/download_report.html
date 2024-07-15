@@ -39,7 +39,7 @@
   <h1>{{ sample_data.panel_obj.get_assay_display }} report for {{ sample_data.sample_id }}</h1>
 
   <!-- Fail warning box -->
-  {% if sample_data.checks.current_status  == 'Fail' %}
+  {% if sample_data.status  == 'Analysis fail' %}
   <div class="alert">
     <h2><b>This sample has failed QC</b></h2>
   </div> 
@@ -408,8 +408,9 @@
       <tr>
         <th style="width: 10%">Check</th>
         <th style="width: 20%">User</th>
+        <th style="width: 10%">Pass/fail</th>
         <th style="width: 15%">Checks</th>
-        <th style="width: 55%">Comments</th>
+        <th style="width: 45%">Comments</th>
       </tr>
     </thead>
 
@@ -418,6 +419,7 @@
       <tr>
         <td>{{ forloop.counter }}</td>
         <td>{{ c.user }}<br>{{ c.signoff_time }}</td>
+        <td>{% if c.get_status_display == "Complete" %}Pass{% else %}{{ c.get_status_display }}{% endif %}</td>
         <td>
           <i>Patient info check:</i> {{ c.patient_info_check }}
         {% if sample_data.panel_obj.show_snvs %}

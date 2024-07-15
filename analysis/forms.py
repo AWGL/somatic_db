@@ -21,14 +21,14 @@ class UnassignForm(forms.Form):
         )
 
 
-class ReopenForm(forms.Form):
+class ReopenSampleAnalysisForm(forms.Form):
     """
     Form that allows the user who closed the case to reopen the most recent check
     """
-    reopen = forms.CharField(widget=forms.HiddenInput(), required=False)
+    reopen_analysis = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):
-        super(ReopenForm, self).__init__(*args, **kwargs)
+        super(ReopenSampleAnalysisForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
         self.helper.add_input(
@@ -50,6 +50,62 @@ class PaperworkCheckForm(forms.Form):
         self.helper.form_method = 'POST'
         self.helper.add_input(
             Submit('submit', 'Continue to analysis', css_class='btn btn-info w-100')
+        )
+
+
+class RunQCForm(forms.Form):
+    """
+    Perform QC on a worksheet
+
+    """
+    QC_CHOICES = (
+        ('P', 'AutoQC run pass'),
+        ('F', 'AutoQC run fail'),
+    )
+    qc_result = forms.ChoiceField(choices=QC_CHOICES, required=True, label='Whole run pass/fail, as performed in AutoQC')
+    confirm = forms.BooleanField(required=True, label='All individual sample fails have been failed below')
+    auto_qc_pk = forms.IntegerField(min_value=1, label='AutoQC primary key')
+
+    def __init__(self, *args, **kwargs):
+        super(RunQCForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.add_input(
+            Submit('submit', 'Complete QC', css_class='btn btn-warning w-100')
+        )
+
+
+class ReopenRunQCForm(forms.Form):
+    """
+    Form that allows user to send a worksheet back to QC
+    """
+    reopen_qc = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(ReopenRunQCForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.add_input(
+            Submit('submit', "I'm sure", css_class='btn btn-danger w-100')
+        )
+
+
+class SampleQCForm(forms.Form):
+    """
+    """
+    confirm = forms.BooleanField(required=True, label='Patient name has been checked')
+    fail_reason = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 2}),
+        required=True,
+        label='Reason for QC fail:'
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(SampleQCForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.add_input(
+            Submit('submit', 'Fail sample', css_class='btn btn-danger w-100')
         )
 
 
@@ -118,21 +174,50 @@ class SubmitForm(forms.Form):
     Finalise a sample analysis
 
     """
-    NEXT_STEP_CHOICES = (
-        ('Complete check', 'Sample passed check'),
-        ('Request extra check', 'Sample passed check, send for an extra check'),
-        ('Fail sample', 'Sample failed check'),
+    PASS_FAIL_CHOICES = (
+        ('C', 'Analysis pass'),
+        ('F', 'Analysis fail')
     )
-    next_step = forms.ChoiceField(choices=NEXT_STEP_CHOICES)
-    confirm = forms.BooleanField(required=True, label='Confirm check is complete')
+    NEXT_STEP_CHOICES = (
+        ('extra_check', 'Send for an extra check'),
+        ('finalise', 'Close analysis for this sample'),
+    )
+    analysis_pass_fail = forms.ChoiceField(required=True, widget=forms.RadioSelect, choices=PASS_FAIL_CHOICES, label='Has the sample analysis passed?')
+    next_step = forms.ChoiceField(required=True, widget=forms.RadioSelect, choices=NEXT_STEP_CHOICES)
+    confirm = forms.BooleanField(required=True, label='Confirm selections are correct')
+
+
+class SendCheckBackForm(forms.Form):
+    """
+    Finalise a sample analysis
+
+    """
+    send_back_check = forms.BooleanField(required=True, label='I understand that my check will be removed')
+    inform_user_check = forms.BooleanField(required=True, label="I have notified the user that I'm sending this check back to them")
 
     def __init__(self, *args, **kwargs):
-        super(SubmitForm, self).__init__(*args, **kwargs)
+        super(SendCheckBackForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
         self.helper.add_input(
-            Submit('submit', 'Submit', css_class='btn btn-info w-100')
+            Submit('submit', 'Confirm', css_class='btn btn-danger w-100')
         )
+
+
+class DetailsCheckForm(forms.Form):
+    """
+    Finalise a sample analysis
+
+    """
+    patient_demographics = forms.BooleanField(required=True, label='Patient demographics are correct')
+
+    def __init__(self, *args, **kwargs):
+        self.info_check = kwargs.pop('info_check')
+
+        super(DetailsCheckForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.fields['patient_demographics'].initial = self.info_check
+        self.helper.add_input(Submit('submit', 'Update', css_class='btn btn-warning'))
 
 
 class SampleCommentForm(forms.Form):
@@ -145,20 +230,17 @@ class SampleCommentForm(forms.Form):
         required=False,
         label='General sample comments:'
     )
-    patient_demographics = forms.BooleanField(required=False, label='Patient demographics checked')
     pk = forms.CharField(widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         self.comment = kwargs.pop('comment')
-        self.info_check = kwargs.pop('info_check')
         self.pk = kwargs.pop('pk')
 
         super(SampleCommentForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.fields['sample_comment'].initial = self.comment
-        self.fields['patient_demographics'].initial = self.info_check
         self.fields['pk'].initial = self.pk
-        self.helper.add_input(Submit('submit', 'Update', css_class='btn btn-success'))
+        self.helper.add_input(Submit('submit', 'Update', css_class='btn btn-warning'))
 
 
 class VariantCommentForm(forms.Form):
@@ -257,7 +339,7 @@ class CoverageCheckForm(forms.Form):
         self.fields['coverage_comment'].initial = self.comment
         self.fields['ntc_checked'].initial = self.ntc
         self.fields['pk'].initial = self.pk
-        self.helper.add_input(Submit('submit', 'Update', css_class='btn btn-success'))
+        self.helper.add_input(Submit('submit', 'Update', css_class='btn btn-warning'))
 
 
 class ManualVariantCheckForm(forms.Form):

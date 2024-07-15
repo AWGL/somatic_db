@@ -1,0 +1,8 @@
+<div id="finalise_form_check_3" class="alert alert-warning" role="alert">
+    <h5><span class="fa fa-exclamation-triangle" style="color:firebrick"></span>&nbsp;Cannot close this sample, either close this box and resolve the following error(s), or send for an extra check</h5>
+    <ul>
+        {% for e in errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+    </ul>
+</div>
