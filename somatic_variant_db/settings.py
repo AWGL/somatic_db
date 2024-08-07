@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'analysis',
     'crispy_forms',
     'auditlog',
+    'swgs'
 ]
 
 MIDDLEWARE = [

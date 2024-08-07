@@ -1,0 +1,47 @@
+{% extends 'analysis/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block breadcrumbs %}
+<div class="container-fluid breadcrumbs-custom">
+  <div class="container">
+    <ol class="breadcrumb" style="background-color: transparent;">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}"><span class="fa fa-home"></span></a></li>
+      <li class="breadcrumb-item active"> Runs</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h5>Runs</h5>
+  <br>
+
+  <table class="table" id="runs-table">
+    <thead>
+      <tr>
+        <th scope="col">WS ID</th>
+        <th scope="col">Run ID</th>
+        <th scope="col">Patient Analyses</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td>{{ run.worksheet }}</td>
+        <td>{{ run.run }}</td>
+        <td style="text-align:left">
+          <a class="btn btn-secondary" href="{% url 'view_patient_analysis' run.patient_analyses %}" role="button">
+              View Patient Analysis
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <br>
+  <br>
+
+</div>
+
+{% endblock %}

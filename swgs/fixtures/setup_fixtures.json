@@ -1,0 +1,324 @@
+[
+    {
+        "model": "swgs.genomebuild",
+        "pk": "grch38",
+        "fields": {
+
+        }
+    },
+    {
+        "model": "swgs.vepannotationsimpact",
+        "pk": "HIGH",
+        "fields": {
+
+        }
+    },
+    {
+        "model": "swgs.vepannotationsimpact",
+        "pk": "MODERATE",
+        "fields": {
+
+        }
+    },
+    {
+        "model": "swgs.vepannotationsimpact",
+        "pk": "LOW",
+        "fields": {
+
+        }
+    },
+    {
+        "model": "swgs.vepannotationsimpact",
+        "pk": "MODIFIER",
+        "fields": {
+
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "transcript_ablation",
+        "fields": {
+            "impact": "HIGH"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "splice_acceptor_variant",
+        "fields": {
+            "impact": "HIGH"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "splice_donor_variant",
+        "fields": {
+            "impact": "HIGH"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "stop_gained",
+        "fields": {
+            "impact": "HIGH"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "frameshift_variant",
+        "fields": {
+            "impact": "HIGH"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "stop_lost",
+        "fields": {
+            "impact": "HIGH"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "start_lost",
+        "fields": {
+            "impact": "HIGH"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "transcript_amplification",
+        "fields": {
+            "impact": "HIGH"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "feature_elongation",
+        "fields": {
+            "impact": "HIGH"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "feature_truncation",
+        "fields": {
+            "impact": "HIGH"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "inframe_insertion",
+        "fields": {
+            "impact": "MODERATE"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "inframe_deletion",
+        "fields": {
+            "impact": "MODERATE"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "missense_variant",
+        "fields": {
+            "impact": "MODERATE"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "protein_altering_variant",
+        "fields": {
+            "impact": "MODERATE"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "splice_donor_5th_base_variant",
+        "fields": {
+            "impact": "LOW"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "splice_region_variant",
+        "fields": {
+            "impact": "LOW"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "splice_donor_region_variant",
+        "fields": {
+            "impact": "LOW"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "splice_polypyrimidine_tract_variant",
+        "fields": {
+            "impact": "LOW"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "incomplete_terminal_codon_variant",
+        "fields": {
+            "impact": "LOW"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "start_retained_variant",
+        "fields": {
+            "impact": "LOW"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "stop_retained_variant",
+        "fields": {
+            "impact": "LOW"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "synonymous_variant",
+        "fields": {
+            "impact": "LOW"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "coding_sequence_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "mature_miRNA_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "5_prime_UTR_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "3_prime_UTR_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "non_coding_transcript_exon_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "intron_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "NMD_transcript_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "non_coding_transcript_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "coding_transcript_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "upstream_gene_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "downstream_gene_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "TFBS_ablation",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "TFBS_amplification",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "TF_binding_site_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "regulatory_region_ablation",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "regulatory_region_amplification",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "regulatory_region_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "intergenic_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    },
+    {
+        "model": "swgs.vepannotationsconsequence",
+        "pk": "sequence_variant",
+        "fields": {
+            "impact": "MODIFIER"
+        }
+    }
+]

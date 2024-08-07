@@ -1,0 +1,62 @@
+{% extends 'analysis/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block breadcrumbs %}
+<div class="container-fluid breadcrumbs-custom">
+  <div class="container">
+    <ol class="breadcrumb" style="background-color: transparent;">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}"><span class="fa fa-home"></span></a></li>
+      <li class="breadcrumb-item active"> Patient Analysis</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h5>Somatic SNVs</h5>
+  <table class="table" id="runs-table">
+    <thead>
+      <tr>
+        <th scope="col">Variant</th>
+        <th scope="col">VAF</th>
+        <th scope="col">GnomAD</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in somatic_snvs %}
+      <tr>
+        <td>{{ v.pk }}</td>
+        <td>{{ v.vaf }}%</td>
+        <td>{{ v.gnomad }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <br>
+  <br>
+  <h5>Germline SNVs</h5>
+  <table class="table" id="runs-table">
+    <thead>
+      <tr>
+        <th scope="col">Variant</th>
+        <th scope="col">VAF</th>
+        <th scope="col">GnomAD</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in germline_snvs %}
+      <tr>
+        <td>{{ v.pk }}</td>
+        <td>{{ v.vaf }}%</td>
+        <td>{{ v.gnomad }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <br>
+  <br>
+
+</div>
+
+{% endblock %}

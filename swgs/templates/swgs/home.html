@@ -1,0 +1,23 @@
+{% extends 'analysis/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block breadcrumbs %}
+<br>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  
+  <div class="jumbotron jumbotron-fluid">
+    <div class="container">
+      <h1 class="display-4"><i class="fa fa-dna"></i> SWGS</h1>
+      <a class="btn btn-secondary" href="{% url 'view_runs' %}" role="button">
+        View Runs
+    </a>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
