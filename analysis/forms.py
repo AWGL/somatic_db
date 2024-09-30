@@ -333,7 +333,10 @@ class AddNewPolyForm(forms.Form):
     Add a variant to the poly list
 
     """
-    variant = forms.CharField()
+    chrm = forms.CharField(label='Chromosome')
+    position = forms.IntegerField(label='Genomic coordinates')
+    ref = forms.CharField(label='Reference nucleotide')
+    alt = forms.CharField(label='Alt nucleotide')
     comment = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 4}),
         label='Comments'
@@ -342,8 +345,11 @@ class AddNewPolyForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(AddNewPolyForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.fields['chrm'].widget.attrs['placeholder'] = 'e.g. 7'
+        self.fields['position'].widget.attrs['placeholder'] = 'e.g. 140453136'
+        self.fields['ref'].widget.attrs['placeholder'] = 'e.g. A'
+        self.fields['alt'].widget.attrs['placeholder'] = 'e.g. T'
         self.fields['comment'].widget.attrs['placeholder'] = 'Add comments or evidence to support this variant being a poly\ne.g. filepaths to documented evidence, sample IDs to check...'
-        self.fields['variant'].widget.attrs['placeholder'] = 'Must be in genomic format e.g. 7:140453136A>T'
         self.helper.form_method = 'POST'
         self.helper.add_input(
             Submit('submit', 'Submit', css_class='btn btn-info w-25')
@@ -354,7 +360,10 @@ class AddNewArtefactForm(forms.Form):
     """
     Add a variant to the artefact list
     """
-    variant = forms.CharField()
+    chrm = forms.CharField(label='Chromosome')
+    position = forms.IntegerField(label='Genomic coordinates')
+    ref = forms.CharField(label='Reference nucleotide')
+    alt = forms.CharField(label='Alt nucleotide')
     vaf_cutoff = forms.DecimalField(label='VAF cutoff', min_value=0, max_value=100, decimal_places=5)
     comment = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 4}),
@@ -364,10 +373,13 @@ class AddNewArtefactForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(AddNewArtefactForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.fields['comment'].help_text = 'Add comments or evidence to support this variant being an artefact\ne.g. filepaths to documented evidence, sample IDs to check...'
-        self.fields['variant'].help_text = 'Must be in genomic format e.g. 7:140453136A>T'
+        self.fields['chrm'].widget.attrs['placeholder'] = 'e.g. 7'
+        self.fields['position'].widget.attrs['placeholder'] = 'e.g. 140453136'
+        self.fields['ref'].widget.attrs['placeholder'] = 'e.g. A'
+        self.fields['alt'].widget.attrs['placeholder'] = 'e.g. T'
         self.fields['vaf_cutoff'].initial = 0.0
-        self.fields['vaf_cutoff'].help_text = 'Only variants below this value will be filtered as artefacts. If no cutoff is required then leave as 0.'
+        self.fields['vaf_cutoff'].widget.attrs['placeholder'] = 'Only variants below this value will be filtered as artefacts. If no cutoff is required then leave as 0.'
+        self.fields['comment'].widget.attrs['placeholder'] = 'Add comments or evidence to support this variant being an artefact\ne.g. filepaths to documented evidence, sample IDs to check...'
         self.helper.form_method = 'POST'
         self.helper.add_input(
             Submit('submit', 'Submit', css_class='btn btn-info w-25')
