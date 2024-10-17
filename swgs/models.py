@@ -12,7 +12,8 @@ class Gene(models.Model):
     """
     Gene
     """
-    gene = models.CharField(max_length=20, primary_key=True)
+    id = models.AutoField(primary_key=True)
+    gene = models.CharField(max_length=20, unique=True)
 
     def __repr__(self):
         return f"Gene: {self.gene}"
@@ -24,7 +25,8 @@ class Transcript(models.Model):
     """
     NCBI transcript identifiers
     """
-    transcript = models.CharField(max_length=50, primary_key=True)
+    id = models.AutoField(primary_key=True)
+    transcript = models.CharField(max_length=50, unique=True)
     gene = models.ForeignKey("Gene", on_delete=models.CASCADE)
 
     def __repr__(self):
@@ -54,7 +56,8 @@ class Sample(models.Model):
     """
     An individual sample
     """
-    sample_id = models.CharField(max_length=20, primary_key=True)
+    id = models.AutoField(primary_key=True)
+    sample_id = models.CharField(max_length=20)
 
     def __repr__(self):
         return f"Sample {self.sample_id}"
@@ -82,13 +85,55 @@ class Panel(models.Model):
     
     def __str__(self):
         return f"{self.panel_name}_{str(self.panel_version)}"
+    
+    def display_panel_name(self):
+
+        # split on _
+        split_panel_name = self.panel_name.split("_")
+
+        # remove germline/somatic if relevant and join with spaces
+        if split_panel_name[0] == "germline" or split_panel_name[0] == "somatic":
+            joined_panel_name = " ".join(split_panel_name[1:])
+        else:
+            joined_panel_name = " ".join(split_panel_name)
+
+        # change to title case
+        joined_panel_name = joined_panel_name.title()
+
+        # add version
+        display_panel_name = f"{joined_panel_name} {self.panel_version}"
+
+        return display_panel_name
+    
+    def display_somatic_or_germline(self):
+
+        somatic_or_germline = self.panel_name.split("_")[0]
+
+        if somatic_or_germline == "somatic":
+            return "Somatic"
+        elif somatic_or_germline == "germline":
+            return "Germline"
+        else:
+            return "Unknown"
+
+    def get_gene_names(self):
+
+        gene_names = []
+
+        for gene in self.genes.all():
+            gene_names.append(gene.gene)
+        
+        return gene_names
+        
 
 class Indication(models.Model):
     """
     Indication the patient is being tested for e.g. ALL
     Note: Germline panels being tiers 1 and 3 is deliberate because this is what GEL do
     """
-    indication = models.CharField(max_length=20, primary_key=True)
+    id = models.AutoField(primary_key=True)
+    indication = models.CharField(max_length=20)
+    version = models.IntegerField(null=True, blank=True)
     indication_pretty_print = models.CharField(max_length=100, null=True, blank=True)
     lims_code = models.CharField(max_length=20, null=True, blank=True)
     germline_panels_tier_zero = models.ManyToManyField("Panel", related_name="germline_panels_tier_zero", blank=True)
@@ -104,20 +149,60 @@ class Indication(models.Model):
     def __str__(self):
         return f"{self.indication}"
     
-    def get_germline_tier_zero_genes(self):
-        pass
+    @staticmethod
+    def get_genes_and_panels(panel_query):
 
-    def get_germline_tier_one_genes(self):
-        pass
+        genes = []
+        panels = []
 
-    def get_germline_tier_three_genes(self):
-        pass
+        for panel in panel_query:
+            gene_names = panel.get_gene_names()
+            genes += gene_names
+            panel_name_and_id = {
+                "panel_name": panel.display_panel_name(),
+                "panel_id": panel.id
+            }
+            panels.append(panel_name_and_id)
+        
+        return {"genes": list(set(genes)), "panels": panels}
+    
+    def get_all_genes_and_panels(self):
+
+        genes_and_panels_dict = {
+            "somatic_tier_zero": self.get_genes_and_panels(self.somatic_panels_tier_zero.all()),
+            "somatic_tier_one": self.get_genes_and_panels(self.somatic_panels_tier_one.all()),
+            "somatic_tier_two": self.get_genes_and_panels(self.somatic_panels_tier_two.all()),
+            "germline_tier_zero": self.get_genes_and_panels(self.germline_panels_tier_zero.all()),
+            "germline_tier_one": self.get_genes_and_panels(self.germline_panels_tier_one.all()),
+            "germline_tier_three": self.get_genes_and_panels(self.germline_panels_tier_three.all())
+        }
+
+        return genes_and_panels_dict
+    
+    @staticmethod
+    def display_genes(genes_and_panels_dict):
+        somatic_tier_two = [
+            gene for gene in genes_and_panels_dict["somatic_tier_two"]["genes"] if gene not in genes_and_panels_dict["somatic_tier_one"]["genes"]
+        ]
+        germline_tier_three = [
+            gene for gene in genes_and_panels_dict["germline_tier_three"]["genes"] if gene not in genes_and_panels_dict["germline_tier_one"]["genes"]
+        ]
+        display_genes_dict = {
+            "somatic_tier_one": sorted(genes_and_panels_dict["somatic_tier_one"]["genes"]),
+            "somatic_tier_two": sorted(somatic_tier_two),
+            "germline_tier_one": sorted(genes_and_panels_dict["germline_tier_one"]["genes"]),
+            "germline_tier_three": sorted(germline_tier_three)
+        }
+
+        return display_genes_dict
+    
 
 class Run(models.Model):
     """
     NGS Run. Using the Run as the primary key as new LIMS worklists are inconsistent
     """
-    run = models.CharField(max_length=50, primary_key=True)
+    id = models.AutoField(primary_key=True)
+    run = models.CharField(max_length=50, unique=True)
     worksheet = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
@@ -264,7 +349,8 @@ class GenomeBuild(models.Model):
     """
     Genome Builds
     """
-    genome_build = models.CharField(primary_key=True, unique=True, max_length=10)
+    id = models.AutoField(primary_key=True)
+    genome_build = models.CharField(unique=True, max_length=10)
 
     def __str__(self):
         return f"{self.genome_build}"
@@ -274,7 +360,8 @@ class Variant(models.Model):
     An individual SNP/small indel
     """
     #TODO find a way to default to b38
-    variant = models.CharField(primary_key=True, max_length=200)
+    id = models.AutoField(primary_key=True)
+    variant = models.CharField(max_length=200)
     genome_build = models.ForeignKey("GenomeBuild", on_delete=models.CASCADE)
 
     def __str__(self):
@@ -292,7 +379,8 @@ class VEPAnnotationsConsequence(models.Model):
     The variant consequences used by VEP, described here:
     https://www.ensembl.org/info/genome/variation/prediction/predicted_data.html
     """
-    consequence = models.CharField(primary_key=True, max_length=50)
+    id = models.AutoField(primary_key=True)
+    consequence = models.CharField(max_length=50, unique=True)
     impact = models.ForeignKey("VEPAnnotationsImpact", on_delete=models.CASCADE)
 
     def format_display_term(self):
@@ -303,13 +391,15 @@ class VEPAnnotationsImpact(models.Model):
     The impact levels for the different VEP consequences, described here:
     https://www.ensembl.org/info/genome/variation/prediction/predicted_data.html
     """
-    impact = models.CharField(primary_key=True, max_length=20)
+    id = models.AutoField(primary_key=True)
+    impact = models.CharField(max_length=20, unique=True)
 
 class VEPAnnotationsExistingVariation(models.Model):
     """
     Existing Variations (e.g. rsids) as annotated by VEP
     """
-    existing_variation = models.CharField(primary_key=True, max_length=50)
+    id = models.AutoField(primary_key=True)
+    existing_variation = models.CharField(max_length=50, unique=True)
 
     # TODO methods to link out e.g. to dbsnp
 
@@ -317,7 +407,8 @@ class VEPAnnotationsPubmed(models.Model):
     """
     Pubmed IDs sourced from VEP
     """
-    pubmed_id = models.CharField(primary_key=True, max_length=10)
+    id = models.AutoField(primary_key=True)
+    pubmed_id = models.CharField(max_length=10, unique=True)
 
     def format_pubmed_link(self):
         # create a link for the pubmed ID
@@ -340,7 +431,8 @@ class VEPAnnotationsClinvar(models.Model):
         ("O", "Other")
     )
     #TODO change this to just clinsig and have it be a choice field
-    clinvar_id = models.CharField(primary_key=True, max_length=20)
+    id = models.AutoField(primary_key=True)
+    clinvar_id = models.CharField(max_length=20, unique=True)
     clinvar_clinsig = models.CharField(max_length=3, choices=CLINVAR_CHOICES)
 
     def format_clinvar_link(self):
@@ -350,7 +442,8 @@ class VEPAnnotationsCancerHotspots(models.Model):
     """
     Cancer hotspots information for a given somatic variant
     """
-    cancer_hotspot = models.CharField(primary_key=True, max_length=20)
+    id = models.AutoField(primary_key=True)
+    cancer_hotspot = models.CharField(max_length=20, unique=True)
 
     def format_cancer_hotspots_link(self):
         # you currently can't go to the website for a specific variant, return the main link

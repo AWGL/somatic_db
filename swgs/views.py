@@ -43,7 +43,101 @@ def view_panels(request):
     """
     View panels, panel update pages
     """
-    pass
+    
+    # get all the panels
+    panels = Panel.objects.all().order_by("panel_name")
+    germline_panel_list = []
+    somatic_panel_list = []
+    other_panel_list = []
+    for panel in panels:
+        panel_dict = {
+            "panel_id": panel.id,
+            "panel_name": panel.display_panel_name(),
+            "is_active": panel.panel_approved
+        }
+        if panel.panel_name.startswith("germline"):
+            germline_panel_list.append(panel_dict)
+        elif panel.panel_name.startswith("somatic"):
+            somatic_panel_list.append(panel_dict)
+        else:
+            other_panel_list.append(panel_dict)
+
+    # get all the indications
+    indications = Indication.objects.all().order_by("indication")
+    indications_list = []
+    for indication in indications:
+        indication_dict = {
+            "indication_id": indication.id,
+            "indication": indication.indication
+        }
+        indications_list.append(indication_dict)
+
+    context = {
+        "germline_panels": germline_panel_list,
+        "somatic_panels": somatic_panel_list,
+        "other_panels": other_panel_list,
+        "indications": indications_list
+    }
+
+    return render(request, "swgs/view_panels.html", context)
+
+
+@login_required
+def view_panel(request, panel_id):
+    """
+    Display the genes in a panel, 
+    """
+
+    panel = Panel.objects.get(id=panel_id)
+
+    panel_dict = {
+        "panel_name": panel.display_panel_name(),
+        "panel_notes": panel.panel_notes,
+        "genes": panel.get_gene_names(),
+        "somatic_or_germline": panel.display_somatic_or_germline()
+    }
+
+    context = {
+        "panel_dict": panel_dict,
+        "update_panel_notes_form": UpdatePanelNotesForm(
+            panel_notes=panel.panel_notes
+        )
+    }
+    
+    if "panel_notes" in request.POST:
+        update_panel_notes_form = UpdatePanelNotesForm(request.POST, panel_notes=panel_dict["panel_notes"])
+
+        if update_panel_notes_form.is_valid():
+            updated_notes = update_panel_notes_form.cleaned_data["panel_notes"]
+            Panel.objects.filter(id=panel_id).update(panel_notes=updated_notes)
+            panel = Panel.objects.get(id=panel_id)
+            context["update_panel_notes_form"] = UpdatePanelNotesForm(
+                panel_notes = panel.panel_notes
+            )
+
+    return render(request, "swgs/view_panel.html", context)
+
+
+@login_required
+def view_indication(request, indication_id):
+    """
+    display information about an indication
+    """
+    indication = Indication.objects.get(id=indication_id)
+    
+    genes_and_panels = indication.get_all_genes_and_panels()
+
+    indication_dict = {
+        "indication_name": indication.indication,
+        "genes_and_panels": genes_and_panels,
+        "display_genes": indication.display_genes(genes_and_panels)
+    }
+
+    context = {
+        "indication_dict": indication_dict
+    }
+
+    return render(request, "swgs/view_indication.html", context)
 
 
 @login_required
