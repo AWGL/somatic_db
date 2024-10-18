@@ -1,0 +1,80 @@
+{% load crispy_forms_tags %}
+
+<br>
+
+<h1>Patient Details and Run QC</h1>
+<p> 
+    This page contains information about this run, including QC information. Please read the QC warnings carefully, 
+    as they may impact your interpretation of the data.
+</p>
+
+<br>
+
+<h2>Run Details</h2>
+<div class="container">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th scope="col">Run ID</th>
+                <th scope="col">{{ patient_analysis_info_dict.run }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Patient Identifier</td>
+                <td>{{ patient_analysis_info_dict.patient_identifier }}</td>
+            </tr>
+            <tr>
+                <td>Worksheet</td>
+                <td>{{ patient_analysis_info_dict.worksheet }}</td>
+            </tr>
+            <tr>
+                <td>Tumour Sample</td>
+                <td>{{ patient_analysis_info_dict.tumour_sample }}</td>
+            </tr>
+            <tr>
+                <td>Germline Sample</td>
+                <td>{{ patient_analysis_info_dict.germline_sample }}</td>
+            </tr>
+            <tr>
+                <td>Indication</td>
+                <td><a href="{% url 'view_indication'  patient_analysis_info_dict.indication_id %}">{{ patient_analysis_info_dict.indication }}</a></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<br>
+
+<h2>QC Information</h2>
+<div class="container">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th scope="col">Metric</th>
+                <th scope="col">Result</th>
+                <th scope="col">Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for metric, qc_dict in patient_analysis_qc_dict.items %}
+            <tr>
+                <td>
+                    {{ qc_dict.display_name }}
+                    <i class="fa fa-info-circle" id="tooldtip-{{ metric }}" data-toggle="tooltip" data-placement="bottom" title="{{ qc_dict.tooltip }}"></i>
+                </td>
+                {% if qc_dict.status == "P" %}
+                    <td><span class="badge badge-success badge-pill">PASS</span></td>
+                {% elif qc_dict.status == "W" %}
+                    <td><span class="badge badge-warning badge-pill">WARN</span></td>
+                {% elif qc_dict.status == "F" %}
+                    <td><span class="badge badge-danger badge-pill">FAIL</span></td>
+                {% else %}
+                    <td><span class="badge badge-secondary badge-pill">UNKNOWN - contact bioinformatics</span></td>
+                {% endif %}
+                <td>{{ qc_dict.message }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,37 @@
+{% extends 'analysis/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block breadcrumbs %}
+<div class="container-fluid breadcrumbs-custom">
+  <div class="container">
+    <ol class="breadcrumb" style="background-color: transparent;">
+      <li class="breadcrumb-item"><a href="{% url 'home_swgs' %}"><span class="fa fa-home"></span></a></li>
+      <li class="breadcrumb-item"><a href="{% url 'view_panels' %}">Panels and Indications</a></li>
+      <li class="breadcrumb-item active"> {{ panel_dict.panel_name }}</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+  
+    <div class="jumbotron jumbotron-fluid">
+      <div class="container">
+        <h1 class="display-4"> {{ panel_dict.panel_name }} <a class="badge badge-success badge-pill">{{ panel_dict.somatic_or_germline}}</a></h1>
+        <br>
+        <h3>Genes in Panel: </h3>
+        {% for gene in panel_dict.genes %}
+        <a class="badge badge-info">
+            {{ gene }}
+        </a>
+        {% endfor %}
+        <br>
+        <br>
+        {% crispy update_panel_notes_form %}
+        <br>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

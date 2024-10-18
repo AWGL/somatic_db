@@ -1,0 +1,135 @@
+{% load crispy_forms_tags %}
+
+<br>
+
+<div class="container">
+  <h3>Variants for tumour sample {{ patient_analysis.tumour_sample.sample_id }} and germline sample {{ patient_analysis.germline_sample.sample_id }}</h3>
+  <h5>Variants have been filtered in the following way:</h5>
+  <ul>
+    <li>Variants with a VAF of >5% in GnomAD have been removed</li>
+    <li>Variants are excluded if their most severe consequence is a MODIFIER strength - see <a href="https://www.ensembl.org/info/genome/variation/prediction/predicted_data.html", target="_blank">VEP Documentation</a></li>
+    <li>Variants flagged as "Possible MNV - Check IGV" have been included irrespective of gnomAD VAF as the MNV may have different consequences than the multiple SNVs</li>
+  </ul>
+  <br>
+  <h5>Download SNVs for this patient in a CSV:</h5>
+  {% crispy form %}
+  <br>
+  <br>
+  <h4>Somatic SNVs</h4>
+  <h5>Tier 1</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-4">Variant</th>
+        <th class="col-md-4">HGVSc / HGVSp</th>
+        <th class="col-md-1">Gene</th>
+        <th class="col-md-1">VAF</th>
+        <th class="col-md-2">GnomAD</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in somatic_snvs_tier_one %}
+      <tr>
+        {% if v.force_display %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</br><span class="badge badge-warning badge-pill">Possible MNV - Check IGV</span></td>
+        {% else %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</td>
+        {% endif %}
+        <td>{{ v.hgvsc }}</br>{{ v.hgvsp }}</td>
+        <td>{{ v.gene }}</td>
+        <td>{{ v.vaf }}%</td>
+        <td>{{ v.gnomad }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <br>
+  <h5>Tier 2</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-4">Variant</th>
+        <th class="col-md-4">HGVSc / HGVSp</th>
+        <th class="col-md-1">Gene</th>
+        <th class="col-md-1">VAF</th>
+        <th class="col-md-2">GnomAD</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in somatic_snvs_tier_two %}
+      <tr>
+        {% if v.force_display %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</br><span class="badge badge-warning badge-pill">Possible MNV - Check IGV</span></td>
+        {% else %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</td>
+        {% endif %}
+        <td>{{ v.hgvsc }}</br>{{ v.hgvsp }}</td>
+        <td>{{ v.gene }}</td>
+        <td>{{ v.vaf }}%</td>
+        <td>{{ v.gnomad }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <br>
+  <br>
+  <h4>Germline SNVs</h4>
+  <h5>Tier 1</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-4">Variant</th>
+        <th class="col-md-4">HGVSc / HGVSp</th>
+        <th class="col-md-1">Gene</th>
+        <th class="col-md-1">VAF</th>
+        <th class="col-md-2">GnomAD</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in germline_snvs_tier_one %}
+      <tr>
+        {% if v.force_display %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</br><span class="badge badge-warning badge-pill">Possible MNV - Check IGV</span></td>
+        {% else %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</td>
+        {% endif %}
+        <td>{{ v.hgvsc }}</br>{{ v.hgvsp }}</td>
+        <td>{{ v.gene }}</td>
+        <td>{{ v.vaf }}%</td>
+        <td>{{ v.gnomad }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <br>
+  <h5>Tier 3</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-4">Variant</th>
+        <th class="col-md-4">HGVSc / HGVSp</th>
+        <th class="col-md-1">Gene</th>
+        <th class="col-md-1">VAF</th>
+        <th class="col-md-2">GnomAD</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in germline_snvs_tier_three %}
+      <tr>
+        {% if v.force_display %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</br><span class="badge badge-warning badge-pill">Possible MNV - Check IGV</span></td>
+        {% else %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</td>
+        {% endif %}
+        <td>{{ v.hgvsc }}</br>{{ v.hgvsp }}</td>
+        <td>{{ v.gene }}</td>
+        <td>{{ v.vaf }}%</td>
+        <td>{{ v.gnomad }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <br>
+  <br>
+
+</div>
