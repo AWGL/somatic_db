@@ -67,7 +67,8 @@ class Command(BaseCommand):
         qc_low_tumour_sample_quality_obj, created = QCLowQualityTumourSample.objects.get_or_create(**overall_qc_dict["low_quality_tumour_sample_qc"])
         qc_tumour_ntc_contamination_obj, created = QCNTCContamination.objects.get_or_create(**overall_qc_dict["tumour_sample_ntc_contamination"])
         qc_germline_ntc_contamination_obj, created = QCNTCContamination.objects.get_or_create(**overall_qc_dict["sample_ntc_contamination"])
-        qc_relatedness_obj, created = QCRelatedness.objects.get_or_create(**overall_qc_dict["somelier_qc"])
+        qc_relatedness_obj, created = QCRelatedness.objects.get_or_create(**overall_qc_dict["somalier_qc"])
+        qc_tumour_purity_obj, created = QCTumourPurity.objects.get_or_create(**overall_qc_dict["tumour_purity"])
 
         # get or create the patient analysis objcet
         patient_analysis_obj, created = PatientAnalysis.objects.get_or_create(
@@ -82,7 +83,8 @@ class Command(BaseCommand):
             low_quality_tumour_sample=qc_low_tumour_sample_quality_obj,
             tumour_ntc_contamination=qc_tumour_ntc_contamination_obj,
             germline_ntc_contamination=qc_germline_ntc_contamination_obj,
-            relatedness=qc_relatedness_obj
+            relatedness=qc_relatedness_obj,
+            tumour_purity=qc_tumour_purity_obj
         )
 
         # fetch the genome build - SWGS is only build 38

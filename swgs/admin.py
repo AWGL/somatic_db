@@ -20,7 +20,7 @@ admin.site.register(Gene, GeneAdmin)
 
 class TranscriptAdmin(admin.ModelAdmin):
     list_display = ["transcript", "gene"]
-    search_fields = ["transcript", "gene"]
+    search_fields = ["transcript", "gene__gene"]
 
 admin.site.register(Transcript, TranscriptAdmin)
 
@@ -58,7 +58,7 @@ admin.site.register(Run, RunAdmin)
 
 class PatientAnalysisAdmin(admin.ModelAdmin):
     list_display = ["patient", "get_tumour_sample", "get_germline_sample", "get_indication", "get_run"]
-    search_fields = ["patient", "tumour_sample", "germline_sample", "run"]
+    search_fields = ["patient__nhs_number", "tumour_sample__sample_id", "germline_sample__sample_id", "run__run"]
 
     def get_tumour_sample(self, obj):
         return obj.tumour_sample.sample_id
@@ -100,6 +100,12 @@ class QCGermlineCNVQualityAdmin(admin.ModelAdmin):
 
 admin.site.register(QCGermlineCNVQuality, QCGermlineCNVQualityAdmin)
 
+class QCTumourPurityAdmin(admin.ModelAdmin):
+    list_display = ["id", "status", "tumour_purity"]
+    search_fields = ["status"]
+
+admin.site.register(QCTumourPurity, QCTumourPurityAdmin)
+
 class QCNTCContaminationAdmin(admin.ModelAdmin):
     list_display = ["id", "status", "ntc_contamination"]
     search_fields = ["status"]
@@ -121,7 +127,7 @@ admin.site.register(Variant, VariantAdmin)
 class GermlineVariantInstanceAdmin(admin.ModelAdmin):
     filter_horizontal = ["vep_annotations"]
     list_display = ["id", "get_variant", "patient_analysis", "af"]
-    search_fields = ["id", "variant", "patient_analysis"]
+    search_fields = ["id", "variant__variant", "patient_analysis__patient__nhs_number"]
 
     def get_variant(self, obj):
         return obj.variant.variant
@@ -131,7 +137,7 @@ admin.site.register(GermlineVariantInstance, GermlineVariantInstanceAdmin)
 class SomaticVariantInstanceAdmin(admin.ModelAdmin):
     filter_horizontal = ["vep_annotations"]
     list_display = ["variant", "patient_analysis", "ad", "af"]
-    search_fields = ["variant", "patient_analysis"]
+    search_fields = ["id", "variant__variant", "patient_analysis__patient__nhs_number"]
 
 admin.site.register(SomaticVariantInstance, SomaticVariantInstanceAdmin)
 
@@ -178,7 +184,7 @@ admin.site.register(GermlineVEPAnnotations, GermlineVEPAnnotationsAdmin)
 class SomaticVEPAnnotationsAdmin(admin.ModelAdmin):
     filter_horizontal = ["pubmed_id", "existing_variation", "consequence"]
     list_display = ["hgvsc", "hgvsp", "exon", "intron"]
-    search_fields = ["hgvsc", "hgvsp"]
+    search_fields = ["id", "hgvsc", "hgvsp"]
 
 admin.site.register(SomaticVEPAnnotations, SomaticVEPAnnotationsAdmin)
 
