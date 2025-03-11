@@ -300,6 +300,12 @@ class PatientAnalysis(models.Model):
                 "status": self.relatedness.status,
                 "message": self.relatedness.message,
                 "tooltip": "This metric checks the germline and somatic samples are from the same individual. If this metric has failed DO NOT PROCEED with analysis"
+            },
+            "tumour_purity": {
+                "display_name": "Estimated Tumour Purity",
+                "status": self.tumour_purity.status,
+                "message": self.tumour_purity.message,
+                "tooltip": "This metric estimates the tumour purity from the NGS data. Low purity samples may have reduced sensitvity to low level variants."
             }
         }
 
