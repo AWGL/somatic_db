@@ -576,11 +576,11 @@ class CNVs(models.Model):
     """
     A CNV
     """
-    #fusion_genes = models.CharField(max_length=50)
-    #left_breakpoint = models.CharField(max_length=50)
-    #right_breakpoint = models.CharField(max_length=50)
-    #genome_build = models.IntegerField(default=37)
-
+    region_genes = models.CharField(max_length=50)
+    start_coordinate = models.CharField(max_length=50)
+    end_coordinate = models.CharField(max_length=50)
+    genome_build = models.IntegerField(default=38)
+    copy_number = models.IntegerField(default=2)
 
 class CNVAnalysis(models.Model):
     """

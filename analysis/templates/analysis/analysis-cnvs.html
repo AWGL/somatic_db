@@ -27,13 +27,13 @@
 <table id="fusions-table" class="table table-striped table-hover">
   <thead>
     <tr>
-      <th scope="col">Fusion</th>
-      <th scope="col">HGVS</th>
+      <th scope="col">CNVs</th>
+      <th scope="col">Copy Number</th>
       <th scope="col">Fusion supporting reads</th>
       {% if sample_data.panel_obj.show_fusion_vaf %}<th scope="col">VAF</th>{% endif %}
       <!--<th scope="col">Reference reads<br>(Gene 1 | Gene 2)</th>-->
-      <th scope="col">Left breakpoint</th>
-      <th scope="col">Right breakpoint</th>
+      <th scope="col">Start Coordinate</th>
+      <th scope="col">End Coordinate</th>
       <th scope="col">NTC</th>
       <th scope="col">IGV</th>
       {% if 'IGV' in sample_data.checks.current_status %}
