@@ -263,8 +263,17 @@ class Command(BaseCommand):
             status='P',
         )
         new_check.save()
-
-
+        
+        # Specifies the cancer hotspots file for annotation
+        if genome_build == "GRCh37":
+            cancer_hotspots_file = "/roi/20220125_hotspots_all_37.bed"
+        elif genome_build == "GRCh38":
+            cancer_hotspots_file = "/roi/20220125_hotspots_all_38.bed"
+        
+        if not os.path.isfile(cancer_hotspots_file):
+                print(f'ERROR\t{datetime.now()}\timport.py\t{cancer_hotspots_file} file does not exist')
+                raise IOError(f'{cancer_hotspots_file} file does not exist')
+        
         # ---------------------------------------------------------------------------------------------------------
         # SNVs and indels
         # ---------------------------------------------------------------------------------------------------------
@@ -337,6 +346,9 @@ class Command(BaseCommand):
                         if v['in_ntc'] == '':
                         	v['in_ntc'] = False
 
+                        # boolean if variant overlaps with hotspot
+                        overlaps_hotspots = len(hotspots_bed.intersect(variant_bed_region)) > 0
+
                         # make new instance of variant
                         new_var_instance = VariantInstance(
                             sample = new_sample,
@@ -349,6 +361,7 @@ class Command(BaseCommand):
                             alt_count = v['alt_reads'],
                             in_ntc = v['in_ntc'],
                             gnomad_popmax = v['gnomad_popmax_AF'],
+                            is_hotspot = overlaps_hotspots,
                         )
                         
                         # For new database had to convert string to boolean
