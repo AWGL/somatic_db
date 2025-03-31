@@ -40,9 +40,9 @@ def signup(request):
         if signup_form.is_valid():
 
             # get data from form
-            username = signup_form.cleaned_data('username')
-            raw_password = signup_form.cleaned_data('password1')
-            lims_initials = signup_form.cleaned_data('lims_initials')
+            username = signup_form.cleaned_data.get('username')
+            raw_password = signup_form.cleaned_data.get('password1')
+            lims_initials = signup_form.cleaned_data.get('lims_initials')
 
             # check if LIMS initials already exists
             initials_check, warning_message = lims_initials_check(lims_initials)
