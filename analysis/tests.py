@@ -2438,3 +2438,81 @@ class TestPolyArtefactValidation(TestCase):
             self.skipTest("Error contacting external API")
         else:
             self.assertEqual(result, expected_warning)
+
+class TestPolyArtefactPeriodicSaving(TestCase):
+    """
+    Checks polys and artefacts are being saved to the relevant list
+    """
+    # load in all panels
+    # fixtures = ['panels.json']
+
+
+    def setUp(self):
+        ''' runs before each test '''
+        # make mock sample object
+        self.sample_obj = Sample(sample_id='test_sample')
+
+        # make mock variant object, build 37 for most tests as build doesnt matter for most
+        self.variant_obj = Variant(variant='1:2345C>G', genome_build=37)
+
+        self.sample_analysis = SampleAnalysis(sample = self.sample_obj)
+
+        # make mock variant instance, gnomad values will be added in each test
+        self.variant_instance_obj = VariantInstance(
+            sample = self.sample_obj,
+            variant = self.variant_obj,
+            gene = 'BRAF',
+            exon = '1/5',
+            hgvs_c = 'c.12345C>G',
+            hgvs_p = 'p.Ala456Arg',
+            total_count = 10,
+            alt_count = 1,
+            in_ntc = False,
+            manual_upload = False,
+            final_decision = '-',
+        )
+
+        self.check_obj = Check(
+            sample_analysis = self.sample_analysis,
+        )
+
+        self.variant_check = VariantCheck()
+
+    def test_polys_artefacts(self):
+        '''
+        test polys_artefacts
+        '''
+        # get db objects
+        #empyt variant list#
+        #poly and non-poly
+        ws_obj = Worksheet.objects.get_or_create(ws_id = 'test38') 
+        sample_obj = Sample.objects.get(sample_id = 'sample22')
+        panel_obj = Panel.objects.get(panel_name='lung', assay='1', live=True, genome_build=38)
+        sample_analysis_obj = SampleAnalysis.objects.get(worksheet = ws_obj, sample=sample_obj, panel=panel_obj)
+
+        # run import management command - wrap in contextlib to prevent output printing to screen
+        with contextlib.redirect_stdout(None):
+            call_command('save_polys_artefacts')
+        # test genome build
+        #length of variant list
+        #name of first object , etc.
+        self.assertEqual(sample_analysis_obj.genome_build, 38)
+
+        # test number of reads is empty - RNA only
+        self.assertEqual(sample_analysis_obj.total_reads, None)
+        self.assertEqual(sample_analysis_obj.total_reads_ntc, None)
+
+        # test than num SNVs uploaded was correct
+        self.assertEqual(Variant.objects.count(), 2)
+        self.assertEqual(VariantInstance.objects.count(), 2)
+
+        # test that num of coverage records is correct
+        self.assertEqual(GeneCoverageAnalysis.objects.count(), 3)
+        self.assertEqual(RegionCoverageAnalysis.objects.count(), 11)
+        self.assertEqual(GapsAnalysis.objects.count(), 9)
+
+        # check that no fusions have been added
+        self.assertFalse(Fusion.objects.exists())
+        self.assertFalse(FusionAnalysis.objects.exists())
+        self.assertFalse(FusionAnalysis.objects.filter(fusion_caller='Fusion').exists())
+        self.assertFalse(FusionAnalysis.objects.filter(fusion_caller='Splice').exists())        
