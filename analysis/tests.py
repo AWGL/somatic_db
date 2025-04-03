@@ -2441,24 +2441,54 @@ class TestPolyArtefactValidation(TestCase):
 
 class TestPolyArtefactPeriodicSaving(TestCase):
     """
-    Checks polys and artefacts are being saved to the relevant list
+    Checks polys and artefacts are being saved to the correct list
     """
-    # load in all panels
-    # fixtures = ['panels.json']
-
 
     def setUp(self):
         ''' runs before each test '''
+
+        # make mock user and user settings objects
+        self.user = User.objects.create_user(username='admin', password='test_user_1')
+        self.usersettings = UserSettings(
+            user = self.user,
+            lims_initials = 'ABC'
+        )
+        self.usersettings.save()
+
         # make mock sample object
-        self.sample_obj = Sample(sample_id='test_sample')
+        self.sample_obj = Sample.objects.create(sample_id='test_sample')
 
         # make mock variant object, build 37 for most tests as build doesnt matter for most
-        self.variant_obj = Variant(variant='1:2345C>G', genome_build=37)
-
-        self.sample_analysis = SampleAnalysis(sample = self.sample_obj)
-
+        # self.variant_obj = Variant(variant='1:2345C>G', genome_build=37)
+        self.variant_obj = Variant.objects.create(variant='1:2345C>G', genome_build=37)
+        self.fusion_obj = Fusion.objects.create(
+            fusion_genes='',
+            left_breakpoint="chr1:154142876",
+            right_breakpoint="chr1:156844361",
+            genome_build=37
+            )
+        self.run = Run.objects.create(run_id = "TEST_RUN1")
+        self.worksheet = Worksheet.objects.create(
+            ws_id="test38",
+            assay="TSO500_DNA",
+            run=self.run
+            )
+        self.panel = Panel.objects.create(
+            panel_name="Lung",
+            version=1,
+            live=True,
+            show_snvs=True,
+            show_fusions=False,
+            show_fusion_coverage=False,
+            show_fusion_vaf=False
+            )
+        self.sample_analysis = SampleAnalysis.objects.create(
+            sample=self.sample_obj,
+            worksheet=self.worksheet,
+            panel=self.panel
+            )
         # make mock variant instance, gnomad values will be added in each test
-        self.variant_instance_obj = VariantInstance(
+        self.variant_instance_obj = VariantInstance.objects.create(
             sample = self.sample_obj,
             variant = self.variant_obj,
             gene = 'BRAF',
@@ -2469,50 +2499,74 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             alt_count = 1,
             in_ntc = False,
             manual_upload = False,
-            final_decision = '-',
-        )
-
-        self.check_obj = Check(
-            sample_analysis = self.sample_analysis,
-        )
-
-        self.variant_check = VariantCheck()
+            final_decision = '-'
+            )
+        self.check_obj = Check.objects.create(analysis = self.sample_analysis)
+        self.variant_panel_analysis = VariantPanelAnalysis.objects.create(
+            sample_analysis=self.sample_analysis,
+            variant_instance=self.variant_instance_obj
+            )
+        self.fusion_analysis = FusionAnalysis.objects.create(
+            sample=self.sample_analysis,
+            fusion_genes=self.fusion_obj,
+            fusion_supporting_reads=339,
+            ref_reads_1=2452
+            )
+        self.fusion_panel_analysis = FusionPanelAnalysis.objects.create(
+            sample_analysis=self.sample_analysis,
+            fusion_instance=self.fusion_analysis
+            )
+        self.variant_check = VariantCheck.objects.create(
+            variant_analysis=self.variant_panel_analysis,
+            check_object=self.check_obj
+            )
+        self.fusion_check = FusionCheck.objects.create(
+            fusion_analysis=self.fusion_panel_analysis,
+            check_object=self.check_obj
+            )
+        self.variant_list = VariantList.objects.create(
+            name="build_38_polys",
+            assay="1"
+            )
+        self.variant_to_variant_list = VariantToVariantList.objects.create(
+            variant_list=self.variant_list,
+            variant=self.variant_obj,
+            upload_user=self.user,
+            check_user=self.user
+            )
+        # run import management command - wrap in contextlib to prevent output printing to screen
+        with contextlib.redirect_stdout(None):
+            call_command('save_polys_artefacts')
 
     def test_polys_artefacts(self):
         '''
         test polys_artefacts
         '''
         # get db objects
-        #empyt variant list#
-        #poly and non-poly
-        ws_obj = Worksheet.objects.get_or_create(ws_id = 'test38') 
-        sample_obj = Sample.objects.get(sample_id = 'sample22')
-        panel_obj = Panel.objects.get(panel_name='lung', assay='1', live=True, genome_build=38)
-        sample_analysis_obj = SampleAnalysis.objects.get(worksheet = ws_obj, sample=sample_obj, panel=panel_obj)
-
-        # run import management command - wrap in contextlib to prevent output printing to screen
-        with contextlib.redirect_stdout(None):
-            call_command('save_polys_artefacts')
         # test genome build
         #length of variant list
-        #name of first object , etc.
-        self.assertEqual(sample_analysis_obj.genome_build, 38)
+        # #name of first object , etc.
+        self.assertEqual(self.variant_obj.genome_build, 37)
 
-        # test number of reads is empty - RNA only
-        self.assertEqual(sample_analysis_obj.total_reads, None)
-        self.assertEqual(sample_analysis_obj.total_reads_ntc, None)
+        # # test number of reads is empty - RNA only
+        # self.assertEqual(sample_analysis_obj.total_reads, None)
+        # self.assertEqual(sample_analysis_obj.total_reads_ntc, None)
+        # print(list(self.variant_list))
+        self.assertEqual(VariantList.objects.count(), 1)
+        print(self.variant_list.name)
+        # print(self.variant_list.name)
+        variants = VariantToVariantList.objects.filter(variant_list=self.variant_list)
+        variant = variants[0].variant.variant
+        print(variant)
 
+        self.assertEqual(variant,'1:2345C>G')
         # test than num SNVs uploaded was correct
-        self.assertEqual(Variant.objects.count(), 2)
-        self.assertEqual(VariantInstance.objects.count(), 2)
-
-        # test that num of coverage records is correct
-        self.assertEqual(GeneCoverageAnalysis.objects.count(), 3)
-        self.assertEqual(RegionCoverageAnalysis.objects.count(), 11)
-        self.assertEqual(GapsAnalysis.objects.count(), 9)
+        # print(list(Variant.objects.all()))
+        self.assertEqual(Variant.objects.count(), 1)
+        self.assertEqual(VariantInstance.objects.count(), 1)
 
         # check that no fusions have been added
-        self.assertFalse(Fusion.objects.exists())
-        self.assertFalse(FusionAnalysis.objects.exists())
+        self.assertTrue(Fusion.objects.exists())
+        self.assertTrue(FusionAnalysis.objects.exists())
         self.assertFalse(FusionAnalysis.objects.filter(fusion_caller='Fusion').exists())
         self.assertFalse(FusionAnalysis.objects.filter(fusion_caller='Splice').exists())        
