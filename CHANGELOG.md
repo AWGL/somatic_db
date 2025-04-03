@@ -3,6 +3,22 @@ This format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [v1.6.2] - 31/03/2025
+
+### Fixed
+- Bug when making a new user
+
+### Changed
+- Update panel fixtures
+
+## [v1.6.1] - 21/03/2025
+
+### Added
+- Add download for clinical scientist checks
+
+### Changed
+- Update panels
+
 ## [v1.6.0] - 2024-11-20
 
 ### Added
