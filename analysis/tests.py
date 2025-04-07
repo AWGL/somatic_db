@@ -7,6 +7,7 @@ from analysis.models import *
 
 from decimal import Decimal
 import contextlib
+import datetime
 
 
 class TestViews(TestCase):
@@ -2459,7 +2460,7 @@ class TestPolyArtefactPeriodicSaving(TestCase):
         self.sample_obj = Sample.objects.create(sample_id='test_sample')
 
         # make mock variant object, build 37 for most tests as build doesnt matter for most
-        # self.variant_obj = Variant(variant='1:2345C>G', genome_build=37)
+
         self.variant_obj = Variant.objects.create(variant='1:2345C>G', genome_build=37)
         self.fusion_obj = Fusion.objects.create(
             fusion_genes='',
@@ -2499,9 +2500,11 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             alt_count = 1,
             in_ntc = False,
             manual_upload = False,
-            final_decision = '-'
+            final_decision = 'P'
             )
-        self.check_obj = Check.objects.create(analysis = self.sample_analysis)
+        self.check_obj = Check.objects.create(
+            analysis = self.sample_analysis,
+            signoff_time = datetime.date.today())
         self.variant_panel_analysis = VariantPanelAnalysis.objects.create(
             sample_analysis=self.sample_analysis,
             variant_instance=self.variant_instance_obj
@@ -2528,12 +2531,11 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             name="build_38_polys",
             assay="1"
             )
-        self.variant_to_variant_list = VariantToVariantList.objects.create(
-            variant_list=self.variant_list,
-            variant=self.variant_obj,
-            upload_user=self.user,
-            check_user=self.user
-            )
+        
+        variants = VariantToVariantList.objects.filter(variant_list=self.variant_list)
+        print(variants)
+        checks = self.sample_analysis.get_checks()['all_checks']
+        print(checks)
         # run import management command - wrap in contextlib to prevent output printing to screen
         with contextlib.redirect_stdout(None):
             call_command('save_polys_artefacts')
@@ -2552,11 +2554,13 @@ class TestPolyArtefactPeriodicSaving(TestCase):
         # self.assertEqual(sample_analysis_obj.total_reads, None)
         # self.assertEqual(sample_analysis_obj.total_reads_ntc, None)
         # print(list(self.variant_list))
-        self.assertEqual(VariantList.objects.count(), 1)
+        print(VariantList.objects.count())
+        self.assertEqual(VariantList.objects.count(),1)
         print(self.variant_list.name)
         # print(self.variant_list.name)
-        variants = VariantToVariantList.objects.filter(variant_list=self.variant_list)
-        variant = variants[0].variant.variant
+        v2vl = VariantToVariantList.objects.filter(variant_list=self.variant_list)
+        print(v2vl)
+        variant = v2vl[0].variant.variant
         print(variant)
 
         self.assertEqual(variant,'1:2345C>G')

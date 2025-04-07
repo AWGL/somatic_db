@@ -9,7 +9,7 @@ from django.db import transaction
 from django.conf import settings
 
 import datetime
-from analysis.models import SampleAnalysis, VariantList, VariantToVariantList, VariantPanelAnalysis, Variant, Fusion, FusionPanelAnalysis
+from analysis.models import SampleAnalysis, VariantList, VariantToVariantList, VariantInstance, Variant, Fusion, FusionAnalysis
 from django.utils import timezone
 
 
@@ -49,15 +49,18 @@ class Command(BaseCommand):
         query_days = 28
 
         # set date range
-        end_date = datetime.date.today()
-        start_date = end_date - datetime.timedelta(days=query_days)
+        today = datetime.date.today()
+        end_date = today + datetime.timedelta(days=1)
+        start_date = today - datetime.timedelta(days=query_days)
         print(f"date range = {start_date} - {end_date}, i.e. last {query_days} days")
 
         #Get all sample analyses
-        samples = SampleAnalysis.objects.all()
+        sas = SampleAnalysis.objects.all()
 
         # create empty lists for variants and fusions
         variants = []
+        polys = []
+        artefacts = []
         fusions = []
 
         # define dectionaries used for build list sorting
@@ -78,10 +81,12 @@ class Command(BaseCommand):
         }
 
         # Loop over samples
-        for s in samples:
+        for sa in sas:
             # Get all IGV checks
-            checks = s.get_checks()['all_checks']
-            assay = s.worksheet.assay
+            checks = sa.get_checks()['all_checks']
+            sample = sa.sample
+            assay = sa.worksheet.assay
+
             # Use date of first check therefore will be after go live
             # if the check is between the dates, get it
             if checks[0].signoff_time != None:
@@ -89,57 +94,72 @@ class Command(BaseCommand):
                 within_timeframe = start_date <= checks[0].signoff_time.date() <= end_date
                 if within_timeframe:
 
-                    # Now we know the checks for the sample analysis were in the date range, get variant panel analysis for that sample analysis
-                    variant_analyses = VariantPanelAnalysis.objects.filter(sample_analysis = s)
+                    # get in-date VariantInstance objects
+                    variant_instances = VariantInstance.objects.filter(sample_analysis = sample)
                             
                     # Get checks
-                    for v in variant_analyses:
-                        variant_checks = v.get_all_checks()
-                        
-                        # Get decision for each check
-                        for result in variant_checks:
-                            # Get variant string, genome build, set fusion_boolean to False
-                            variant = result.variant_analysis.variant_instance.variant.variant
-                            genome_build = result.variant_analysis.variant_instance.variant.genome_build
-                            fusion_boolean = False
-                            # Add variant string to variants list
-                            variants.append(variant)
-                            # Get or create variant object
-                            variant_obj, created = Variant.objects.get_or_create(variant=variant[0])
+                    for v in variant_instances:
+                        # Get decision, variant string, genome build, set fusion_boolean to False
+                        decision = v.final_decision()
+                        variant = v.variant.variant
+                        genome_build = v.variant.genome_build
+                        fusion_boolean = False
+                        # Get or create variant object
+                        variant_obj, created = Variant.objects.get_or_create(variant=variant[0])
+                        # If poly save varaint to poly list
+                        if decision == "Poly":
                             # Check if variant has sufficient number of checks
-                            if variants.count(variant) >= required_checks:
-                                # If poly save varaint to poly list
-                                if result.get_decision_display() == "Poly":
-                                    self.save_variant_to_list(variant, variant_obj, created, poly_variant_list_dict[genome_build], fusion_boolean)
-                                # If artefact save to artefacts list
-                                elif result.get_decision_display() == "Artefact":
-                                    self.save_variant_to_list(variant, variant_obj, created, variant_artefact_dict[assay], fusion_boolean)
-                            # Print variant to console if insufficient checks
+                            polys.append(variant)
+                            if polys.count(variant) >= required_checks:
+                                self.save_variant_to_list(
+                                    variant,
+                                    variant_obj,
+                                    created,poly_variant_list_dict[genome_build],
+                                    fusion_boolean
+                                    )
                             else:
+                                # Print variant to console if insufficient checks
                                 print(f"INFO\t{timezone.now()}\t{variant}, seen fewer times than required ({required_checks}), not added to list")
-                    
-                    # For the sample analyses were in the date range, get fusion panel analyses for that sample analysis
-                    fusion_analyses = FusionPanelAnalysis.objects.filter(sample_analysis = s)
+                            # If artefact save to artefacts list
+                        elif decision == "Artefact":
+                            artefacts.append(variant)
+                            if artefacts.count(variant) >= required_checks:
+                                self.save_variant_to_list(
+                                    variant,
+                                    variant_obj,
+                                    created,
+                                    variant_artefact_dict[assay],
+                                    fusion_boolean
+                                    )
+                            else:
+                                # Print variant to console if insufficient checks
+                                print(f"INFO\t{timezone.now()}\t{variant}, seen fewer times than required ({required_checks}), not added to list")
+
+                    # get in-date FusionAnalysis objects
+                    fusion_analysis = FusionAnalysis.objects.filter(sample_analysis = sample)
                             
                     # Get checks
-                    for f in fusion_analyses:
-                        fusion_checks = f.get_all_checks()
-                        
-                        # Get decision for each check
-                        for result in fusion_checks:
-                            # Get fusion string, genome build, set fusion_boolean to True
-                            fusion = result.fusion_analysis.fusion_instance.fusion_genes.fusion_genes
-                            genome_build = result.fusion_analysis.fusion_instance.fusion_genes.genome_build
-                            fusion_boolean = True
-                            # Add fusion string to fusions list
-                            fusions.append(fusion)
-                            # Get or create fusion object
-                            fusion_obj, created = Fusion.objects.get_or_create(fusion_genes=fusion)
-                            # Check if fusion has sufficient number of checks
-                            if fusions.count(fusion) >= required_checks:
-                                # If artefact save varaint to artefacts list
-                                if result.decision == "A":
-                                    self.save_variant_to_list(fusion, fusion_obj, created, fusion_artefact_dict[assay], fusion_boolean)
-                            # Print fusion to console if insufficient checks
+                    for f in fusion_analysis:
+                        # Get decision, variant string, genome build, set fusion_boolean to False
+                        decision = f.final_decision()
+                        fusion = f.fusion_genes.fusion_genes
+                        genome_build = f.fusion_genes.genome_build
+                        fusion_boolean = True
+
+                        # Get or create variant object
+                        fusion_obj, created = Fusion.objects.get_or_create(fusion_genes=fusion)
+                        # If artefact save to artefacts list
+                        if decision == "Artefact":
+                            # Check if variant has sufficient number of checks
+                            artefacts.append(fusion)
+                            if artefacts.count(variant) >= required_checks:
+                                self.save_variant_to_list(
+                                    fusion,
+                                    fusion_obj,
+                                    created,
+                                    fusion_artefact_dict[assay],
+                                    fusion_boolean
+                                    )
                             else:
-                                print(f"INFO\t{timezone.now()}\t{fusion}, seen fewer times than required ({required_checks}), not added to list")
+                                # Print variant to console if insufficient checks
+                                print(f"INFO\t{timezone.now()}\t{fusion}, seen fewer times than required ({required_checks}), not added to list")      
