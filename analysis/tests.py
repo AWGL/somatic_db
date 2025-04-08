@@ -7,6 +7,8 @@ from analysis.models import *
 
 from decimal import Decimal
 import contextlib
+from django.utils import timezone
+import datetime
 
 
 class TestViews(TestCase):
@@ -2438,3 +2440,284 @@ class TestPolyArtefactValidation(TestCase):
             self.skipTest("Error contacting external API")
         else:
             self.assertEqual(result, expected_warning)
+
+class TestPolyArtefactPeriodicSaving(TestCase):
+    """
+    Checks polys and artefacts are being saved to the correct list
+    """
+
+    def setUp(self):
+        ''' runs before each test '''
+
+        # make mock user and user settings objects
+        self.user = User.objects.create_user(username='admin', password='test_user_1')
+        self.usersettings = UserSettings(
+            user = self.user,
+            lims_initials = 'ABC'
+        )
+        self.usersettings.save()
+
+        # make mock sample object
+        self.sample_obj_1 = Sample.objects.create(sample_id='test_sample_1')
+        self.sample_obj_2 = Sample.objects.create(sample_id='test_sample_2')
+        # make mock variant object, build 37 for most tests as build doesnt matter for most
+
+        self.variant_obj = Variant.objects.create(
+            variant='1:2345C>G',
+            genome_build=38
+            )
+        self.variant_obj_2 = Variant.objects.create(
+            variant='1:1111C>G',
+            genome_build=38
+            )
+        self.fusion_obj_1 = Fusion.objects.create(
+            fusion_genes='fusion1',
+            left_breakpoint="chr1:154142876",
+            right_breakpoint="chr1:156844361",
+            genome_build=37
+            )
+        self.fusion_obj_2 = Fusion.objects.create(
+            fusion_genes='fusion2',
+            left_breakpoint="chr1:154142876",
+            right_breakpoint="chr1:156844361",
+            genome_build=37
+            )
+        self.run = Run.objects.create(run_id = "TEST_RUN1")
+        self.worksheet_DNA = Worksheet.objects.create(
+            ws_id="test38",
+            assay="TSO500_DNA",
+            run=self.run
+            )
+        self.worksheet_ctDNA = Worksheet.objects.create(
+            ws_id="test37",
+            assay="TSO500_ctDNA",
+            run=self.run
+            )
+        self.panel = Panel.objects.create(
+            panel_name="Lung",
+            version=1,
+            live=True,
+            show_snvs=True,
+            show_fusions=False,
+            show_fusion_coverage=False,
+            show_fusion_vaf=False
+            )
+        self.sample_analysis_1 = SampleAnalysis.objects.create(
+            sample=self.sample_obj_1,
+            worksheet=self.worksheet_DNA,
+            panel=self.panel
+            )
+        self.sample_analysis_2 = SampleAnalysis.objects.create(
+            sample=self.sample_obj_2,
+            worksheet=self.worksheet_ctDNA,
+            panel=self.panel
+            )
+        # make mock variant instance, gnomad values will be added in each test
+        self.variant_instance_obj_1 = VariantInstance.objects.create(
+            sample = self.sample_obj_1,
+            variant = self.variant_obj,
+            gene = 'BRAF',
+            exon = '1/5',
+            hgvs_c = 'c.12345C>G',
+            hgvs_p = 'p.Ala456Arg',
+            total_count = 10,
+            alt_count = 1,
+            in_ntc = False,
+            manual_upload = False,
+            final_decision = 'P'
+            )
+        self.variant_instance_obj_2 = VariantInstance.objects.create(
+            sample = self.sample_obj_2,
+            variant = self.variant_obj,
+            gene = 'BRAF',
+            exon = '1/5',
+            hgvs_c = 'c.12345C>G',
+            hgvs_p = 'p.Ala456Arg',
+            total_count = 10,
+            alt_count = 1,
+            in_ntc = False,
+            manual_upload = False,
+            final_decision = 'P'
+            )
+        self.variant_instance_obj_3 = VariantInstance.objects.create(
+            sample = self.sample_obj_1,
+            variant = self.variant_obj_2,
+            gene = 'BRAF',
+            exon = '1/5',
+            hgvs_c = 'c.11111C>G',
+            hgvs_p = 'p.Ala456Arg',
+            total_count = 10,
+            alt_count = 1,
+            in_ntc = False,
+            manual_upload = False,
+            final_decision = 'P'
+            )
+        self.variant_instance_obj_4 = VariantInstance.objects.create(
+            sample = self.sample_obj_2,
+            variant = self.variant_obj_2,
+            gene = 'BRAF',
+            exon = '1/5',
+            hgvs_c = 'c.11111C>G',
+            hgvs_p = 'p.Ala456Arg',
+            total_count = 10,
+            alt_count = 1,
+            in_ntc = False,
+            manual_upload = False,
+            final_decision = 'G'
+            )
+        self.check_obj_1 = Check.objects.create(
+            analysis = self.sample_analysis_1,
+            signoff_time = timezone.now()
+            # signoff_time = timezone.now() - datetime.timedelta(days=30)
+            )
+        self.check_obj_2 = Check.objects.create(
+            analysis = self.sample_analysis_2,
+            signoff_time = timezone.now()
+            )
+        self.variant_panel_analysis_1 = VariantPanelAnalysis.objects.create(
+            sample_analysis=self.sample_analysis_1,
+            variant_instance=self.variant_instance_obj_1
+            )
+        self.variant_panel_analysis_2 = VariantPanelAnalysis.objects.create(
+            sample_analysis=self.sample_analysis_2,
+            variant_instance=self.variant_instance_obj_2
+            )
+        self.fusion_analysis_1 = FusionAnalysis.objects.create(
+            sample=self.sample_analysis_1,
+            fusion_genes=self.fusion_obj_1,
+            fusion_supporting_reads=339,
+            ref_reads_1=2452,
+            final_decision = "A"
+            )
+        self.fusion_analysis_2 = FusionAnalysis.objects.create(
+            sample=self.sample_analysis_2,
+            fusion_genes=self.fusion_obj_1,
+            fusion_supporting_reads=339,
+            ref_reads_1=2452,
+            final_decision = "A"
+            )
+        self.fusion_analysis_3 = FusionAnalysis.objects.create(
+            sample=self.sample_analysis_1,
+            fusion_genes=self.fusion_obj_2,
+            fusion_supporting_reads=339,
+            ref_reads_1=2452,
+            final_decision = "A"
+            )
+        self.fusion_analysis_4 = FusionAnalysis.objects.create(
+            sample=self.sample_analysis_2,
+            fusion_genes=self.fusion_obj_2,
+            fusion_supporting_reads=339,
+            ref_reads_1=2452,
+            final_decision = "G"
+            )
+        self.fusion_panel_analysis_1 = FusionPanelAnalysis.objects.create(
+            sample_analysis=self.sample_analysis_1,
+            fusion_instance=self.fusion_analysis_1
+            )
+        self.fusion_panel_analysis_2 = FusionPanelAnalysis.objects.create(
+            sample_analysis=self.sample_analysis_2,
+            fusion_instance=self.fusion_analysis_2
+            )
+        self.fusion_panel_analysis_3 = FusionPanelAnalysis.objects.create(
+            sample_analysis=self.sample_analysis_1,
+            fusion_instance=self.fusion_analysis_3
+            )
+        self.fusion_panel_analysis_4 = FusionPanelAnalysis.objects.create(
+            sample_analysis=self.sample_analysis_2,
+            fusion_instance=self.fusion_analysis_4
+            )
+        self.variant_check_1 = VariantCheck.objects.create(
+            variant_analysis=self.variant_panel_analysis_1,
+            check_object=self.check_obj_1
+            )
+        self.variant_check_2 = VariantCheck.objects.create(
+            variant_analysis=self.variant_panel_analysis_2,
+            check_object=self.check_obj_2
+            )
+        self.fusion_check_1 = FusionCheck.objects.create(
+            fusion_analysis=self.fusion_panel_analysis_1,
+            check_object=self.check_obj_1
+            )
+        self.fusion_check_2 = FusionCheck.objects.create(
+            fusion_analysis=self.fusion_panel_analysis_2,
+            check_object=self.check_obj_2
+            )
+        self.fusion_check_3 = FusionCheck.objects.create(
+            fusion_analysis=self.fusion_panel_analysis_3,
+            check_object=self.check_obj_1
+            )
+        self.fusion_check_4 = FusionCheck.objects.create(
+            fusion_analysis=self.fusion_panel_analysis_4,
+            check_object=self.check_obj_2
+            )
+        self.variant_list = VariantList.objects.create(
+            name="build_38_polys",
+            assay="1"
+            )
+        self.fusion_list = VariantList.objects.create(
+            name="TSO500_ctDNA_b37_fusion_artefacts",
+            assay="1"
+            )
+        
+        variants = VariantToVariantList.objects.filter(variant_list=self.variant_list)
+        fusions = VariantToVariantList.objects.filter(variant_list=self.fusion_list)
+        print(f"variants in list before script run = {variants}")
+        print(f"fusions in list before script run = {fusions}")
+        checks = self.sample_analysis_1.get_checks()['all_checks']
+        print(f"checks before script run = {checks}")
+        # run import management command - wrap in contextlib to prevent output printing to screen
+        with contextlib.redirect_stdout(None):
+            call_command('save_polys_artefacts')
+
+    def test_variants(self):
+        '''
+        test polys_artefacts
+        '''
+        # test genome build
+        variant_objs = Variant.objects.all()
+        self.assertEqual(variant_objs[0].genome_build, 38)
+        self.assertEqual(variant_objs[1].genome_build, 38)
+
+        self.variant_lists = VariantList.objects.all()
+        self.assertEqual(self.variant_lists[0].name, 'build_38_polys')
+
+        print(f"VariantList objects = {VariantList.objects.count()}")
+        self.assertEqual(VariantList.objects.count(),2)
+
+        v2vl = VariantToVariantList.objects.all()
+        print(f"VariantToVariantList (build_38_polys)= {v2vl[0]}")
+
+        variant = v2vl[0].variant.variant
+        variant_list = v2vl[0].variant_list.name
+        print(f"variant = {variant}")
+        print(f"variant_list = {variant_list}")
+        self.assertEqual(variant,'1:2345C>G')
+        self.assertEqual(VariantToVariantList.objects.count(), 2)
+        self.assertEqual(variant_list,'build_38_polys')
+
+    def test_fusions(self):
+        '''
+        test polys_artefacts
+        '''
+        fusions_all = Fusion.objects.all()
+
+        self.assertEqual(fusions_all[0].genome_build, 37)
+        self.assertEqual(fusions_all[1].genome_build, 37)
+
+        self.variant_lists = VariantList.objects.all()
+        self.assertEqual(self.variant_lists[1].name, 'TSO500_ctDNA_b37_fusion_artefacts')
+        
+        
+        v2vl = VariantToVariantList.objects.all()
+        fusion = v2vl[1].variant.variant
+        fusion_list = v2vl[1].variant_list.name
+        print(f"fusion = {fusion}")
+        print(f"fusion_list = {fusion_list}")
+        self.assertEqual(fusion,'')
+        self.assertEqual(self.fusion_list[1].name, 'TSO500_ctDNA_b37_fusion_artefacts')
+
+        # check that no fusions have been added
+        self.assertTrue(Fusion.objects.exists())
+        self.assertTrue(FusionAnalysis.objects.exists())
+        self.assertFalse(FusionAnalysis.objects.filter(fusion_caller='Fusion').exists())
+        self.assertFalse(FusionAnalysis.objects.filter(fusion_caller='Splice').exists())        
