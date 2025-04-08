@@ -23,7 +23,7 @@ class Command(BaseCommand):
         global VariantToVariantList
         global VariantList
         global timezone
-        global user
+        global User
         polys_to_add = []
         build_list = VariantList.objects.get(name=build)
         if fusion:
@@ -33,7 +33,7 @@ class Command(BaseCommand):
         if created:
             polys_to_add.append(variant)
             # if the poly list instance is newly created, add user info
-            variant_list.upload_user = user
+            variant_list.upload_user = self.user
             variant_list.upload_time = timezone.now()
             variant_list.upload_comment = 'Auto-uploaded by bioinformatics'
             variant_list.save()
@@ -44,7 +44,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         # set global variables
-        user = User.objects.get(username='admin')
+        self.user = User.objects.get(username='admin')
         required_checks = 2
         query_days = 28
 
@@ -57,30 +57,29 @@ class Command(BaseCommand):
         #Get all sample analyses
         sas = SampleAnalysis.objects.all()
 
-        # create empty lists for variants and fusions
-        variants = []
+        # create empty lists for polys and artefacts
         polys = []
         artefacts = []
-        fusions = []
 
         # define dectionaries used for build list sorting
-        poly_variant_list_dict = {37: "build_37_polys",
-                                38: "build_38_polys"
+        poly_variant_list_dict = {
+            37: "build_37_polys",
+            38: "build_38_polys"
                                 }
 
         variant_artefact_dict = {
-        "TSO500_ctDNA": "TSO500_ctDNA_b37_artefacts",
-        "TSO500_DNA": "TSO500_DNA_b38_artefacts",
-        "GeneRead_CRM": "GeneRead_CRM_b37_artefacts",
-        "GeneRead_BRCA": "GeneRead_BRCA_b37_artefacts"
+            "TSO500_ctDNA": "TSO500_ctDNA_b37_artefacts",
+            "TSO500_DNA": "TSO500_DNA_b38_artefacts",
+            "GeneRead_CRM": "GeneRead_CRM_b37_artefacts",
+            "GeneRead_BRCA": "GeneRead_BRCA_b37_artefacts"
         }
 
         fusion_artefact_dict = {
-        "TSO500_ctDNA": "TSO500_ctDNA_b37_fusion_artefacts",
-        "TSO500_RNA": "TSO500_RNA_b37_fusion_artefacts"
+            "TSO500_ctDNA": "TSO500_ctDNA_b37_fusion_artefacts",
+            "TSO500_RNA": "TSO500_RNA_b37_fusion_artefacts"
         }
 
-        # Loop over samples
+        # Loop over SampleAnalysis objects
         for sa in sas:
             # Get all IGV checks
             checks = sa.get_checks()['all_checks']
@@ -95,33 +94,34 @@ class Command(BaseCommand):
                 if within_timeframe:
 
                     # get in-date VariantInstance objects
-                    variant_instances = VariantInstance.objects.filter(sample_analysis = sample)
+                    variant_instances = VariantInstance.objects.filter(sample = sample)
                             
                     # Get checks
                     for v in variant_instances:
                         # Get decision, variant string, genome build, set fusion_boolean to False
-                        decision = v.final_decision()
+                        decision = v.final_decision
                         variant = v.variant.variant
                         genome_build = v.variant.genome_build
                         fusion_boolean = False
                         # Get or create variant object
-                        variant_obj, created = Variant.objects.get_or_create(variant=variant[0])
+                        variant_obj, created = Variant.objects.get_or_create(variant=variant)
                         # If poly save varaint to poly list
-                        if decision == "Poly":
+                        if decision == "P":
                             # Check if variant has sufficient number of checks
                             polys.append(variant)
                             if polys.count(variant) >= required_checks:
                                 self.save_variant_to_list(
                                     variant,
                                     variant_obj,
-                                    created,poly_variant_list_dict[genome_build],
+                                    created,
+                                    poly_variant_list_dict[genome_build],
                                     fusion_boolean
                                     )
                             else:
                                 # Print variant to console if insufficient checks
                                 print(f"INFO\t{timezone.now()}\t{variant}, seen fewer times than required ({required_checks}), not added to list")
                             # If artefact save to artefacts list
-                        elif decision == "Artefact":
+                        elif decision == "A":
                             artefacts.append(variant)
                             if artefacts.count(variant) >= required_checks:
                                 self.save_variant_to_list(
@@ -136,30 +136,31 @@ class Command(BaseCommand):
                                 print(f"INFO\t{timezone.now()}\t{variant}, seen fewer times than required ({required_checks}), not added to list")
 
                     # get in-date FusionAnalysis objects
-                    fusion_analysis = FusionAnalysis.objects.filter(sample_analysis = sample)
-                            
-                    # Get checks
-                    for f in fusion_analysis:
-                        # Get decision, variant string, genome build, set fusion_boolean to False
-                        decision = f.final_decision()
-                        fusion = f.fusion_genes.fusion_genes
-                        genome_build = f.fusion_genes.genome_build
-                        fusion_boolean = True
+                    fusion_analysis = FusionAnalysis.objects.filter(sample = sa)
 
-                        # Get or create variant object
-                        fusion_obj, created = Fusion.objects.get_or_create(fusion_genes=fusion)
-                        # If artefact save to artefacts list
-                        if decision == "Artefact":
-                            # Check if variant has sufficient number of checks
-                            artefacts.append(fusion)
-                            if artefacts.count(variant) >= required_checks:
-                                self.save_variant_to_list(
-                                    fusion,
-                                    fusion_obj,
-                                    created,
-                                    fusion_artefact_dict[assay],
-                                    fusion_boolean
-                                    )
-                            else:
-                                # Print variant to console if insufficient checks
-                                print(f"INFO\t{timezone.now()}\t{fusion}, seen fewer times than required ({required_checks}), not added to list")      
+                    if fusion_analysis.count() > 0:  
+                        # Get checks
+                        for f in fusion_analysis:
+                            # Get decision, variant string, genome build, set fusion_boolean to False
+                            decision = f.final_decision
+                            fusion = f.fusion_genes.fusion_genes
+                            genome_build = f.fusion_genes.genome_build
+                            fusion_boolean = True
+
+                            # Get or create variant object
+                            fusion_obj, created = Fusion.objects.get_or_create(fusion_genes=fusion)
+                            # If artefact save to artefacts list
+                            if decision == "A":
+                                # Check if variant has sufficient number of checks
+                                artefacts.append(fusion)
+                                if artefacts.count(fusion) >= required_checks:
+                                    self.save_variant_to_list(
+                                        fusion,
+                                        fusion_obj,
+                                        created,
+                                        fusion_artefact_dict[assay],
+                                        fusion_boolean
+                                        )
+                                else:
+                                    # Print variant to console if insufficient checks
+                                    print(f"INFO\t{timezone.now()}\t{fusion}, seen fewer times than required ({required_checks}), not added to list")      
