@@ -2664,7 +2664,7 @@ class TestPolyArtefactPeriodicSaving(TestCase):
         print(f"variants in list before script run = {variants}")
         print(f"fusions in list before script run = {fusions}")
         checks = self.sample_analysis_1.get_checks()['all_checks']
-        print(f"checks before script run = {checks}")
+        print(f"checks in sample_analysis_1 before script run = {checks}")
         # run import management command - wrap in contextlib to prevent output printing to screen
         with contextlib.redirect_stdout(None):
             call_command('save_polys_artefacts')
