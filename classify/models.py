@@ -829,7 +829,7 @@ class CodeAnswer(models.Model):
         if self.pending:
             return "Pending"
         elif self.applied:
-            return f"{self.code} {self.pretty_print_code()} ({self.get_score()})"
+            return f"{self.code} {self.applied_strength.pretty_print()} ({self.get_score()})"
         else:
             return "Not applied"
 
