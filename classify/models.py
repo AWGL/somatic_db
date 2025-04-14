@@ -511,14 +511,16 @@ class ClassifyVariantInstance(PolymorphicModel):
     @transaction.atomic
     def signoff_check(self, current_check, next_step):
         """complete a whole check"""
-        # always complete the current check regardless of next step
-        updated, err = current_check.complete_check()
-        if not updated:
-            return False, err
-
+        # extra check - close of current check and make a new one
         if next_step == "extra_check":
-            self.make_new_check()
+            updated, err = current_check.complete_check()
+            if not updated:
+                return False, err
+            else:
+                self.make_new_check()
+                return True, None
 
+        # send back - delete current check if its not the first check
         if next_step == "send_back":
             previous_checks = self.get_previous_checks()
             if previous_checks.exists():
@@ -528,19 +530,21 @@ class ClassifyVariantInstance(PolymorphicModel):
             else:
                 return False, "Cannot send back, this is the first check"
 
+        # complete - close check and analysis if there are two checks
+        # TODO some logic around the two checks agreeing here
         if next_step == "complete":
             previous_checks = self.get_previous_checks()
             if not previous_checks.exists():
                 return False, "Cannot complete analysis, two checks required"
             else:
+                updated, err = current_check.complete_check()
                 # save results to classification obj if final check
                 self.final_class = current_check.final_class
                 self.final_score = current_check.final_score
                 self.final_class_overridden = current_check.final_class_overridden
                 self.complete_date = timezone.now()
                 self.save()
-
-        return True, None
+                return True, None
 
 
 class AnalysisVariantInstance(ClassifyVariantInstance):
