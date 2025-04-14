@@ -1,0 +1,196 @@
+{% extends 'analysis/base.html' %}
+{% load custom_tags %}
+{% load crispy_forms_tags %}
+
+{% block breadcrumbs %}
+<div class="container-fluid breadcrumbs-custom">
+    <div class="container">
+        <ol class="breadcrumb" style="background-color: transparent;">
+            <li class="breadcrumb-item active"><a href="{% url 'home' %}"><span class="fa fa-home"></span></a></li>
+            <li class="breadcrumb-item"><a href="{% url 'view-all-classifications' %}">Classify</a></li>
+            <li class="breadcrumb-item active">{{ classification_info.classification_obj }}</li>
+        </ol>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- TODO this header bit could do with a tidy up-->
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th scope="col" class="col-4">Variant</th>
+                <th scope="col" class="col-2">Sample</th>
+                <th scope="col" class="col-2">Referral</th>
+                <th scope="col" class="col-2">Status</th>
+                <th scope="col" class="col-2">Comments</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ variant_info.gene }}<br>{{ variant_info.hgvs_c }}<br>{{ variant_info.hgvs_p }}</td>
+                <td>{{ sample_info.sample_id }}<br>{{ sample_info.worksheet_id }}</td>
+                <td>{{ sample_info.svd_panel }}<br>{{ sample_info.specific_tumour_type }}</td>
+                <td>
+                    <h4><span class="badge badge-{{ classification_info.somatic_or_germline|colour_by_guideline }}">{{ classification_info.guidelines }}</span></h4>
+                    {{ classification_info.classification_obj.get_status }}
+                </td>
+                <td>
+                    <a class="btn btn-light" data-toggle="modal" href="#comments-modal" role="button" aria-expanded="false" aria-controls="comments-modal">
+                        View all comments
+                    </a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<br>
+
+<div class="container-fluid">
+    <ul class="nav nav-tabs nav-justified">
+
+        <li class="nav-item">
+            <a class="nav-link section-button active" href="#details" data-target="details">Variant details</a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link section-button" href="#previous" data-target="previous">Previous classifications</a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link section-button" href="#classify" data-target="classify">Classification</a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link section-button" href="#finalise" data-target="finalise">Finalise</a>
+        </li>
+
+    </ul>
+</div>
+<br>
+
+
+<!-- load in each section from template -->
+<div class="container" id="details">{% include 'classify/classify_info.html' %}</div>
+<div class="container" id="previous">{% include 'classify/classify_previous.html' %}</div>
+<div class="container-fluid" id="classify">{% include 'classify/classify_classify.html' %}</div>
+<div class="container" id="finalise">{% include 'classify/classify_finalise.html' %}</div>
+
+
+<!-- comments modal -->
+<div class="modal fade" id="comments-modal" tabindex="-1" role="dialog" aria-labelledby="comments-modal-label" aria-hidden="true">
+    <div class="modal-dialog" style="min-width:90%;" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="comments-modal-label">Comments</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>TODO form to add new comment</p>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">Time</th>
+                            <th scope="col">User</th>
+                            <th scope="col">Object</th>
+                            <th scope="col">Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>TODO</td>
+                            <td>TODO</td>
+                            <td>TODO</td>
+                            <td>TODO</td>
+                        </tr>
+                        <tr>
+                            <td>TODO</td>
+                            <td>TODO</td>
+                            <td>TODO</td>
+                            <td>TODO</td>
+                        </tr>
+                        <tr>
+                            <td>TODO</td>
+                            <td>TODO</td>
+                            <td>TODO</td>
+                            <td>TODO</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--------------------------------------------------------------------------------------- 
+    Javascript
+---------------------------------------------------------------------------------------->
+<script>
+
+    // function to clear all sections
+    function clear_sections(sections) {
+        var i;
+        for (i=0; i<sections.length; i++) {
+            $(sections[i]).hide();
+        };
+    };
+
+
+    // function to show specific section
+    function show_section(target, sections) {
+        // clear all sections content
+        clear_sections(sections);
+        // get button for section
+        for (i=0; i<$('.section-button').length; i++) {
+            var temp = '#' + $('.section-button')[i].dataset.target;
+            if ( target == temp ) {
+                var section_button = $('.section-button')[i];
+            };
+        };
+        // clear active class from all, then add to current button
+        $('.section-button').removeClass('active');
+        $(section_button).addClass('active');
+        // add section content
+        $(target).fadeIn(200);
+    };
+
+
+    // get a list of section buttons
+    var i; var sections_list = [];
+    for (i=0; i<$('.section-button').length; i++) {
+        sections_list.push('#' + $('.section-button')[i].dataset.target);
+    };
+
+
+    // page loadup - load section after hash otherwise load overview
+    clear_sections(sections_list);
+    if ( sections_list.includes(window.location.hash)) {
+        show_section(window.location.hash, sections_list);
+    } else {
+        $("#details").fadeIn(200)
+    };
+
+
+    // handler for section button click
+    $('.section-button').click(function() {
+        var target = '#' + $(this).data('target');
+        show_section(target, sections_list);
+        $(window).scrollTop(0); //TODO - doesnt work
+    });
+
+    // TODO this only works on page load, needs to run every tab change
+    $(document).ready(function(){
+        $(window).scrollTop(0);
+    });
+
+</script>
+
+
+
+{% endblock %}
