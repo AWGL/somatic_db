@@ -130,7 +130,8 @@
     "pk": 1,
     "fields": {
         "final_classification": "Benign",
-        "minimum_score": -9999
+        "minimum_score": -9999,
+        "review_period": 24
     }
 },
 {
@@ -138,7 +139,8 @@
     "pk": 2,
     "fields": {
         "final_classification": "Likely benign",
-        "minimum_score": -6
+        "minimum_score": -6,
+        "review_period": 24
     }
 },
 {
@@ -146,7 +148,8 @@
     "pk": 3,
     "fields": {
         "final_classification": "VUS",
-        "minimum_score": 0
+        "minimum_score": 0,
+        "review_period": 6
     }
 },
 {
@@ -154,7 +157,8 @@
     "pk": 4,
     "fields": {
         "final_classification": "VUS cold",
-        "minimum_score": 0
+        "minimum_score": 0,
+        "review_period": 6
     }
 },
 {
@@ -162,7 +166,8 @@
     "pk": 5,
     "fields": {
         "final_classification": "VUS warm",
-        "minimum_score": 2
+        "minimum_score": 2,
+        "review_period": 6
     }
 },
 {
@@ -170,7 +175,8 @@
     "pk": 6,
     "fields": {
         "final_classification": "VUS hot",
-        "minimum_score": 4
+        "minimum_score": 4,
+        "review_period": 6
     }
 },
 {
@@ -178,7 +184,8 @@
     "pk": 7,
     "fields": {
         "final_classification": "Likely oncogenic",
-        "minimum_score": 6
+        "minimum_score": 6,
+        "review_period": 24
     }
 },
 {
@@ -186,7 +193,8 @@
     "pk": 8,
     "fields": {
         "final_classification": "Likely pathogenic",
-        "minimum_score": 6
+        "minimum_score": 6,
+        "review_period": 24
     }
 },
 {
@@ -194,7 +202,8 @@
     "pk": 9,
     "fields": {
         "final_classification": "Oncogenic",
-        "minimum_score": 10
+        "minimum_score": 10,
+        "review_period": 24
     }
 },
 {
@@ -202,7 +211,8 @@
     "pk": 10,
     "fields": {
         "final_classification": "Pathogenic",
-        "minimum_score": 10
+        "minimum_score": 10,
+        "review_period": 24
     }
 },
 {

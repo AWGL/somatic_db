@@ -70,4 +70,4 @@ class CodeAnswerAdmin(admin.ModelAdmin):
 @admin.register(FinalClassification)
 class FinalClassificationAdmin(admin.ModelAdmin):
     search_fields = ["final_classification"]
-    list_display = ["final_classification", "minimum_score"]
+    list_display = ["final_classification", "minimum_score", "review_period"]

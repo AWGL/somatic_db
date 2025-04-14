@@ -58,6 +58,7 @@ class FinalClassification(models.Model):
     """
     final_classification = models.CharField(max_length=200)
     minimum_score = models.IntegerField(null=True, blank=True)
+    review_period = models.IntegerField()
 
     class Meta:
         unique_together = ["final_classification", "minimum_score"]
@@ -442,10 +443,6 @@ class ClassifyVariantInstance(PolymorphicModel):
 
     def get_most_recent_full_classification(self):
         # TODO filter for tumour type
-        review_periods = {
-            "vus": 6,
-            "other": 24,
-        }
         try:
             # get the most recent classification where the complete_date is not empty
             most_recent = self.get_all_previous_classifications().filter(
@@ -457,12 +454,9 @@ class ClassifyVariantInstance(PolymorphicModel):
                 return None, False
 
             # check if a review is needed (every 6 months for VUS, 2 years otherwise)
-            previous = most_recent.get_final_class_display()
-            if previous:
-                if "vus" in previous.lower():
-                    review_period = datetime.timedelta(days=review_periods["vus"]*365/12)
-                else:
-                    review_period = datetime.timedelta(days=review_periods["other"]*365/12)
+            if most_recent.final_class:
+                review_period = most_recent.final_class.review_period
+                review_period_diff = datetime.timedelta(days=review_period*365/12)
             else:
                 return None, False
 
@@ -470,7 +464,7 @@ class ClassifyVariantInstance(PolymorphicModel):
 
             # work out if date is longer than review period
             time_diff = timezone.now() - most_recent.complete_date
-            needs_review = time_diff > review_period
+            needs_review = time_diff > review_period_diff
 
             return most_recent, needs_review
 
