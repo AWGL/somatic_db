@@ -21,5 +21,6 @@ urlpatterns = [
     path(f'{settings.URL_PREFIX}admin/', admin.site.urls),
     path(f'{settings.URL_PREFIX}', include('analysis.urls')),
     path(f'{settings.URL_PREFIX}swgs/', include('swgs.urls')),
-    path(f'{settings.URL_PREFIX}classify/', include('classify.urls'))
+    path(f'{settings.URL_PREFIX}classify/', include('classify.urls')),
+    path(f'{settings.URL_PREFIX}knowledge_base/', include('knowledge_base.urls'))
 ]
