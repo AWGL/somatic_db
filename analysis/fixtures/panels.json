@@ -22,7 +22,8 @@
         "show_fusion_coverage": true,
         "fusion_genes": "NTRK1,NTRK2,NTRK3",
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -48,7 +49,8 @@
         "show_fusion_coverage": true,
         "fusion_genes": "NTRK1,NTRK2,NTRK3",
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -74,7 +76,8 @@
         "show_fusion_coverage": true,
         "fusion_genes": "BRAF,NTRK1,NTRK2,NTRK3",
         "splice_genes": "EGFR",
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -100,7 +103,8 @@
         "show_fusion_coverage": true,
         "fusion_genes": "ALK,RET,ROS1,NTRK1,NTRK2,NTRK3",
         "splice_genes": "EGFR,MET",
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -126,7 +130,8 @@
         "show_fusion_coverage": true,
         "fusion_genes": "NTRK1,NTRK2,NTRK3",
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -152,7 +157,8 @@
         "show_fusion_coverage": true,
         "fusion_genes": "NTRK1,NTRK2,NTRK3",
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -178,7 +184,8 @@
         "show_fusion_coverage": true,
         "fusion_genes": "RET,NTRK1,NTRK2,NTRK3",
         "splice_genes": "EGFR",
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -204,7 +211,8 @@
         "show_fusion_coverage": true,
         "fusion_genes": "ALK,BRAF,RET,ROS1,NTRK1,NTRK2,NTRK3",
         "splice_genes": "EGFR,MET",
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -230,7 +238,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -256,7 +265,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -282,7 +292,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -308,7 +319,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -334,7 +346,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -360,7 +373,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -386,7 +400,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -412,7 +427,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -438,7 +454,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -464,7 +481,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -490,7 +508,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -516,7 +535,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -542,7 +562,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -568,7 +589,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -594,7 +616,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -620,7 +643,8 @@
         "show_fusion_coverage": true,
         "fusion_genes": "FGFR1,FGFR2,FGFR3",
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -646,7 +670,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": "ALK,RET,ROS1,NTRK1,NTRK2,NTRK3",
         "splice_genes": null,
-        "show_fusion_vaf": true
+        "show_fusion_vaf": true,
+        "show_cnvs": false
     }
 },
 {
@@ -672,7 +697,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": "NTRK1,NTRK2,NTRK3",
         "splice_genes": null,
-        "show_fusion_vaf": true
+        "show_fusion_vaf": true,
+        "show_cnvs": false
     }
 },
 {
@@ -698,7 +724,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": "ALK,BRAF,RET,ROS1,NTRK1,NTRK2,NTRK3",
         "splice_genes": null,
-        "show_fusion_vaf": true
+        "show_fusion_vaf": true,
+        "show_cnvs": false
     }
 },
 {
@@ -724,7 +751,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -750,7 +778,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -776,7 +805,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -802,7 +832,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -828,7 +859,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -854,7 +886,8 @@
         "show_fusion_coverage": true,
         "fusion_genes": "EGFR,BRAF,NTRK1,NTRK2,NTRK3",
         "splice_genes": null,
-        "show_fusion_vaf": true
+        "show_fusion_vaf": true,
+        "show_cnvs": false
     }
 },
 {
@@ -880,7 +913,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -906,7 +940,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -932,7 +967,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -958,7 +994,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -984,7 +1021,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1010,7 +1048,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1036,7 +1075,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1062,7 +1102,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1088,7 +1129,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1114,7 +1156,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1140,7 +1183,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1166,7 +1210,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1192,7 +1237,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1218,7 +1264,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1244,7 +1291,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1270,7 +1318,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1296,7 +1345,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -1322,7 +1372,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -1348,7 +1399,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -1374,7 +1426,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -1400,7 +1453,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -1426,7 +1480,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -1452,7 +1507,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -1478,7 +1534,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -1504,7 +1561,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -1530,7 +1588,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 },
 {
@@ -1556,7 +1615,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": "ALK,BRAF,RET,ROS1,NTRK1,NTRK2,NTRK3",
         "splice_genes": null,
-        "show_fusion_vaf": true
+        "show_fusion_vaf": true,
+        "show_cnvs": false
     }
 },
 {
@@ -1582,7 +1642,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": false
     }
 },
 {
@@ -1608,7 +1669,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "show_cnvs": true
     }
 }
 ]

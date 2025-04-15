@@ -457,3 +457,32 @@ class EditedUserCreationForm(UserCreationForm):
         self.helper.add_input(
             Submit('submit', 'Submit', css_class='btn btn-info w-100')
         )
+
+class CNVCommentForm(forms.Form):
+    """
+    Add a comment to a specific CNV
+
+    """
+    hgvs = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 1}),
+        required=False,
+        label='HGVS'
+    )
+    cnv_comment = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4}),
+        required=False,
+    )
+    pk = forms.CharField(widget=forms.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+
+        self.comment = kwargs.pop('comment')
+        self.hgvs = kwargs.pop('hgvs')
+        self.pk = kwargs.pop('pk')
+
+        super(CNVCommentForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.fields['cnv_comment'].initial = self.comment
+        self.fields['hgvs'].initial = self.hgvs
+        self.fields['pk'].initial = self.pk
+        self.helper.add_input(Submit('submit', 'Update', css_class='btn btn-success'))

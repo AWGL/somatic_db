@@ -1,5 +1,5 @@
 from .models import *
-from .forms import NewVariantForm, SubmitForm, VariantCommentForm, FusionCommentForm
+from .forms import NewVariantForm, SubmitForm, VariantCommentForm, FusionCommentForm, CNVCommentForm
 
 from django.utils import timezone
 from django.db import transaction
@@ -1265,3 +1265,138 @@ def validate_variant(chrm, position, ref, alt, build):
     # If json file had some sort of unexpected structure, return this so we can investigate
     else:
         return 'Unexpected Error, contact Bioinformatics'
+
+def get_cnv_info(sample_data, sample_obj):
+    """
+    Get information on all cnvs in a sample analysis to generate the cnv portion of the context dictionary
+    """
+    
+    cnvs = CNVAnalysis.objects.filter(sample=sample_obj)
+
+    cnv_calls = []
+    reportable_list = []
+    filtered_list = []
+    other_calls_list = []
+    artefact_count = 0
+
+    for cnv_object in cnvs:
+
+        # get checks for each variant
+        cnv_checks = CNVCheck.objects.filter(cnv_analysis=cnv_object).order_by('pk')
+        cnv_checks_list = [ v.get_decision_display() for v in cnv_checks ]
+        latest_check = cnv_checks.latest('pk')
+
+        # remove Not analysed from checks list
+        cnv_checks_analysed = []
+        for c in cnv_checks_list:
+            if c != 'Not analysed':
+                cnv_checks_analysed.append(c)
+
+        # marker to tell whether a variant should be filtered downstream
+        filter_call = False
+        filter_reason = ''
+        
+        # do the last two checks agree?
+        last_two_checks_agree = True
+        if len(cnv_checks_analysed) > 1:
+            last2 = cnv_checks_analysed[-2:]
+            if last2[0] != last2[1]:
+                last_two_checks_agree = False
+
+        cnv_comment_form = CNVCommentForm(
+            pk=latest_check.pk, 
+            hgvs=cnv_object.cnv_instance.hgvs, 
+            comment=latest_check.comment
+        )
+
+        # get list of comments for variant
+        cnv_comments_list = []
+        for v in cnv_checks:
+            if v.comment:
+                cnv_comments_list.append(
+                    { 'comment': v.comment, 'user': v.check_object.user, 'updated': v.comment_updated, }
+                )
+
+        # if variant is to appear on report tab, add to list
+        if cnv_object.cnv_instance.get_final_decision_display() in ['Genuine']:
+            reportable_list.append(cnv_object)
+
+        # list of other calls to go in the footer of the report
+        if cnv_object.cnv_instance.get_final_decision_display() in ['Miscalled', 'Failed call']:
+            other_calls_list.append(cnv_object.cnv_instance.cnv_genes.cnv_genes)
+
+        # only get VAF when panel setting says so, otherwise return none
+        panel = sample_obj.panel
+        if panel.show_cnv_vaf:
+            vaf = cnv_object.cnv_instance.vaf()
+        else:
+            vaf = None
+
+        # get artefact lists relevant to this sample
+        artefact_lists = VariantList.objects.filter(genome_build=sample_obj.genome_build, list_type='F', assay = sample_obj.panel.assay)
+
+        # get cnvs in artefact list
+        for cnv_artefact in VariantToVariantList.objects.filter(cnv=cnv_object.cnv_instance.cnv_genes):
+
+            # if signed off and in one of the variant lists for this sample
+            if cnv_artefact.signed_off() and (cnv_artefact.variant_list in artefact_lists):
+
+                # if it's an artefact
+                if cnv_artefact.variant_list.list_type == 'F':
+                    # set variables and update variant check
+                    artefact_count += 1
+                    filter_call = True
+                    latest_check.decision = 'A'
+                    latest_check.save()
+                    filter_reason = 'Artefact'
+
+        # combine all into context dict
+        cnv_calls_dict = {
+            'pk': cnv_object.pk,
+            'cnv_instance_pk': cnv_object.cnv_instance.pk,
+            'cnv_genes': cnv_object.cnv_instance.cnv_genes.cnv_genes,
+            'cnv_hgvs': cnv_object.cnv_instance.hgvs,
+            'cnv_supporting_reads': cnv_object.cnv_instance.cnv_supporting_reads,
+            'vaf': vaf,
+            'left_breakpoint': cnv_object.cnv_instance.cnv_genes.left_breakpoint,
+            'right_breakpoint': cnv_object.cnv_instance.cnv_genes.right_breakpoint,
+            'genome_build': cnv_object.cnv_instance.cnv_genes.genome_build,
+            'this_run': {
+                'ntc': cnv_object.cnv_instance.in_ntc,
+            },
+            'checks': cnv_checks_list,
+            'latest_check': latest_check,
+            'latest_checks_agree': last_two_checks_agree,
+            'comment_form': cnv_comment_form,
+            'comments': cnv_comments_list,
+            'final_decision': cnv_object.cnv_instance.get_final_decision_display(),
+            'manual_upload': cnv_object.cnv_instance.manual_upload
+        }
+        # add to artefact list if appears in the artefact list, otherwise add to the cnv calls list
+        if filter_call == True:
+            filtered_list.append((cnv_calls_dict, filter_reason))
+        else:
+            cnv_calls.append(cnv_calls_dict)
+
+    # set true or false for whether there are reportable variants
+    if len(reportable_list) == 0:
+        no_calls = True
+    else:
+        no_calls = False
+
+        # make list of other calls to go in footer of PDF report
+    if len(other_calls_list) == 0:
+        other_calls_text = 'None'
+    else:
+        other_calls_text = ', '.join(other_calls_list)
+
+    cnv_data = {
+        'cnv_calls': cnv_calls,
+        'filtered_calls': filtered_list,
+        'artefact_count': artefact_count,
+        'no_calls': no_calls,
+        'other_calls_text': other_calls_text,
+        'check_options': CNVCheck.DECISION_CHOICES,
+    }
+
+    return cnv_data

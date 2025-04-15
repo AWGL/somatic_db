@@ -116,6 +116,9 @@ class Panel(models.Model):
     manual_review_desc = models.CharField(max_length=200, blank=True, null=True) # pipe seperated, no spaces
     bed_file = models.FileField(upload_to=make_bedfile_path, blank=True, null=True)
     report_snv_vaf = models.BooleanField(default=False)
+                                                    
+    # cnv settings
+    show_cnvs = models.BooleanField()
 
     # fusion settings
     show_fusions = models.BooleanField()
@@ -586,28 +589,61 @@ class CNVAnalysis(models.Model):
     """
     A specfic analysis of a CNV
     """
-    # DECISION_CHOICES = (
-    #     ('-', 'Pending'),
-    #     ('G', 'Genuine'),
-    #     ('A', 'Artefact'),
-    #     ('P', 'Poly'),
-    #     ('M', 'Miscalled'),
-    #     ('N', 'Not analysed'),
-    #     ('F', 'Failed call'),
-    # )
-    # sample = models.ForeignKey('SampleAnalysis', on_delete=models.CASCADE)
-    # fusion_genes = models.ForeignKey('Fusion', on_delete=models.CASCADE)
-    # hgvs = models.CharField(max_length=400, blank=True)
-    # fusion_supporting_reads = models.IntegerField()
-    # ref_reads_1 = models.IntegerField()
-    # ref_reads_2 = models.IntegerField(blank=True, null=True) # will be blank if splice variant
-    # split_reads = models.IntegerField(blank=True, null=True)
-    # spanning_reads = models.IntegerField(blank=True, null=True)
-    # fusion_caller = models.CharField(max_length=50)
-    # fusion_score = models.CharField(max_length=50, blank=True, null=True)
-    # in_ntc = models.BooleanField(default=False)
-    # final_decision = models.CharField(max_length=1, default='-', choices=DECISION_CHOICES)
-    # manual_upload=models.BooleanField(default=False)
+    DECISION_CHOICES = (
+        ('-', 'Pending'),
+        ('G', 'Genuine'),
+        ('A', 'Artefact'),
+        ('P', 'Poly'),
+        ('M', 'Miscalled'),
+        ('N', 'Not analysed'),
+        ('F', 'Failed call'),
+    )
+    sample = models.ForeignKey('SampleAnalysis', on_delete=models.CASCADE)
+    cnv_genes = models.ForeignKey('CNVs', on_delete=models.CASCADE)
+    hgvs = models.CharField(max_length=400, blank=True)
+    cnv_supporting_reads = models.IntegerField()
+    ref_reads_1 = models.IntegerField()
+    ref_reads_2 = models.IntegerField(blank=True, null=True) # will be blank if splice variant
+    split_reads = models.IntegerField(blank=True, null=True)
+    spanning_reads = models.IntegerField(blank=True, null=True)
+    cnv_caller = models.CharField(max_length=50)
+    cnv_score = models.CharField(max_length=50, blank=True, null=True)
+    in_ntc = models.BooleanField(default=False)
+    final_decision = models.CharField(max_length=1, default='-', choices=DECISION_CHOICES)
+    manual_upload=models.BooleanField(default=False)
+
+class CNVCheck(models.Model):
+    """
+    Record the genuine/ artefact check for a fusion analysis
+
+    """
+    DECISION_CHOICES = (
+        ('-', 'Pending'),
+        ('G', 'Genuine'),
+        ('A', 'Artefact'),
+        ('P', 'Poly'),
+        ('M', 'Miscalled'),
+        ('N', 'Not analysed'),
+        ('F', 'Failed call'),
+    )
+    cnv_analysis = models.ForeignKey('CNVPanelAnalysis', on_delete=models.CASCADE)
+    check_object = models.ForeignKey('Check', on_delete=models.CASCADE)
+    decision = models.CharField(max_length=1, default='-', choices=DECISION_CHOICES)
+    comment = models.CharField(max_length=2000, blank=True, null=True)
+    comment_updated = models.DateTimeField(blank=True, null=True)
+
+class CNVPanelAnalysis(models.Model):
+    """
+    Link instances of variants to a panel analysis
+    """
+    sample_analysis = models.ForeignKey('SampleAnalysis', on_delete=models.CASCADE)
+    cnv_instance = models.ForeignKey('CNVAnalysis', on_delete=models.CASCADE)
+
+    def get_current_check(self):
+        return CNVCheck.objects.filter(cnv_analysis=self).latest('pk')
+
+    def get_all_checks(self):
+        return CNVCheck.objects.filter(cnv_analysis=self).order_by('pk')
 
 
 auditlog.register(Run)
@@ -630,3 +666,7 @@ auditlog.register(Fusion)
 auditlog.register(FusionAnalysis)
 auditlog.register(FusionCheck)
 auditlog.register(FusionPanelAnalysis)
+auditlog.register(CNVs)
+auditlog.register(CNVAnalysis)
+auditlog.register(CNVCheck)
+auditlog.register(CNVPanelAnalysis)

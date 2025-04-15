@@ -14,7 +14,7 @@ from .forms import (NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatien
     ManualVariantCheckForm, ReopenForm, ChangeLimsInitials, EditedPasswordChangeForm, EditedUserCreationForm, NewFusionForm)
 from .utils import (get_samples, unassign_check, reopen_check, signoff_check, make_next_check, 
     get_variant_info, get_coverage_data, get_sample_info, get_fusion_info, get_poly_list, get_fusion_list, 
-    create_myeloid_coverage_summary, variant_format_check, breakpoint_format_check, lims_initials_check, validate_variant)
+    create_myeloid_coverage_summary, variant_format_check, breakpoint_format_check, lims_initials_check, validate_variant, get_cnv_info)
 from .models import *
 
 import csv
@@ -441,7 +441,6 @@ def analysis_sheet(request, sample_id):
     # load in data that is common to both RNA and DNA workflows
     sample_data = get_sample_info(sample_obj)
     current_step_obj = sample_data['checks']['current_check_object']
-
     # assign to whoever clicked the sample and reload check objects
     if sample_data['checks']['current_status'] not in ['Complete', 'Fail']:
         if current_step_obj.user == None:
@@ -485,6 +484,10 @@ def analysis_sheet(request, sample_id):
         context['variant_data'] = get_variant_info(sample_data, sample_obj)
         context['coverage_data'] = get_coverage_data(sample_obj, sample_data['panel_obj'].depth_cutoffs)
         context['myeloid_coverage_summary'] = myeloid_coverage_summary
+
+    #CNV workflow
+    if sample_data['panel_obj'].show_cnvs == True:
+        context['cnv_data'] = get_cnv_info(sample_data, sample_obj)
 
     # fusion workflow
     if sample_data['panel_obj'].show_fusions == True:

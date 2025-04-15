@@ -1,36 +1,14 @@
 {% load crispy_forms_tags %}
 {% load humanize %}
 
-{% if sample_data.panel_obj.show_fusion_coverage %}
-<div class="container">
-  <div class="row">
-    <div class="col-6">
-      {% if sample_data.total_reads >= 9000000 %}
-      <div class="alert alert-success"><p><b>Number of reads in sample:</b> {{ sample_data.total_reads | intcomma }}</p></div>
-    
-      {% else %}
-      <div class="alert alert-danger"><p><b>Number of reads in sample:</b> {{ sample_data.total_reads | intcomma }}</p></div>
-      
-      {% endif %}
-    </div>
-    <div class="col-6">
-      <div class="alert alert-secondary">
-        <p><b>Number of reads in NTC:</b> {{ sample_data.total_reads_ntc | intcomma }}  ({{ sample_data.percent_reads_ntc }}%)</p>
-      </div>
-    </div>
-  </div>
-</div>
-<br>
-{% endif %}
 
-
-<table id="fusions-table" class="table table-striped table-hover">
+<table id="CNV-table" class="table table-striped table-hover">
   <thead>
     <tr>
       <th scope="col">CNVs</th>
       <th scope="col">Copy Number</th>
-      <th scope="col">Fusion supporting reads</th>
-      {% if sample_data.panel_obj.show_fusion_vaf %}<th scope="col">VAF</th>{% endif %}
+      <th scope="col">CNV supporting reads</th>
+      {% if sample_data.panel_obj.show_cnv_vaf %}<th scope="col">VAF</th>{% endif %}
       <!--<th scope="col">Reference reads<br>(Gene 1 | Gene 2)</th>-->
       <th scope="col">Start Coordinate</th>
       <th scope="col">End Coordinate</th>
@@ -44,19 +22,19 @@
   </thead>
 
   <tbody>
-    {% for v in fusion_data.fusion_calls %}
+    {% for v in cnv_data.cnv_calls %}
 
     <tr>
       <td class="variant-pk" style="display:none">{{ v.pk }}</td>
       <td>
-        <p style="display:inline" id="igv-{{ v.pk }}">{{ v.fusion_genes }} </p><button class="btn btn-sm btn-info" onclick="copyToClipboard('#igv-{{ v.pk }}')"><span class="fa fa-copy"></span></button>
+        <p style="display:inline" id="igv-{{ v.pk }}">{{ v.cnv_genes }} </p><button class="btn btn-sm btn-info" onclick="copyToClipboard('#igv-{{ v.pk }}')"><span class="fa fa-copy"></span></button>
         {% if v.manual_upload %}
           <span class="badge badge-warning badge-pill">Manual</span>
         {% endif %}
       </td>
-      <td>{{ v.fusion_hgvs }}</td>
-      <td>{{ v.fusion_supporting_reads }}</td>
-      {% if sample_data.panel_obj.show_fusion_vaf %}<td>{{ v.vaf }}%</td>{% endif %}
+      <td>{{ v.cnv_hgvs }}</td>
+      <td>{{ v.cnv_supporting_reads }}</td>
+      {% if sample_data.panel_obj.show_cnv_vaf %}<td>{{ v.vaf }}%</td>{% endif %}
       <td>{{ v.left_breakpoint }}
       {% if v.genome_build == 37 %}
        <span class = "badge badge-info badge-pill">GRCh{{ v.genome_build }}
@@ -91,7 +69,7 @@
       {% if 'IGV' in sample_data.checks.current_status %}
       <td class=genuine-dropdown>
         <select name="variant" id="variant">
-          {% for option in fusion_data.check_options %}
+          {% for option in cnv_data.check_options %}
             {% if v.latest_check.decision == option.0 %}
             <option value="{{ option.0 }}" selected>{{ option.1 }}</option>
             {% else %}
@@ -122,13 +100,13 @@
 
 
 <!-- display buttons if there are calls, message if there are none -->
-{% if fusion_data.fusion_calls %}
+{% if cnv_data.cnv_calls %}
 
   <!-- submit button -->
   {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail' %}
   <div class="float-right">
-    <button type="button" class="btn btn-light" data-toggle="modal" data-target="#add-fusion-modal">Add fusion</button>
-    <button type="button" class="btn btn-success fusion-submit" id="fusion-submit">Update selections</button>
+    <button type="button" class="btn btn-light" data-toggle="modal" data-target="#add-cnv-modal">Add cnv</button>
+    <button type="button" class="btn btn-success cnv-submit" id="cnv-submit">Update selections</button>
   </div>
   <br>
   <br>
@@ -137,14 +115,14 @@
 
 {% else %}
 
-<!-- message that there are no fusions in sample -->
+<!-- message that there are no cnvs in sample -->
 <div class="alert alert-info">
   No calls in this sample
 </div>
 
   {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail' %}
   <div class="float-right">
-    <button type="button" class="btn btn-light" data-toggle="modal" data-target="#add-fusion-modal">Add fusion</button>
+    <button type="button" class="btn btn-light" data-toggle="modal" data-target="#add-cnv-modal">Add cnv</button>
   </div>
   <br>
   <br>
@@ -161,10 +139,10 @@
       <h5 class="mb-0">
         <p><b>Filtered calls:</b>&nbsp;&nbsp;Artefacts list
 
-        {% if fusion_data.artefact_count > 0 %}
-        <span class="badge badge-warning">{{ fusion_data.artefact_count }}</span>
+        {% if cnv_data.artefact_count > 0 %}
+        <span class="badge badge-warning">{{ cnv_data.artefact_count }}</span>
         {% else %}
-        <span class="badge badge-secondary">{{ fusion_data.artefact_count }}</span>
+        <span class="badge badge-secondary">{{ cnv_data.artefact_count }}</span>
         {% endif %}
 
         &nbsp;&nbsp;<button class="btn btn-outline-dark" data-toggle="collapse" data-target="#artefacts" aria-expanded="true" aria-controls="artefacts"><span class="fa fa-search"></span> Show/ hide</button>
@@ -178,27 +156,27 @@
         <table class="table table-striped table-hover">
           <thead>
             <tr>
-              <th class="col-3">Fusion</th>
+              <th class="col-3">CNV</th>
               <th class="col-3">Left Breakpoint</th>
               <th class="col-3">Right Breakpoint</th>
-              <th class="col-3">Fusion Supporting Reads</th>
+              <th class="col-3">CNV Supporting Reads</th>
             </tr>
           </thead>
           <tbody>
-            {% for fusion, fusion_type in fusion_data.filtered_calls %}
+            {% for cnv, cnv_type in cnv_data.filtered_calls %}
             <tr>
               <td>
-                {{ fusion.fusion_genes }}<br>
-                {% if fusion.genome_build == 37 %}
-                <span class="badge badge-info badge-pill">GRCh{{ fusion.genome_build }}</span>
-                {% elif fusion.genome_build == 38 %}
-                <span class="badge badge-success badge-pill">GRCh{{ fusion.genome_build }}</span>
+                {{ cnv.cnv_genes }}<br>
+                {% if cnv.genome_build == 37 %}
+                <span class="badge badge-info badge-pill">GRCh{{ cnv.genome_build }}</span>
+                {% elif cnv.genome_build == 38 %}
+                <span class="badge badge-success badge-pill">GRCh{{ cnv.genome_build }}</span>
                 {% endif %}
                 <span class="badge badge-secondary badge-pill">Artefacts</span>
               </td>
-              <td>{{ fusion.left_breakpoint }}</td>
-              <td>{{ fusion.right_breakpoint }}</td>
-              <td>{{ fusion.fusion_supporting_reads }}</td>
+              <td>{{ cnv.left_breakpoint }}</td>
+              <td>{{ cnv.right_breakpoint }}</td>
+              <td>{{ cnv.cnv_supporting_reads }}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -210,7 +188,7 @@
 
 
 <!-- Comments Modal -->
-{% for v in fusion_data.fusion_calls %}
+{% for v in cnv_data.cnv_calls %}
 <div class="modal fade" id="comments-modal-{{ v.pk }}" tabindex="-1" role="dialog" aria-labelledby="comments-modal-label" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
@@ -254,36 +232,13 @@
         {% endif %}
 
         <br>
-        <p>Variant ID: {{ v.fusion_instance_pk }}</p>
+        <p>Variant ID: {{ v.cnv_instance_pk }}</p>
       </div>
 
     </div>
   </div>
 </div>
 {% endfor %}
-
-
-<!-- Add fusion modal -->
-<div class="modal fade" id="add-fusion-modal" tabindex="-1" role="dialog" aria-labelledby="add-fusion-modalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="add-fusion-modalLabel">Add new fusion</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-
-        {% crispy new_fusion_form %}
-
-      </div>
-
-    </div>
-  </div>
-</div>
-
-
 
 <script>
     // copy IGV coords to clipboard
@@ -296,8 +251,8 @@
     }
 
     // gather selections from dropdown
-    $(".fusion-submit").click(function(){
-      var rows = $("#fusions-table").children("tbody").children();
+    $(".cnv-submit").click(function(){
+      var rows = $("#cnvs-table").children("tbody").children();
       var selection_dict = {};
 
       for (var i=0; i<rows.length; i++){
@@ -317,7 +272,7 @@
       formData.append('csrfmiddlewaretoken',document.getElementsByName('csrfmiddlewaretoken')[0].value);
       formData.append('selections', JSON.stringify(selection_dict));
       formData.append('sample_pk', "{{ sample_data.sample_pk }}");
-      formData.append('variant_type', "fusion");
+      formData.append('variant_type', "cnv");
 
       $.ajax({
           url: "{% url 'ajax' %}",

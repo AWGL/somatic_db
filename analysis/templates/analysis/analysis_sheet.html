@@ -72,7 +72,7 @@
     {% endif %}
 
     <!-- CNV specific tab -->
-    {% if sample_data.panel_obj.show_fusions %}
+    {% if sample_data.panel_obj.show_cnvs %}
     <li class="nav-item">
       <a class="nav-link section-button" href="#cnvs" data-target="cnvs">CNVs</a>
     </li>
@@ -106,6 +106,9 @@
 
 {% if sample_data.panel_obj.show_fusions %}
 <div class="container-fluid" id="rna">{% include 'analysis/analysis-fusions.html' %}</div>
+{% endif %}
+
+{% if sample_data.panel_obj.show_cnvs %}
 <div class="container-fluid" id="cnvs">{% include 'analysis/analysis-cnvs.html' %}</div>
 {% endif %}
 
