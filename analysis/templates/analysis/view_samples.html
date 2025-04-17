@@ -11,8 +11,12 @@
         {% if template == 'user' %}
         <li class="breadcrumb-item active">Samples: {{ username }}</li>
 
-        {% elif template == 'worksheet' %}
+        {% elif template == 'worksheet' and signed_off %}
         <li class="breadcrumb-item"><a href="{% url 'view_worksheets' 'recent' %}">Worksheets</a></li>
+        <li class="breadcrumb-item active">{{ worksheet }}</li>
+
+        {% elif template == 'worksheet' and not signed_off %}
+        <li class="breadcrumb-item"><a href="{% url 'view_worksheets' 'qc' %}">Worksheets (QC)</a></li>
         <li class="breadcrumb-item active">{{ worksheet }}</li>
 
         {% endif %}
@@ -23,6 +27,8 @@
 
 {% block content %}
 <div class="container">
+
+  <!-- header -->
   {% if template == 'user' %}
   <h5>All samples assigned to <b>{{ username }}</b></h5>
 
@@ -30,11 +36,12 @@
   <h5>All samples on worksheet <b>{{ worksheet }}</b></h5>
   <br>
 
-  <table class="table table-bordered table-sm col-8">
+  <!-- worksheet summary table -->
+  <table class="table table-bordered table-sm">
     <tbody>
       <tr>
         <th class="col-3">Worksheet ID</th>
-        <td class="col-9">{{ worksheet }}</td>
+        <td class="col-9">{{ worksheet }} {% if not diagnostic %}<span class="badge badge-pill badge-info">Training</span>{% endif %}</td>
       </tr>
       <tr>
         <th>Run ID</th>
@@ -44,12 +51,45 @@
         <th>Assay</th>
         <td>{{ assay }}</td>
       </tr>
+      <!-- extra rows only if worksheet QC is signed off -->
+      {% if signed_off %}
+      <tr>
+        <th>Run QC</th>
+        <td>{{ ws_pass_fail }} <a class="btn btn-info btn-sm w-25" style="float: right;" href="{{ autoqc_link }}" target="_blank" role="button">View in AutoQC</a></td>
+      </tr>
+      <tr>
+        <th>SVD signoff user</th>
+        <td>
+          {{ signoff_user }} ({{ signoff_time }})&nbsp;
+          {% if in_qc_user_group %}<a class="btn btn-info btn-sm w-25" style="float: right;" data-toggle="modal" data-target="#reopen-qc-modal" role="button">Reopen QC</a>{% endif %}
+        </td>
+      </tr>
+      {% endif %}
     </tbody>
   </table>
+
+  <!-- signoff form, if user has permissions for QC-->
+  {% if not signed_off and in_qc_user_group == True %}
+  <div class="alert alert-warning">
+    <h5><span class="fa fa-clipboard-check"></span> Worksheet QC pending</h5>
+    <br>
+    {% crispy qc_form %}
+  </div>
+
+  <!-- warning box is user does not have permissions for QC-->
+  {% elif not signed_off and in_qc_user_group == False %}
+  <div class="alert alert-warning">
+    <h5><span class="fa fa-clipboard-check"></span> QC pending</h5>
+    <br>
+    <p>You do not have permission to perform QC</p>
+  </div>
+
+  {% endif %}
 
   {% endif %}
   <br>
 
+  <!-- table of samples -->
   <table class="table" id="samples-table">
     <thead>
       <tr>
@@ -70,92 +110,64 @@
         <tr>
           <td>{{ sample }}</td>
           {% if template == 'user' %}
-          <td>{{ analysis.worksheet }}</td>
+          <td>{{ analysis.worksheet }} {% if not analysis.diagnostic %}<span class="badge badge-pill badge-info">Training</span>{% endif %}</td>
           <td>{{ analysis.assay }}</td>
           {% endif %}
           <td>{{ analysis.panel }}</td>
-          <td>{{ analysis.checks.current_status }}</td>
+          <td>{{ analysis.status }}</td>
           {% if template == 'worksheet' %}<td>{{ analysis.checks.assigned_to }}</td>{% endif %}
           <td style="text-align:right">
 
             <!-- NOTE: order is important in the if loop below -->
 
+            <!-- disable the button if the user doesnt have permission -->
+            {% if not signed_off and in_qc_user_group == False %}
+            <a class="btn btn-light btn-block disabled">QC pending</a>
+
             <!-- button when analysis is complete and the logged in user did the most recent check -->
-            {% if analysis.checks.current_status == 'Complete' and request.user == analysis.checks.current_check_object.user %}
+            {% elif analysis.status == 'Complete' and request.user == analysis.checks.current_check_object.user %}
             <div class="btn-group btn-block">
               <a class="btn btn-info btn-block" href="{% url 'analysis_sheet' analysis.analysis_id %}#report" role="button">Complete</a>
               <button type="button btn-block" class="btn btn-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <span class="sr-only">Toggle Dropdown</span>
               </button>
               <div class="dropdown-menu dropdown-menu-right">
-                <a class="dropdown-item" data-toggle="modal" data-target="#reopen-modal" data-pk="{{ analysis.analysis_id }}" data-sample="{{ sample }}" data-panel="{{ analysis.panel }}" data-user="{{ analysis.checks.current_check_object.user }}">
+                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#reopen-modal" data-pk="{{ analysis.analysis_id }}" data-sample="{{ sample }}" data-panel="{{ analysis.panel }}" data-user="{{ analysis.checks.current_check_object.user }}">
                   Reopen Previous Check
                 </a>
               </div>
             </div>
             
             <!-- button when analysis is complete -->
-            {% elif analysis.checks.current_status == 'Complete' %}
+            {% elif analysis.status == 'Complete' %}
             <a class="btn btn-light btn-block" href="{% url 'analysis_sheet' analysis.analysis_id %}#report" role="button">View</a>
 
             <!-- button when analysis is a fail and the logged in user did the most recent check -->
-            {% elif analysis.checks.current_status == 'Fail' and request.user == analysis.checks.current_check_object.user %}
+            {% elif 'fail' in analysis.status and request.user == analysis.checks.current_check_object.user %}
             <div class="btn-group btn-block">
-              <a class="btn btn-danger btn-block" href="{% url 'analysis_sheet' analysis.analysis_id %}#report" role="button">Fail</a>
+              <a class="btn btn-danger btn-block" href="{% url 'analysis_sheet' analysis.analysis_id %}#report" role="button">{{ analysis.status }}</a>
               <button type="button btn-block" class="btn btn-danger dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <span class="sr-only">Toggle Dropdown</span>
               </button>
               <div class="dropdown-menu dropdown-menu-right">
-                <a class="dropdown-item" data-toggle="modal" data-target="#reopen-modal" data-pk="{{ analysis.analysis_id }}" data-sample="{{ sample }}" data-panel="{{ analysis.panel }}" data-user="{{ analysis.checks.current_check_object.user }}">
+                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#reopen-modal" data-pk="{{ analysis.analysis_id }}" data-sample="{{ sample }}" data-panel="{{ analysis.panel }}" data-user="{{ analysis.checks.current_check_object.user }}">
                   Reopen Previous Check
                 </a>
               </div>
             </div>
 
             <!-- button when analysis is a fail -->
-            {% elif analysis.checks.current_status == 'Fail' %}
-            <a class="btn btn-danger btn-block" href="{% url 'analysis_sheet' analysis.analysis_id %}#report" role="button">Fail</a>
-
-            <!-- button when second check for fail required but unassigned -->
-            {% elif analysis.checks.current_status == 'Fail - 2nd check required' and analysis.checks.assigned_to == None %}
-            <a class="btn btn-warning btn-block" href="{% url 'analysis_sheet' analysis.analysis_id %}" role="button">Fail (check required)</a>
-
-            <!-- button when second check for fail required and assigned to current user -->
-            {% elif analysis.checks.current_status == 'Fail - 2nd check required' and analysis.checks.assigned_to == request.user %}
-            <div class="btn-group btn-block">
-              <a class="btn btn-warning btn-block btn-disabled" href="{% url 'analysis_sheet' analysis.analysis_id %}" role="button">Fail - analyse 2nd check</a>
-              <button type="button btn-block" class="btn btn-warning dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <span class="sr-only">Toggle Dropdown</span>
-              </button>
-              <div class="dropdown-menu dropdown-menu-right">
-                <a class="dropdown-item" data-toggle="modal" data-target="#unassign-modal" data-pk="{{ analysis.analysis_id }}" data-sample="{{ sample }}" data-panel="{{ analysis.panel }}" data-user="{{ analysis.checks.assigned_to }}" data-status="{{ analysis.checks.current_status }}">
-                  Unassign
-                </a>
-              </div>
-            </div>
-
-            <!-- button when second check for fail required and assigned to someone else -->
-            {% elif analysis.checks.current_status == 'Fail - 2nd check required' and analysis.checks.assigned_to != request.user %}
-            <div class="btn-group btn-block">
-              <a class="btn btn-warning btn-block btn-disabled" href="#" role="button">Fail - assigned to {{ analysis.checks.assigned_to }}</a>
-              <button type="button btn-block" class="btn btn-warning dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <span class="sr-only">Toggle Dropdown</span>
-              </button>
-              <div class="dropdown-menu dropdown-menu-right">
-                <a class="dropdown-item" data-toggle="modal" data-target="#unassign-modal" data-pk="{{ analysis.analysis_id }}" data-sample="{{ sample }}" data-panel="{{ analysis.panel }}" data-user="{{ analysis.checks.assigned_to }}" data-status="{{ analysis.checks.current_status }}">
-                  Unassign
-                </a>
-              </div>
-            </div>
+            {% elif 'fail' in analysis.status %}
+            <a class="btn btn-danger btn-block" href="{% url 'analysis_sheet' analysis.analysis_id %}#report" role="button">{{ analysis.status }}</a>
 
             <!-- button when no one is assigned to an analysis 1st check (goes to check modal for 1st check only)-->
-            {% elif analysis.checks.assigned_to == None and analysis.checks.current_status == 'IGV check 1' %}
+            {% elif analysis.checks.assigned_to == None and analysis.status == 'IGV check 1' %}
             <a class="btn btn-secondary btn-block" href="#" data-toggle="modal" data-target="#check-modal" data-pk="{{ analysis.analysis_id }}" data-sample="{{ sample }}" data-panel="{{ analysis.panel }}" data-ws="{{ worksheet }}" data-run="{{ run_id }}">
               Assign to me & analyse
             </a>
 
             <!-- button when no one is assigned to an analysis after 1st check -->
-            {% elif analysis.checks.assigned_to == None and analysis.checks.current_status != 'IGV check 1' %}
+            {% elif analysis.checks.assigned_to == None and analysis.status != 'IGV check 1' %}
             <a class="btn btn-secondary btn-block" href="{% url 'analysis_sheet' analysis.analysis_id %}" role="button">Assign to me & analyse</a>
 
             <!-- button if analysis is assigned to someone else -->
@@ -166,7 +178,7 @@
                 <span class="sr-only">Toggle Dropdown</span>
               </button>
               <div class="dropdown-menu dropdown-menu-right">
-                <a class="dropdown-item" data-toggle="modal" data-target="#unassign-modal" data-pk="{{ analysis.analysis_id }}" data-sample="{{ sample }}" data-panel="{{ analysis.panel }}" data-user="{{ analysis.checks.assigned_to }}" data-status="{{ analysis.checks.current_status }}">
+                <a class="dropdown-item" data-toggle="modal" data-target="#unassign-modal" data-pk="{{ analysis.analysis_id }}" data-sample="{{ sample }}" data-panel="{{ analysis.panel }}" data-user="{{ analysis.checks.assigned_to }}" data-status="{{ analysis.status }}">
                   Unassign
                 </a>
               </div>
@@ -182,7 +194,7 @@
                 <span class="sr-only">Toggle Dropdown</span>
               </button>
               <div class="dropdown-menu dropdown-menu-right">
-                <a class="dropdown-item" data-toggle="modal" data-target="#unassign-modal" data-pk="{{ analysis.analysis_id }}" data-sample="{{ sample }}" data-panel="{{ analysis.panel }}" data-user="{{ analysis.checks.assigned_to }}" data-status="{{ analysis.checks.current_status }}">
+                <a class="dropdown-item" data-toggle="modal" data-target="#unassign-modal" data-pk="{{ analysis.analysis_id }}" data-sample="{{ sample }}" data-panel="{{ analysis.panel }}" data-user="{{ analysis.checks.assigned_to }}" data-status="{{ analysis.status }}">
                   Unassign
                 </a>
               </div>
@@ -255,7 +267,7 @@
   </div>
 </div>
 
-<!-- Reopen modal -->
+<!-- Reopen sample analysis modal -->
 <div class="modal fade" id="reopen-modal" tabindex="-1" role="dialog" aria-labelledby="reopen-modal-label" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
@@ -288,7 +300,7 @@
           </tbody>
         </table>
 
-        {% crispy reopen_form %}
+        {% crispy reopen_analysis_form %}
 
       </div>
     </div>
@@ -376,6 +388,28 @@
   </div>
 </div>
 
+
+<!-- Reopen QC modal -->
+<div class="modal fade" id="reopen-qc-modal" tabindex="-1" role="dialog" aria-labelledby="reopen-qc-modal-label" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reopen-qc-modal-label">Reopen QC?</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger">
+          <strong>Warning!</strong> Are you sure you want to continue?<br><br>
+          This worksheet will be sent back to QC
+        </div>
+
+        {% crispy reopen_qc_form %}
+
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- custom JS, pass in template variables through data attributes -->

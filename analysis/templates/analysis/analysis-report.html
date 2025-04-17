@@ -1,11 +1,11 @@
 {% load crispy_forms_tags %}
 
-{% if sample_data.checks.current_status  == 'Fail' %}
+{% if sample_data.status  == 'Bioinformatics QC fail' %}
 <div class="alert alert-danger">
   <div class="container">
     <div class="row">
       <div class="col-8">
-        <strong>Warning!</strong> This sample has failed.
+        <strong>Warning!</strong> This sample has failed bioinformatics QC.
       </div>
       <div class="col-4">
         <form method="GET">
@@ -23,387 +23,421 @@
         </form>
       </div>
     </div>
-  </div>  
+  </div>
 </div>
 
 {% else %}
-<div class="alert alert-success">
-  <div class="container">
-    <div class="row">
-      <div class="col-8">
-        <strong>Success!</strong> This sample has completed analysis.
-      </div>
-      <div class="col-4">
-        <form method="GET">
 
-          <div class="btn-group btn-block">
-            <button type="submit" name="download-report" id="download" class="btn btn-success w-100">Download report</button>
-            <button type="button btn-block" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <span class="sr-only">Toggle Dropdown</span>
-            </button>
-            <div class="dropdown-menu">
-              <button type="submit" name="download-xml" id="download-xml" class="dropdown-item">Download XML</button>
+  {% if sample_data.status  == 'Analysis fail' %}
+  <div class="alert alert-danger">
+    <div class="container">
+      <div class="row">
+        <div class="col-8">
+          <strong>Warning!</strong> This sample has failed during analysis.
+        </div>
+        <div class="col-4">
+          <form method="GET">
+
+            <div class="btn-group btn-block">
+              <button type="submit" name="download-report" id="download" class="btn btn-danger w-100">Download report</button>
+              <button type="button btn-block" class="btn btn-danger dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="sr-only">Toggle Dropdown</span>
+              </button>
+              <div class="dropdown-menu">
+                <button type="submit" name="download-xml" id="download-xml" class="dropdown-item">Download XML</button>
+              </div>
             </div>
-          </div>
 
-        </form>
+          </form>
+        </div>
       </div>
     </div>
-  </div>  
-</div>
-
-{% endif %}
-<br>
-
-
-<!-- SNV section - variant calls -->
-{% if sample_data.panel_obj.show_snvs %}
-<h4>SNVs & indels - variant calls</h4>
-<small class="form-text text-muted">Only genuine variants are displayed here, see 'SNVs & indels' tab for all calls</small>
-<table class="table table-sm table-striped table-hover">
-  <thead>
-    <tr>
-      <th scope="col">Variant</th>
-      <th scope="col">Gene</th>
-      <th scope="col">HGVSc</th>
-      <th scope="col">HGVSp</th>
-      <th scope="col">VAF</th>
-      <th scope="col">IGV</th>
-      <th scope="col">Comments</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <!-- say no calls if empty -->
-    {% if variant_data.no_calls %}
-      <tr><td colspan="7">No calls</td></tr>
-
-    <!-- otherwise list all genuine variants -->
-    {% else%}
-      {% for v in variant_data.variant_calls %}
-        {% if v.final_decision == "Genuine" %}
-        <tr>
-          <td class="variant-pk" style="display:none">{{ v.pk }}</td>
-          <td><p style="display:inline" id="igv">{{ v.genomic }} 
-            {% if v.genome_build == 37 %}
-            <span class = "badge badge-info badge-pill">GRCh{{ v.genome_build }}</span>
-            {% elif v.genome_build == 38 %}
-            <span class = "badge badge-success badge-pill">GRCh{{ v.genome_build }}</span>
-            {% endif %}
-            {% if v.manual_upload %}
-            <span class="badge badge-warning badge-pill">Manual</span>
-        {% endif %}
-          </p></td>
-          <td>{{ v.gene }} ({{ v.exon }})</td>
-          <td>{{ v.hgvs_c }}</td>
-          <td>{{ v.hgvs_p }}</td>
-          {% if sample_data.panel_obj.assay == '3' %} <!-- 2dp for ctDNA, whole number for the rest-->
-          <td>{{ v.vaf.vaf }}%</td>
-          {% else %}
-          <td>{{ v.vaf.vaf_rounded }}%</td>
-          {% endif %}
-          <td>{{ v.final_decision }}</td>
-          <td>
-          {% for c in v.comments %}
-            {{ c.user }}-{{ c.comment }}<br>
-          {% endfor %}
-          </td>
-        </tr>
-        {% endif %}
-      {% endfor %}
-
-    {% endif %}
-  </tbody>
-</table>
-<br>
-
-<!-- SNV section - coverage info -->
-<h4>SNVs & indels - coverage</h4><br>
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-5">
-
-      <!-- gene overall coverage table - all panels -->
-      <h5>Gene coverage</h5>
-      <table class="table table-sm table-striped table-hover">
-        <thead>
-          <tr>
-            <th scope="col">Gene</th>
-            <th scope="col">Average coverage</th>
-            {% if '135' in coverage_data.depth_cutoffs %}
-            <th scope="col">Percent 135X</th>
-            {% endif %}
-            {% if '270' in coverage_data.depth_cutoffs %}
-            <th scope="col">Percent 270X</th>
-            {% endif %}
-            {% if '500' in coverage_data.depth_cutoffs %}
-            <th scope="col">Percent 500X</th>
-            {% endif %}
-            {% if '1000' in coverage_data.depth_cutoffs %}
-            <th scope="col">Percent 1000X</th>
-            {% endif %}
-          </tr>
-        </thead>
-
-        <tbody>
-          {% for gene, values in coverage_data.regions.items %}
-          <tr>
-            <td>{{ gene }}</td>
-            <td>{{ values.av_coverage }}</td>
-            {% if '135' in coverage_data.depth_cutoffs %}
-            <td>{{ values.percent_135x }}%</td>
-            {% endif %}
-            {% if '270' in coverage_data.depth_cutoffs %}
-            <td>{{ values.percent_270x }}%</td>
-            {% endif %}
-            {% if '500' in coverage_data.depth_cutoffs %}
-            <td>{{ values.percent_500x }}%</td>
-            {% endif %}
-            {% if '1000' in coverage_data.depth_cutoffs %}
-            <td>{{ values.percent_1000x }}%</td>
-            {% endif %}
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-
-    </div>
-
-    <!-- gaps summary for myeloid referrals-->
-    {% if myeloid_coverage_summary %}
-    <div class="col-7">
-      <h5>Gaps summary</h5>
-      <table class="table table-sm table-striped table-hover">
-        <thead>
-          <tr>
-            <th scope="col">Cutoff</th>
-            <th scope="col">Regions</th>
-            <th scope="col"></th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr>
-            <td scope="col" class="col-3">Regions with 0% coverage</td>
-            <td scope="col" class="col-8">
-              <p style="display:inline">{{ myeloid_coverage_summary.summary_0x }}</p>
-              <p style="display:none" id="coverage-text-0x">{{ myeloid_coverage_summary.summary_0x }}</p>
-            </td>
-            <td scope="col" class="col-1">
-              <button class="btn btn-sm btn-info" onclick="copyToClipboard('#coverage-text-0x')"><span class="fa fa-copy"></span></button>
-            </td>
-          </tr>
-          <tr>
-            <td>Regions with less than 270X depth</td>
-            <td>
-              <p style="display:inline">{{ myeloid_coverage_summary.summary_270x }}</p>
-              <p style="display:none" id="coverage-text-270x">{{ myeloid_coverage_summary.summary_270x }}</p>
-            </td>
-            <td>
-              <button class="btn btn-sm btn-info" onclick="copyToClipboard('#coverage-text-270x')"><span class="fa fa-copy"></span></button>
-            </td>
-          </tr>
-        </tbody>
-
-      </table>
-    </div>
-
-    <!-- hotspot gaps for non-myeloid referrals -->
-    {% else %}
-    <div class="col-7">
-
-      {% if '135' in coverage_data.depth_cutoffs %}
-      <h5>Hotspot gaps 135X</h5>
-      <table class="table table-sm table-striped table-hover">
-        <thead>
-          <tr>
-            <th scope="col">Gap</th>
-            <th scope="col">Percent COSMIC</th>
-            <th scope="col">Counts COSMIC</th>
-          </tr>
-        </thead>
-
-        <tbody>
-        {% if coverage_data.gaps_present_135 %}
-          {% for gene, values in coverage_data.regions.items %}
-            {% if values.gaps_135 %}
-              {% for gap in values.gaps_135 %}
-              <tr>
-                <td>{{ gap.gene }} {{ gap.hgvs_c }}</td>
-                <td>{{ gap.percent_cosmic }}</td>
-                <td>{{ gap.counts_cosmic }}</td>
-              </tr>
-              {% endfor %}
-            {% endif %}
-          {% endfor %}
-        {% else %}
-          <tr><td colspan="3">No hotspot gaps</td></tr>
-        {% endif %}
-        </tbody>
-      </table>
-      <br>
-
-    {% endif %}
-    {% if '270' in coverage_data.depth_cutoffs %}
-      <h5>Hotspot gaps 270X</h5>
-      <table class="table table-sm table-striped table-hover">
-        <thead>
-          <tr>
-            <th scope="col">Gap</th>
-            <th scope="col">Percent COSMIC</th>
-            <th scope="col">Counts COSMIC</th>
-          </tr>
-        </thead>
-
-        <tbody>
-        {% if coverage_data.gaps_present_270 %}
-          {% for gene, values in coverage_data.regions.items %}
-            {% if values.gaps_270 %}
-              {% for gap in values.gaps_270 %}
-              <tr>
-                <td>{{ gap.gene }} {{ gap.hgvs_c }}</td>
-                <td>{{ gap.percent_cosmic }}</td>
-                <td>{{ gap.counts_cosmic }}</td>
-              </tr>
-              {% endfor %}
-            {% endif %}
-          {% endfor %}
-        {% else %}
-          <tr><td colspan="3">No hotspot gaps</td></tr>
-        {% endif %}
-        </tbody>
-      </table>
-      <br>
-
-    {% endif %}
-    {% if '500' in coverage_data.depth_cutoffs %}
-      <h5>Hotspot gaps 500X</h5>
-      <table class="table table-sm table-striped table-hover">
-        <thead>
-          <tr>
-            <th scope="col">Gap</th>
-            <th scope="col">Percent COSMIC</th>
-            <th scope="col">Counts COSMIC</th>
-          </tr>
-        </thead>
-
-        <tbody>
-        {% if coverage_data.gaps_present_500 %}
-          {% for gene, values in coverage_data.regions.items %}
-            {% if values.gaps_500 %}
-              {% for gap in values.gaps_500 %}
-              <tr>
-                <td>{{ gap.gene }} {{ gap.hgvs_c }}</td>
-                <td>{{ gap.percent_cosmic }}</td>
-                <td>{{ gap.counts_cosmic }}</td>
-              </tr>
-              {% endfor %}
-            {% endif %}
-          {% endfor %}
-        {% else %}
-          <tr><td colspan="3">No hotspot gaps</td></tr>
-        {% endif %}
-        </tbody>
-      </table>
-      <br>
-
-    {% endif %}
-    {% if '1000' in coverage_data.depth_cutoffs %}
-      <h5>Hotspot gaps 1000X</h5>
-      <table class="table table-sm table-striped table-hover">
-        <thead>
-          <tr>
-            <th scope="col">Gap</th>
-            <th scope="col">Percent COSMIC</th>
-            <th scope="col">Counts COSMIC</th>
-          </tr>
-        </thead>
-
-        <tbody>
-        {% if coverage_data.gaps_present_1000 %}
-          {% for gene, values in coverage_data.regions.items %}
-            {% if values.gaps_1000 %}
-              {% for gap in values.gaps_1000 %}
-              <tr>
-                <td>{{ gap.gene }} {{ gap.hgvs_c }}</td>
-                <td>{{ gap.percent_cosmic }}</td>
-                <td>{{ gap.counts_cosmic }}</td>
-              </tr>
-              {% endfor %}
-            {% endif %}
-          {% endfor %}
-        {% else %}
-          <tr><td colspan="3">No hotspot gaps</td></tr>
-        {% endif %}
-        </tbody>
-      </table>
-
-    </div>
-    {% endif %}
-    {% endif %}
   </div>
-</div> 
-<br>
-{% endif %}
 
-
-<!-- fusions section -->
-{% if sample_data.panel_obj.show_fusions %}
-<h4>Fusions</h4>
-<small class="form-text text-muted">Only genuine fusions are displayed here, see 'Fusions' tab for all calls</small>
-<table class="table table-sm table-striped table-hover">
-  <thead>
-    <tr>
-      <th scope="col">Fusion</th>
-      <th scope="col">HGVS</th>
-      <th scope="col">Fusion supporting reads</th>
-      {% if sample_data.panel_obj.show_fusion_vaf %}<th scope="col">VAF</th>{% endif %}
-      <th scope="col">Left breakpoint</th>
-      <th scope="col">Right breakpoint</th>
-      <th scope="col">IGV</th>
-      <th scope="col">Comments</th>
-    </tr>
-  </thead>
-
-  <tbody>
-  {% if fusion_data.no_calls %}
-    <tr><td colspan="7">No calls</td></tr>
   {% else %}
-    {% for v in fusion_data.fusion_calls %}
-    {% if v.final_decision == "Genuine" %}
-    <tr>
-      <td>{{ v.fusion_genes }}</td>
-      <td>{{ v.fusion_hgvs }}</td>
-      <td>{{ v.fusion_supporting_reads }}</td>
-      {% if sample_data.panel_obj.show_fusion_vaf %}<td scope="col">{{ v.vaf  }}%</td>{% endif %}
-      <td>{{ v.left_breakpoint }}
-      {% if v.genome_build == 37 %}
-       <span class = "badge badge-info badge-pill">GRCh{{ v.genome_build }}
-       {% elif v.genome_build == 38 %}
-       <span class = "badge badge-success badge-pill">GRCh{{ v.genome_build }}
-       {% endif %}
-      </td>
-      <td>{{ v.right_breakpoint }}
-      {% if v.genome_build == 37 %}
-       <span class = "badge badge-info badge-pill">GRCh{{ v.genome_build }}
-       {% elif v.genome_build == 38 %}
-       <span class = "badge badge-success badge-pill">GRCh{{ v.genome_build }}
-       {% endif %}
-      </td>
-      <td>{{ v.final_decision }}</td>
-      <td>
-      {% for c in v.comments %}
-        {{ c.user }}-{{ c.comment }}<br>
-      {% endfor %}
-      </td>
-      <td></td>
-    </tr>
-    {% endif %}
-    {% endfor %}
+  <div class="alert alert-success">
+    <div class="container">
+      <div class="row">
+        <div class="col-8">
+          <strong>Success!</strong> This sample has completed analysis.
+        </div>
+        <div class="col-4">
+          <form method="GET">
+
+            <div class="btn-group btn-block">
+              <button type="submit" name="download-report" id="download" class="btn btn-success w-100">Download report</button>
+              <button type="button btn-block" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="sr-only">Toggle Dropdown</span>
+              </button>
+              <div class="dropdown-menu">
+                <button type="submit" name="download-xml" id="download-xml" class="dropdown-item">Download XML</button>
+              </div>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>  
+  </div>
+
   {% endif %}
-  </tbody>
-</table>
-<br>
+  <br>
+
+
+  <!-- SNV section - variant calls -->
+  {% if sample_data.panel_obj.show_snvs %}
+  <h4>SNVs & indels - variant calls</h4>
+  <small class="form-text text-muted">Only genuine variants are displayed here, see 'SNVs & indels' tab for all calls</small>
+  <table class="table table-sm table-striped table-hover">
+    <thead>
+      <tr>
+        <th scope="col">Variant</th>
+        <th scope="col">Gene</th>
+        <th scope="col">HGVSc</th>
+        <th scope="col">HGVSp</th>
+        <th scope="col">VAF</th>
+        <th scope="col">IGV</th>
+        <th scope="col">Comments</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!-- say no calls if empty -->
+      {% if variant_data.no_calls %}
+        <tr><td colspan="7">No calls</td></tr>
+
+      <!-- otherwise list all genuine variants -->
+      {% else%}
+        {% for v in variant_data.variant_calls %}
+          {% if v.final_decision == "Genuine" %}
+          <tr>
+            <td class="variant-pk" style="display:none">{{ v.pk }}</td>
+            <td><p style="display:inline" id="igv">{{ v.genomic }} 
+              {% if v.genome_build == 37 %}
+              <span class = "badge badge-info badge-pill">GRCh{{ v.genome_build }}</span>
+              {% elif v.genome_build == 38 %}
+              <span class = "badge badge-success badge-pill">GRCh{{ v.genome_build }}</span>
+              {% endif %}
+              {% if v.manual_upload %}
+              <span class="badge badge-warning badge-pill">Manual</span>
+          {% endif %}
+            </p></td>
+            <td>{{ v.gene }} ({{ v.exon }})</td>
+            <td>{{ v.hgvs_c }}</td>
+            <td>{{ v.hgvs_p }}</td>
+            {% if sample_data.panel_obj.assay == '3' %} <!-- 2dp for ctDNA, whole number for the rest-->
+            <td>{{ v.vaf.vaf }}%</td>
+            {% else %}
+            <td>{{ v.vaf.vaf_rounded }}%</td>
+            {% endif %}
+            <td>{{ v.final_decision }}</td>
+            <td>
+            {% for c in v.comments %}
+              {{ c.user }}-{{ c.comment }}<br>
+            {% endfor %}
+            </td>
+          </tr>
+          {% endif %}
+        {% endfor %}
+
+      {% endif %}
+    </tbody>
+  </table>
+  <br>
+
+  <!-- SNV section - coverage info -->
+  <h4>SNVs & indels - coverage</h4><br>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-5">
+
+        <!-- gene overall coverage table - all panels -->
+        <h5>Gene coverage</h5>
+        <table class="table table-sm table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col">Gene</th>
+              <th scope="col">Average coverage</th>
+              {% if '135' in coverage_data.depth_cutoffs %}
+              <th scope="col">Percent 135X</th>
+              {% endif %}
+              {% if '270' in coverage_data.depth_cutoffs %}
+              <th scope="col">Percent 270X</th>
+              {% endif %}
+              {% if '500' in coverage_data.depth_cutoffs %}
+              <th scope="col">Percent 500X</th>
+              {% endif %}
+              {% if '1000' in coverage_data.depth_cutoffs %}
+              <th scope="col">Percent 1000X</th>
+              {% endif %}
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for gene, values in coverage_data.regions.items %}
+            <tr>
+              <td>{{ gene }}</td>
+              <td>{{ values.av_coverage }}</td>
+              {% if '135' in coverage_data.depth_cutoffs %}
+              <td>{{ values.percent_135x }}%</td>
+              {% endif %}
+              {% if '270' in coverage_data.depth_cutoffs %}
+              <td>{{ values.percent_270x }}%</td>
+              {% endif %}
+              {% if '500' in coverage_data.depth_cutoffs %}
+              <td>{{ values.percent_500x }}%</td>
+              {% endif %}
+              {% if '1000' in coverage_data.depth_cutoffs %}
+              <td>{{ values.percent_1000x }}%</td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+      </div>
+
+      <!-- gaps summary for myeloid referrals-->
+      {% if myeloid_coverage_summary %}
+      <div class="col-7">
+        <h5>Gaps summary</h5>
+        <table class="table table-sm table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col">Cutoff</th>
+              <th scope="col">Regions</th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td scope="col" class="col-3">Regions with 0% coverage</td>
+              <td scope="col" class="col-8">
+                <p style="display:inline">{{ myeloid_coverage_summary.summary_0x }}</p>
+                <p style="display:none" id="coverage-text-0x">{{ myeloid_coverage_summary.summary_0x }}</p>
+              </td>
+              <td scope="col" class="col-1">
+                <button class="btn btn-sm btn-info" onclick="copyToClipboard('#coverage-text-0x')"><span class="fa fa-copy"></span></button>
+              </td>
+            </tr>
+            <tr>
+              <td>Regions with less than 270X depth</td>
+              <td>
+                <p style="display:inline">{{ myeloid_coverage_summary.summary_270x }}</p>
+                <p style="display:none" id="coverage-text-270x">{{ myeloid_coverage_summary.summary_270x }}</p>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-info" onclick="copyToClipboard('#coverage-text-270x')"><span class="fa fa-copy"></span></button>
+              </td>
+            </tr>
+          </tbody>
+
+        </table>
+      </div>
+
+      <!-- hotspot gaps for non-myeloid referrals -->
+      {% else %}
+      <div class="col-7">
+
+        {% if '135' in coverage_data.depth_cutoffs %}
+        <h5>Hotspot gaps 135X</h5>
+        <table class="table table-sm table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col">Gap</th>
+              <th scope="col">Percent COSMIC</th>
+              <th scope="col">Counts COSMIC</th>
+            </tr>
+          </thead>
+
+          <tbody>
+          {% if coverage_data.gaps_present_135 %}
+            {% for gene, values in coverage_data.regions.items %}
+              {% if values.gaps_135 %}
+                {% for gap in values.gaps_135 %}
+                <tr>
+                  <td>{{ gap.gene }} {{ gap.hgvs_c }}</td>
+                  <td>{{ gap.percent_cosmic }}</td>
+                  <td>{{ gap.counts_cosmic }}</td>
+                </tr>
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="3">No hotspot gaps</td></tr>
+          {% endif %}
+          </tbody>
+        </table>
+        <br>
+
+      {% endif %}
+      {% if '270' in coverage_data.depth_cutoffs %}
+        <h5>Hotspot gaps 270X</h5>
+        <table class="table table-sm table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col">Gap</th>
+              <th scope="col">Percent COSMIC</th>
+              <th scope="col">Counts COSMIC</th>
+            </tr>
+          </thead>
+
+          <tbody>
+          {% if coverage_data.gaps_present_270 %}
+            {% for gene, values in coverage_data.regions.items %}
+              {% if values.gaps_270 %}
+                {% for gap in values.gaps_270 %}
+                <tr>
+                  <td>{{ gap.gene }} {{ gap.hgvs_c }}</td>
+                  <td>{{ gap.percent_cosmic }}</td>
+                  <td>{{ gap.counts_cosmic }}</td>
+                </tr>
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="3">No hotspot gaps</td></tr>
+          {% endif %}
+          </tbody>
+        </table>
+        <br>
+
+      {% endif %}
+      {% if '500' in coverage_data.depth_cutoffs %}
+        <h5>Hotspot gaps 500X</h5>
+        <table class="table table-sm table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col">Gap</th>
+              <th scope="col">Percent COSMIC</th>
+              <th scope="col">Counts COSMIC</th>
+            </tr>
+          </thead>
+
+          <tbody>
+          {% if coverage_data.gaps_present_500 %}
+            {% for gene, values in coverage_data.regions.items %}
+              {% if values.gaps_500 %}
+                {% for gap in values.gaps_500 %}
+                <tr>
+                  <td>{{ gap.gene }} {{ gap.hgvs_c }}</td>
+                  <td>{{ gap.percent_cosmic }}</td>
+                  <td>{{ gap.counts_cosmic }}</td>
+                </tr>
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="3">No hotspot gaps</td></tr>
+          {% endif %}
+          </tbody>
+        </table>
+        <br>
+
+      {% endif %}
+      {% if '1000' in coverage_data.depth_cutoffs %}
+        <h5>Hotspot gaps 1000X</h5>
+        <table class="table table-sm table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col">Gap</th>
+              <th scope="col">Percent COSMIC</th>
+              <th scope="col">Counts COSMIC</th>
+            </tr>
+          </thead>
+
+          <tbody>
+          {% if coverage_data.gaps_present_1000 %}
+            {% for gene, values in coverage_data.regions.items %}
+              {% if values.gaps_1000 %}
+                {% for gap in values.gaps_1000 %}
+                <tr>
+                  <td>{{ gap.gene }} {{ gap.hgvs_c }}</td>
+                  <td>{{ gap.percent_cosmic }}</td>
+                  <td>{{ gap.counts_cosmic }}</td>
+                </tr>
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="3">No hotspot gaps</td></tr>
+          {% endif %}
+          </tbody>
+        </table>
+
+      </div>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div> 
+  <br>
+  {% endif %}
+
+
+  <!-- fusions section -->
+  {% if sample_data.panel_obj.show_fusions %}
+  <h4>Fusions</h4>
+  <small class="form-text text-muted">Only genuine fusions are displayed here, see 'Fusions' tab for all calls</small>
+  <table class="table table-sm table-striped table-hover">
+    <thead>
+      <tr>
+        <th scope="col">Fusion</th>
+        <th scope="col">HGVS</th>
+        <th scope="col">Fusion supporting reads</th>
+        {% if sample_data.panel_obj.show_fusion_vaf %}<th scope="col">VAF</th>{% endif %}
+        <th scope="col">Left breakpoint</th>
+        <th scope="col">Right breakpoint</th>
+        <th scope="col">IGV</th>
+        <th scope="col">Comments</th>
+      </tr>
+    </thead>
+
+    <tbody>
+    {% if fusion_data.no_calls %}
+        {% if sample_data.panel_obj.show_fusion_vaf %}
+        <tr><td colspan="8">No calls</td></tr>
+        {% else %}
+        <tr><td colspan="7">No calls</td></tr>
+        {% endif %}
+    {% else %}
+      {% for v in fusion_data.fusion_calls %}
+      {% if v.final_decision == "Genuine" %}
+      <tr>
+        <td>{{ v.fusion_genes }}</td>
+        <td>{{ v.fusion_hgvs }}</td>
+        <td>{{ v.fusion_supporting_reads }}</td>
+        {% if sample_data.panel_obj.show_fusion_vaf %}<td scope="col">{{ v.vaf  }}%</td>{% endif %}
+        <td>{{ v.left_breakpoint }}
+        {% if v.genome_build == 37 %}
+        <span class = "badge badge-info badge-pill">GRCh{{ v.genome_build }}
+        {% elif v.genome_build == 38 %}
+        <span class = "badge badge-success badge-pill">GRCh{{ v.genome_build }}
+        {% endif %}
+        </td>
+        <td>{{ v.right_breakpoint }}
+        {% if v.genome_build == 37 %}
+        <span class = "badge badge-info badge-pill">GRCh{{ v.genome_build }}
+        {% elif v.genome_build == 38 %}
+        <span class = "badge badge-success badge-pill">GRCh{{ v.genome_build }}
+        {% endif %}
+        </td>
+        <td>{{ v.final_decision }}</td>
+        <td>
+        {% for c in v.comments %}
+          {{ c.user }}-{{ c.comment }}<br>
+        {% endfor %}
+        </td>
+        <td></td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    {% endif %}
+    </tbody>
+  </table>
+  <br>
+
+  {% endif %}
 
 {% endif %}
 
@@ -415,9 +449,9 @@
     <tr>
       <th class="col-1">Check</th>
       <th class="col-3">User</th>
+      <th class="col-1">Pass/fail</th>
       <th class="col-2">Checks</th>
-      <th class="col-6">Comments</th>
-      
+      <th class="col-5">Comments</th>
     </tr>
   </thead>
   <tbody>
@@ -425,6 +459,13 @@
     <tr>
       <td>{{ forloop.counter }}</td>
       <td>{{ c.user }}<br>{{ c.signoff_time }}</td>
+      <td>
+        {% if c.status ==  'C' %}
+        <span class="badge badge-pill badge-success">Pass</span>
+        {% else %}
+        <span class="badge badge-pill badge-danger">{{ c.get_status_display }}</span>
+        {% endif %}
+      </td>
       <td>
         <b>Patient info check:</b> {{ c.patient_info_check }}
       {% if sample_data.panel_obj.show_snvs %}

@@ -36,7 +36,7 @@
       <th scope="col">Right breakpoint</th>
       <th scope="col">NTC</th>
       <th scope="col">IGV</th>
-      {% if 'IGV' in sample_data.checks.current_status %}
+      {% if 'IGV' in sample_data.status %}
       <th scope="col">Action</th>
       {% endif %}
       <th><span class="fa fa-comment-alt"></span></th>
@@ -88,7 +88,7 @@
         {% endfor %}
       </td>
 
-      {% if 'IGV' in sample_data.checks.current_status %}
+      {% if 'IGV' in sample_data.status %}
       <td class=genuine-dropdown>
         <select name="variant" id="variant">
           {% for option in fusion_data.check_options %}
@@ -125,10 +125,10 @@
 {% if fusion_data.fusion_calls %}
 
   <!-- submit button -->
-  {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail' %}
+  {% if 'IGV' in sample_data.status %}
   <div class="float-right">
     <button type="button" class="btn btn-light" data-toggle="modal" data-target="#add-fusion-modal">Add fusion</button>
-    <button type="button" class="btn btn-success fusion-submit" id="fusion-submit">Update selections</button>
+    <button type="button" class="btn btn-warning fusion-submit" id="fusion-submit">Update selections</button>
   </div>
   <br>
   <br>
@@ -249,7 +249,7 @@
         {% endif %}
 
         <!-- comment form here -->
-        {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail'%}
+        {% if 'IGV' in sample_data.status %}
         {% crispy v.comment_form %}
         {% endif %}
 
