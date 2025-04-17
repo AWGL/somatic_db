@@ -306,6 +306,7 @@ def get_sample_info(sample_obj):
         'assay': sample_obj.panel.assay,
         'sample_id': sample_obj.sample.sample_id,
         'sample_name': sample_obj.sample.sample_name,
+        'tumour_content': sample_obj.sample.tumour_content,
         'worksheet_id': sample_obj.worksheet.ws_id,
         'panel': sample_obj.panel.panel_name,
         'panel_obj': sample_obj.panel,
@@ -337,10 +338,13 @@ def get_variant_info(sample_data, sample_obj):
     other_calls_list = []
     poly_count = 0
     artefact_count = 0
-
+    brca_filtered_count = 0
 
     # loop through each sample variant
     for sample_variant in sample_variants:
+
+        # get the assay for any additional assay-specific filtering
+        assay = sample_variant.sample_analysis.panel.assay
 
         # load instance of variant
         variant_obj = sample_variant.variant_instance.variant
@@ -352,7 +356,7 @@ def get_variant_info(sample_data, sample_obj):
 
         # marker to tell whether a variant should be filtered downstream
         filter_call = False
-        filter_reason = ''
+        filter_reason = []
 
         # get VAF and round to nearest whole number - used in artefact list so must be on top
         vaf = sample_variant.variant_instance.vaf()
@@ -374,7 +378,7 @@ def get_variant_info(sample_data, sample_obj):
                     # set variables and update variant check
                     poly_count += 1
                     filter_call = True
-                    filter_reason = 'Poly'
+                    filter_reason.append('Poly')
                     latest_check.decision = 'P'
                     latest_check.save()
 
@@ -391,9 +395,47 @@ def get_variant_info(sample_data, sample_obj):
                         # add VAF cutoff to reason for filtering
                         if vaf < l.vaf_cutoff:
                             vaf_cutoff_rounded = l.vaf_cutoff.quantize(decimal.Decimal('1'), rounding=decimal.ROUND_HALF_UP)
-                            filter_reason = f'Artefact at <{vaf_cutoff_rounded}% VAF'
+                            filter_reason.append(f'Artefact at <{vaf_cutoff_rounded}% VAF')
                         else:
-                            filter_reason = 'Artefact'
+                            filter_reason.append('Artefact')
+
+        # BRCA-specific filtering, ignore any variants already covered on artefact or poly list
+        if assay == '5' and not filter_call:
+
+            # handle BRCA polys
+            # BRCA guidelines classify anything >0.1% in gnomAD as a poly
+            if sample_variant.variant_instance.is_brca_poly():
+                poly_count += 1
+                filter_call = True
+                latest_check.decision = 'P'
+                latest_check.save()
+                filter_reason.append(f'Poly in BRCA: {sample_variant.variant_instance.gnomad_display()} in gnomAD')
+
+            # handle artefact calls
+            brca_sufficient_supporting_reads = sample_variant.variant_instance.brca_sufficient_supporting_reads_count()
+            brca_above_tumour_content_threshold = sample_variant.variant_instance.brca_above_tumour_content_threshold()
+            if not all([brca_sufficient_supporting_reads, brca_above_tumour_content_threshold]):
+                if not filter_call:
+                    # add to brca filter count unless it's already marked as a poly
+                    brca_filtered_count += 1
+                filter_call = True
+                #TODO do we want to set these calls as Not Analysed or as Artefacts? I'd lean towards artefacts, then when
+                # we implement an auto add to list the scientists can review them?
+                latest_check.decision = 'A'
+                latest_check.save()
+                if not brca_sufficient_supporting_reads:
+                    filter_reason.append('BRCA: not enough supporting reads')
+                if not brca_above_tumour_content_threshold:
+                    filter_reason.append('BRCA: VAF below 10% of tumour content')
+            
+            # handle intronic varaints
+            brca_intronic_variant = sample_variant.variant_instance.is_brca_deep_intronic()
+            if brca_intronic_variant:
+                brca_filtered_count += 1
+                filter_call = True
+                latest_check.decision = 'N'
+                latest_check.save()
+                filter_reason.append(f'Intronic variant > 20bp from exon')
 
         # remove Not analysed from checks list
         variant_checks_analysed = []
@@ -498,12 +540,13 @@ def get_variant_info(sample_data, sample_obj):
     else:
         other_calls_text = ', '.join(other_calls_list)
 
-    # return as variantr data dictionary
+    # return as variant data dictionary
     variant_data = {
         'variant_calls': variant_calls, 
         'filtered_calls': filtered_list,
         'poly_count': poly_count,
         'artefact_count': artefact_count,
+        'brca_filtered_count': brca_filtered_count,
         'no_calls': no_calls,
         'other_calls_text': other_calls_text,
         'check_options': VariantCheck.DECISION_CHOICES,
