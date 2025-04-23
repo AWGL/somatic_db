@@ -47,10 +47,9 @@
             <!-- TODO make this hideable? -->
             <tr>
               <td colspan="2">
+                <!-- TODO add annotations in here, may be a model way of doing this -->
                 {% if "gnomad" in code_details.annotations %}
                   {% include 'classify/annotations/gnomad.html' %}
-                {% else %}
-                  <p>TODO - add annotations here</p>
                 {% endif %}
               </td>
               <td colspan="1">

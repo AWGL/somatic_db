@@ -165,6 +165,14 @@ class ClassificationCriteriaStrength(models.Model):
         return self.strength.title().replace("_", " ")
 
 
+class TumourSubtype(models.Model):
+    """
+    """
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+
 class ClassifyVariant(models.Model):
     """
     A given variant for a given transcript
@@ -198,6 +206,7 @@ class ClassifyVariantInstance(PolymorphicModel):
     """
     variant = models.ForeignKey("ClassifyVariant", on_delete=models.CASCADE)
     guideline = models.ForeignKey("Guideline", on_delete=models.CASCADE)
+    tumour_subtype = models.ForeignKey("TumourSubtype", on_delete=models.CASCADE, null=True, blank=True)
     final_class = models.ForeignKey("FinalClassification", on_delete=models.CASCADE, null=True, blank=True)
     final_score = models.IntegerField(blank=True, null=True)
     final_class_overridden = models.BooleanField(default=False)
@@ -444,11 +453,11 @@ class ClassifyVariantInstance(PolymorphicModel):
         return ClassifyVariantInstance.objects.filter(variant=self.variant, guideline=self.guideline).order_by("-pk")
 
     def get_most_recent_full_classification(self):
-        # TODO filter for tumour type
         try:
-            # get the most recent classification where the complete_date is not empty
+            # get the most recent classification where the complete_date is not empty and tumour type matches
             most_recent = self.get_all_previous_classifications().filter(
                 full_classification=True,
+                tumour_subtype=self.tumour_subtype,
             ).latest()
 
             # return none if the only response is the current object
@@ -864,34 +873,3 @@ class CodeAnswer(models.Model):
             return f"{self.code} {self.applied_strength.pretty_print()} ({self.get_score()})"
         else:
             return "Not applied"
-
-
-'''class AbstractComment(models.Model):
-    """general comment model"""
-
-    classification = models.ForeignKey("Classification", on_delete=models.CASCADE)
-    time = models.DateTimeField()
-    comment = models.CharField(max_length=500)
-
-
-class CodeComment(AbstractComment):
-    """comment on a specifc code"""
-
-    check_obj = models.ForeignKey(
-        "Check", on_delete=models.CASCADE, related_name="code_comments"
-    )
-    code = models.ForeignKey("CodeAnswer", on_delete=models.CASCADE)
-
-
-class GeneralComment(AbstractComment):
-    """general comment on a check"""
-
-    check_obj = models.ForeignKey(
-        "Check", on_delete=models.CASCADE, related_name="general_comments"
-    )
-
-
-class SystemComment(AbstractComment):
-    """system comment for audit trail"""
-
-    details = models.CharField(max_length=500)'''

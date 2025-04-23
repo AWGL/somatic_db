@@ -26,9 +26,13 @@ class ClassificationCriteriaStrengthAdmin(admin.ModelAdmin):
 class ClassificationCriteriaCategoryAdmin(admin.ModelAdmin):
     search_fields = ["category"]
 
+@admin.register(TumourSubtype)
+class CategorySortOrderAdmin(admin.ModelAdmin):
+    search_fields = ["name"]
+
 @admin.register(CategorySortOrder)
 class CategorySortOrderAdmin(admin.ModelAdmin):
-    search_fileds = ["guideline", "category"]
+    search_fields = ["guideline", "category"]
 
 @admin.register(ClassifyVariant)
 class ClassifyVariantAdmin(admin.ModelAdmin):

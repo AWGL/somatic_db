@@ -162,7 +162,7 @@
                 <td>#{{ c.pk }} {% if c == classification_info.classification_obj %}<span class="badge badge-pill badge-warning">Current</span>{% endif %}</td>
                 <td>{{ c.get_sample_info.sample_id }}</td>
                 <td>{{ c.get_sample_info.worksheet_id }}</td>
-                <td>{{ c.get_sample_info.svd_panel }}</td>
+                <td>{{ c.tumour_subtype }}</td>
                 {% if c.is_complete %}
 
                 <td>{{ c.complete_date|date:"Y-m-d H:i" }}</td>

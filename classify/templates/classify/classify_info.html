@@ -35,7 +35,7 @@
     </tr>
     <tr>
       <th>Specific tumour type</th>
-      <td>{{ sample_info.specific_tumour_type }}</td>
+      <td>{{ classification_info.classification_obj.tumour_subtype }}</td>
     </tr>
   </tbody>
 </table>
@@ -66,34 +66,10 @@
       <td>{{ variant_info.hgvs_p }}</td>
       <td></td>
     </tr>
-    <!-- TODO knowledgebase <tr>
-      <th>Variant consequence</th>
-      <td>{{ variant_info.consequence }}</td>
-      <td>VEP v??????</td>
-    </tr>-->
   </tbody>
 </table>
 <br>
-
-<!-- TODO knowledgebase<h5>Gene info</h5>
 <br>
-
-<table class="table table-hover">
-  <tbody>
-    <tr>
-      <th class="col-4">Mode of action</th>
-      <td class="col-4">{{ variant_info.mode_action }}</td>
-      <td class="col-4">CGC downloaded ??????</td>
-    </tr>
-    <tr>
-      <th>Mutation types</th>
-      <td>{{ variant_info.mutation_types }}</td>
-      <td>CGC downloaded ??????</td>
-    </tr>
-  </tbody>
-</table>-->
-
-<br><br>
 
 
 <!-- forms to complete check-->

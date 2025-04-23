@@ -34,7 +34,7 @@
           <td>{{ c.pk }}</td>
           <td>{{ c.variant.gene }}</td>
           <td>{{ c.variant.hgvs_c }}<br>{{ c.variant.hgvs_p }}</td>
-          <td>{{ c.get_sample_info.svd_panel }}</td>
+          <td>{{ c.tumour_subtype }}</td>
           <td><h4><span class="badge badge-{{ c.guideline.somatic_or_germline|colour_by_guideline }}">{{ c.guideline }}</span></h4></td>
           <td>
             {% if c.get_status == "Complete" %}
