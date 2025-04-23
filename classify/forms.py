@@ -2,6 +2,8 @@ from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
+from .models import TumourSubtype
+
 
 class NewClassification(forms.Form):
     """
@@ -13,6 +15,25 @@ class NewClassification(forms.Form):
         self.helper = FormHelper()
         self.helper.form_method = "POST"
         self.helper.add_input(Submit("submit", "New", css_class="btn btn-info w-100"))
+
+
+class TumourSubtypeForm(forms.Form):
+    """
+    Form to select a tumour subtype
+
+    """
+    tumour_subtype = forms.ChoiceField()
+
+    def __init__(self, *args, **kwargs):
+        super(TumourSubtypeForm, self).__init__(*args, **kwargs)
+        self.fields['tumour_subtype'].choices = [
+            [choice.pk, choice.name] for choice in TumourSubtype.objects.all()
+        ]
+        self.helper = FormHelper()
+        self.helper.form_method = "POST"
+        self.helper.add_input(
+            Submit("submit", "Update", css_class="btn btn-info w-100")
+        )
 
 
 class CompleteCheckInfoForm(forms.Form):

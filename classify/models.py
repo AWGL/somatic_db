@@ -526,6 +526,13 @@ class ClassifyVariantInstance(PolymorphicModel):
         else:
             return (("new", "Perform full classification"),)
 
+    @transaction.atomic
+    def update_tumour_type(self, updated_pk):
+        """ update the tumour type based on pk passed in from view """
+        new_object = TumourSubtype.objects.get(pk=updated_pk)
+        self.tumour_subtype = new_object
+        self.save()
+
     def make_new_check(self):
         new_check = Check.objects.create(classification=self)
 

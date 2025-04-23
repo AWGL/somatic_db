@@ -104,6 +104,7 @@ def classify(request, classification):
     previous_class_choices = classification_obj.get_previous_classification_choices()
     classification_options = classification_obj.guideline.create_final_classification_tuple()
     context["forms"] = {
+        "select_tumour_subtype_form": TumourSubtypeForm(),
         "complete_check_info_form": CompleteCheckInfoForm(),
         "complete_previous_class_form": CompletePreviousClassificationsForm(previous_class_choices=previous_class_choices),
         "complete_classification_form": CompleteClassificationForm(classification_options=classification_options),
@@ -117,6 +118,13 @@ def classify(request, classification):
     # ------------------------------------------------------------------------
     # when buttons are pressed
     if request.method == "POST":
+
+        # button to change the specific tumour type
+        if "tumour_subtype" in request.POST:
+            select_tumour_subtype_form = TumourSubtypeForm(request.POST)
+            if select_tumour_subtype_form.is_valid():
+                classification_obj.update_tumour_type(select_tumour_subtype_form.cleaned_data['tumour_subtype'])
+                return redirect("perform-classification", classification)
 
         # button to confirm sample/variant tab has been checked
         if "complete_check_info_form" in request.POST:
