@@ -1,0 +1,18 @@
+[
+{
+    "model": "auth.group",
+    "pk": 1,
+    "fields": {
+        "name": "svig_signed_off",
+        "permissions": []
+    }
+},
+{
+    "model": "auth.group",
+    "pk": 2,
+    "fields": {
+        "name": "acmg_signed_off",
+        "permissions": []
+    }
+}
+]

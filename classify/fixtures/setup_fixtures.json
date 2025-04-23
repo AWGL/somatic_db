@@ -5,6 +5,7 @@
     "fields": {
         "guideline": "acgs_2024",
         "somatic_or_germline": "G",
+        "signed_off_group": 2,
         "criteria": [
             1,
             2,
@@ -77,6 +78,7 @@
     "fields": {
         "guideline": "svig_2024",
         "somatic_or_germline": "S",
+        "signed_off_group": 1,
         "criteria": [
             55,
             56,
@@ -1144,6 +1146,7 @@
         "pathogenic_or_benign": "P",
         "description": "Null variant (nonsense, frameshift, canonical \u00b11 or 2 splice sites, initiation codon, single or multi-exon deletion or duplication) in a gene where LOF is a known mechanism of disease; and non-canonical splice variants where RNA analysis confirms aberrant transcription.",
         "links": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6185798/",
+        "annotations": null,
         "category": 10,
         "paired_criteria": null
     }
@@ -1156,6 +1159,7 @@
         "pathogenic_or_benign": "P",
         "description": "Same amino acid change as a previously established pathogenic variant regardless of nucleotide change and splicing variants within the same motif with identical predicted effect",
         "links": "",
+        "annotations": null,
         "category": 10,
         "paired_criteria": null
     }
@@ -1168,6 +1172,7 @@
         "pathogenic_or_benign": "P",
         "description": "De novo (both maternity and paternity confirmed) in a patient with the disease and no family history",
         "links": "https://clinicalgenome.org/site/assets/files/3461/svi_proposal_for_de_novo_criteria_v1_1.pdf",
+        "annotations": null,
         "category": 11,
         "paired_criteria": 11
     }
@@ -1180,6 +1185,7 @@
         "pathogenic_or_benign": "P",
         "description": "Well-established in vitro or in vivo functional studies supportive of a damaging effect on the gene or gene product",
         "links": "https://genomemedicine.biomedcentral.com/articles/10.1186/s13073-019-0690-2",
+        "annotations": null,
         "category": 12,
         "paired_criteria": 19
     }
@@ -1192,6 +1198,7 @@
         "pathogenic_or_benign": "P",
         "description": "The prevalence of the variant in affected individuals is significantly increased compared with the prevalence in controls",
         "links": "https://www.medcalc.org/calc/odds_ratio.php",
+        "annotations": null,
         "category": 1,
         "paired_criteria": null
     }
@@ -1204,6 +1211,7 @@
         "pathogenic_or_benign": "P",
         "description": "Located in a mutational hot spot and/or critical and well-established functional domain (e.g. active site of an enzyme) without benign variation",
         "links": "",
+        "annotations": null,
         "category": 4,
         "paired_criteria": null
     }
@@ -1216,6 +1224,7 @@
         "pathogenic_or_benign": "P",
         "description": "Absent from controls (or at extremely low frequency if recessive) in Genome Aggregation Database",
         "links": "",
+        "annotations": null,
         "category": 1,
         "paired_criteria": null
     }
@@ -1228,6 +1237,7 @@
         "pathogenic_or_benign": "P",
         "description": "For recessive disorders, detected in trans with a pathogenic variant",
         "links": "",
+        "annotations": null,
         "category": 7,
         "paired_criteria": 22
     }
@@ -1240,6 +1250,7 @@
         "pathogenic_or_benign": "P",
         "description": "Protein length changes as a result of in-frame deletions/insertions in a non-repeat region or stop-loss variants",
         "links": "",
+        "annotations": null,
         "category": 10,
         "paired_criteria": null
     }
@@ -1252,6 +1263,7 @@
         "pathogenic_or_benign": "P",
         "description": "Missense change at amino acid residue where a different missense change determined to be pathogenic has been seen before",
         "links": "",
+        "annotations": null,
         "category": 10,
         "paired_criteria": null
     }
@@ -1264,6 +1276,7 @@
         "pathogenic_or_benign": "P",
         "description": "Assumed de novo, but without confirmation of paternity and maternity",
         "links": "",
+        "annotations": null,
         "category": 11,
         "paired_criteria": 3
     }
@@ -1276,6 +1289,7 @@
         "pathogenic_or_benign": "P",
         "description": "Co-segregation with disease in multiple affected family members in a gene definitively known to cause the disease",
         "links": "",
+        "annotations": null,
         "category": 11,
         "paired_criteria": 20
     }
@@ -1288,6 +1302,7 @@
         "pathogenic_or_benign": "P",
         "description": "Missense variant in a gene that has a low rate of benign missense variation and in which missense variants are a common mechanism of disease",
         "links": "",
+        "annotations": null,
         "category": 10,
         "paired_criteria": null
     }
@@ -1300,6 +1315,7 @@
         "pathogenic_or_benign": "P",
         "description": "Computational evidence supports a deleterious effect on the gene or gene product (conservation, evolutionary, splicing impact, etc.)",
         "links": "",
+        "annotations": null,
         "category": 3,
         "paired_criteria": 24
     }
@@ -1312,6 +1328,7 @@
         "pathogenic_or_benign": "P",
         "description": "Patient\u2019s phenotype or family history is highly specific for a disease with a single genetic aetiology",
         "links": "",
+        "annotations": null,
         "category": 5,
         "paired_criteria": null
     }
@@ -1324,6 +1341,7 @@
         "pathogenic_or_benign": "B",
         "description": "Allele frequency is above 5%",
         "links": "",
+        "annotations": null,
         "category": 1,
         "paired_criteria": null
     }
@@ -1336,6 +1354,7 @@
         "pathogenic_or_benign": "B",
         "description": "Allele frequency is greater than expected for disorder",
         "links": "http://cardiodb.org/allelefrequencyapp/",
+        "annotations": null,
         "category": 1,
         "paired_criteria": null
     }
@@ -1348,6 +1367,7 @@
         "pathogenic_or_benign": "B",
         "description": "Observed in a healthy adult individual for a recessive (homozygous), dominant (heterozygous), or X-linked (hemizygous) disorder with full penetrance expected at an early age",
         "links": "",
+        "annotations": null,
         "category": 1,
         "paired_criteria": null
     }
@@ -1360,6 +1380,7 @@
         "pathogenic_or_benign": "B",
         "description": "Well-established in vitro or in vivo functional studies show no damaging effect on protein function",
         "links": "",
+        "annotations": null,
         "category": 12,
         "paired_criteria": 4
     }
@@ -1372,6 +1393,7 @@
         "pathogenic_or_benign": "B",
         "description": "Non-segregation with disease",
         "links": "",
+        "annotations": null,
         "category": 11,
         "paired_criteria": 12
     }
@@ -1384,6 +1406,7 @@
         "pathogenic_or_benign": "B",
         "description": "Missense variant in a gene for which primarily truncating variants are known to cause disease",
         "links": "",
+        "annotations": null,
         "category": 4,
         "paired_criteria": null
     }
@@ -1396,6 +1419,7 @@
         "pathogenic_or_benign": "B",
         "description": "Observed in trans (on different alleles) with a pathogenic variant for a fully penetrant dominant gene/disorder; or observed in cis (same allele) with a pathogenic variant in any inheritance pattern",
         "links": "",
+        "annotations": null,
         "category": 7,
         "paired_criteria": 8
     }
@@ -1408,6 +1432,7 @@
         "pathogenic_or_benign": "B",
         "description": "In-frame deletions/insertions in a repetitive region without a known function",
         "links": "",
+        "annotations": null,
         "category": 4,
         "paired_criteria": null
     }
@@ -1420,6 +1445,7 @@
         "pathogenic_or_benign": "B",
         "description": "Multiple lines of computational evidence suggest no impact on gene or gene product",
         "links": "",
+        "annotations": null,
         "category": 3,
         "paired_criteria": 14
     }
@@ -1432,6 +1458,7 @@
         "pathogenic_or_benign": "B",
         "description": "Variant found in a case with an alternate molecular basis for disease",
         "links": "",
+        "annotations": null,
         "category": 7,
         "paired_criteria": null
     }
@@ -1444,6 +1471,7 @@
         "pathogenic_or_benign": "B",
         "description": "A synonymous (silent) variant for which splicing prediction algorithms predict no impact to the splice consensus sequence nor the creation of a new splice site AND the nucleotide is not highly conserved; splice variants where RNA studies have confirmed no impact",
         "links": "",
+        "annotations": null,
         "category": 3,
         "paired_criteria": null
     }
@@ -1456,6 +1484,7 @@
         "pathogenic_or_benign": "O",
         "description": "Absent or very rare in population database (e.g. gnomAD)",
         "links": "",
+        "annotations": "gnomad",
         "category": 1,
         "paired_criteria": 28
     }
@@ -1468,6 +1497,7 @@
         "pathogenic_or_benign": "B",
         "description": "Variant is present at a high level in a general population database (e.g. gnomAD)",
         "links": "",
+        "annotations": "gnomad",
         "category": 1,
         "paired_criteria": 27
     }
@@ -1480,6 +1510,7 @@
         "pathogenic_or_benign": "O",
         "description": "Null variant in a tumour surpressor gene",
         "links": "",
+        "annotations": null,
         "category": 10,
         "paired_criteria": null
     }
@@ -1492,6 +1523,7 @@
         "pathogenic_or_benign": "B",
         "description": "Variant does not fit the mode of action of the gene for the cancer under investigation",
         "links": "",
+        "annotations": null,
         "category": 10,
         "paired_criteria": null
     }
@@ -1504,6 +1536,7 @@
         "pathogenic_or_benign": "O",
         "description": "Enriched in a somatic variant database (compared to prevalence in controls)",
         "links": "",
+        "annotations": null,
         "category": 8,
         "paired_criteria": null
     }
@@ -1516,6 +1549,7 @@
         "pathogenic_or_benign": "O",
         "description": "Missense at an amino acid where a different missense variant has previously been determined to be oncogenic, where LOF is a know mechanism of oncogenicity",
         "links": "",
+        "annotations": null,
         "category": 4,
         "paired_criteria": null
     }
@@ -1528,6 +1562,7 @@
         "pathogenic_or_benign": "O",
         "description": "Located in a mutational hotspot and/or critical and well-established functional domain (e.g. active site of an enzyme), without benign variation",
         "links": "",
+        "annotations": null,
         "category": 4,
         "paired_criteria": null
     }
@@ -1540,6 +1575,7 @@
         "pathogenic_or_benign": "O",
         "description": "Protein length change due to in-frame deletions/insertions in a non-repeat region or stop-loss variants",
         "links": "",
+        "annotations": null,
         "category": 4,
         "paired_criteria": null
     }
@@ -1552,6 +1588,7 @@
         "pathogenic_or_benign": "B",
         "description": "Synonymous/ intronic variants (outside canonical splice sites)",
         "links": "",
+        "annotations": null,
         "category": 4,
         "paired_criteria": null
     }
@@ -1564,6 +1601,7 @@
         "pathogenic_or_benign": "B",
         "description": "In-frame deletion in a repetitive region with unknown function",
         "links": "",
+        "annotations": null,
         "category": 4,
         "paired_criteria": null
     }
@@ -1576,6 +1614,7 @@
         "pathogenic_or_benign": "O",
         "description": "Computational evidence supports a deleterious effect on the gene or gene product (conservation, evolutionary, splicing impact etc)",
         "links": "",
+        "annotations": null,
         "category": 3,
         "paired_criteria": 38
     }
@@ -1588,6 +1627,7 @@
         "pathogenic_or_benign": "B",
         "description": "Computational evidence DOES NOT support a deleterious effect on the gene product (conservation, evolutionary, splicing impact etc)",
         "links": "",
+        "annotations": null,
         "category": 3,
         "paired_criteria": 37
     }
@@ -1600,6 +1640,7 @@
         "pathogenic_or_benign": "O",
         "description": "Well-established in vitro or in vivo functional studies demonstrating a functionally abnormal result consistent with the mechanism of disease",
         "links": "",
+        "annotations": null,
         "category": 12,
         "paired_criteria": null
     }
@@ -1612,6 +1653,7 @@
         "pathogenic_or_benign": "B",
         "description": "Well-established in vitro or in vivo functional studies demonstrating no damaging effect on protein function or RNA splicing",
         "links": "",
+        "annotations": null,
         "category": 12,
         "paired_criteria": null
     }
@@ -1624,6 +1666,7 @@
         "pathogenic_or_benign": "O",
         "description": "Tumour phenotype",
         "links": "",
+        "annotations": null,
         "category": 5,
         "paired_criteria": 42
     }
@@ -1636,6 +1679,7 @@
         "pathogenic_or_benign": "B",
         "description": "Tumour phenotype",
         "links": "",
+        "annotations": null,
         "category": 5,
         "paired_criteria": 41
     }
