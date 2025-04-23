@@ -111,10 +111,19 @@
         </button>
       </div>
       <div class="modal-body">
+        {% if classification_info.reused %}
+        <div class="alert alert-danger">
+          <p><b>Warning!</b> This analysis has been reused by another analysis since being closed and therefore cannot be reopened.</p>
+          <p>If you need to reclassify then please start a new analysis</p>
+        </div>
+
+        {% else %}
         <div class="alert alert-danger">
           <p><b>Warning!</b> Analysis for this variant is complete, this will reopen analysis from the finalise tab of the last checker</p>
         </div>
         {% crispy forms.reopen_analysis_form %}
+
+        {% endif %}
       </div>
     </div>
   </div>

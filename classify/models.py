@@ -203,7 +203,7 @@ class ClassifyVariantInstance(PolymorphicModel):
     final_class_overridden = models.BooleanField(default=False)
     complete_date = models.DateTimeField(blank=True, null=True)
     full_classification = models.BooleanField(default=False)
-    reused_classification = models.ForeignKey('self', on_delete=models.PROTECT, null=True, blank=True)
+    reused_classification = models.ForeignKey('self', on_delete=models.PROTECT, null=True, blank=True, related_name="original_classification")
 
     class Meta:
         get_latest_by = ["complete_date"]
@@ -241,6 +241,7 @@ class ClassifyVariantInstance(PolymorphicModel):
             "guidelines": self.guideline.guideline,
             "somatic_or_germline": self.guideline.somatic_or_germline,
             "all_checks": self.get_all_checks(),
+            "reused": self.original_classification.reverse().exists(),
         }
 
         # only pull this info if user selected full classification, otherwise code objects wont exist and it'll error
