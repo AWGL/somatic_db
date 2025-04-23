@@ -8,6 +8,7 @@ import yaml
 import os
 from collections import OrderedDict
 import datetime
+import re
 
 from analysis.models import VariantPanelAnalysis
 from swgs.models import GermlineVariantInstance, SomaticVariantInstance
@@ -140,6 +141,7 @@ class ClassificationCriteriaCode(models.Model):
     pathogenic_or_benign = models.CharField(max_length=1)
     description = models.TextField(null=True, blank=True)
     links = models.TextField(null=True, blank=True)
+    annotations = models.CharField(max_length=50, null=True, blank=True)
     category = models.ForeignKey("ClassificationCriteriaCategory", on_delete=models.CASCADE)
     paired_criteria = models.ForeignKey("self", on_delete=models.CASCADE, null=True, blank=True)
 
@@ -196,8 +198,29 @@ class ClassifyVariant(models.Model):
             "hgvs_c": self.hgvs_c,
             "hgvs_p": self.hgvs_p,
             "gene": self.gene,
+            "gnomad": self.create_gnomad_link(),
         }
         return variant_info
+
+    def create_gnomad_link(self):
+        """ link to the Gnomad webpage """
+        genome_build = self.genome_build
+
+        # stored as chrom:posref>alt, needs to be chrom-pos-ref-alt
+        var = self.genomic_coords
+        var = var.replace(":", "-")
+        var = var.replace(">", "-")
+        var = re.split('(\d+)', var)
+        var.insert(-1, "-")
+        var = "".join(var)
+
+        # format link specific to genome build
+        if genome_build == 37:
+            return f'https://gnomad.broadinstitute.org/variant/{var}?dataset=gnomad_r2_1'
+        elif genome_build == 38:
+            return f'https://gnomad.broadinstitute.org/variant/{var}?dataset=gnomad_r3'
+        else:
+            raise ValueError('Genome build should be either 37 or 38')
 
 
 class ClassifyVariantInstance(PolymorphicModel):
@@ -434,7 +457,7 @@ class ClassifyVariantInstance(PolymorphicModel):
             category = code.code.category.category
             options = code.strength.shorthand
             description = code.code.description
-            annotations = []
+            annotations = [code.code.annotations]
 
             try:
                 codes_dict[code_name]["options"].append(options)
