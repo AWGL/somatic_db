@@ -92,8 +92,11 @@ def classify(request, classification):
         if current_check_obj.user != request.user:
             raise PermissionDenied()
 
+        # set check as diagnostic if user signed off, otherwise it will flag as a training check
         group_name = classification_obj.guideline.signed_off_group.name
         signed_off = current_check_obj.user.groups.filter(name=group_name).exists()
+        current_check_obj.diagnostic = signed_off
+        current_check_obj.save()
         if not signed_off:
             context["warning"] = ["You are not currently signed off, this check will be flagged as a training check and will require a third check"]
 

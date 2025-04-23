@@ -531,15 +531,38 @@ class ClassifyVariantInstance(PolymorphicModel):
             else:
                 return False, "Cannot send back, this is the first check"
 
-        # complete - close check and analysis if there are two checks
-        # TODO some logic around the two checks agreeing here
+        # complete - close check and analysis if checks pass
         if next_step == "complete":
-            previous_checks = self.get_previous_checks()
-            if not previous_checks.exists():
+            # check current check is passable 
+            current_check_complete, err = current_check.pre_completion_validation()
+            if not current_check_complete:
+                return False, err
+
+            # whole analysis checks
+            all_checks = self.get_all_checks()
+            last_two = all_checks.order_by("-pk")[0:2]
+            last_two_checkers = set([c.user.username for c in last_two])
+            last_two_results = set([c.final_class.final_classification for c in last_two])
+            last_two_scores = set([c.final_score for c in last_two])
+
+            # two diagnostic checks
+            if all_checks.count() < 2:
                 return False, "Cannot complete analysis, two checks required"
+            # two diagnostic checks after training cases
+            elif all_checks.filter(diagnostic=True).count() < 2:
+                return False, "Cannot complete analysis, some of the checks are training checks"
+            # last two checkers were same person # TODO remove comments when testing done
+            #elif len(last_two_checkers) == 1:
+            #    return False, "Cannot complete analysis, last two checkers are the same analyst"
+            # two classifciations agree
+            elif len(last_two_results) > 1:
+                return False, "Cannot complete analysis, overall classification from last two checkers dont agree"
+            # two scores agree
+            elif len(last_two_scores) > 1:
+                return False, "Cannot complete analysis, scores from last two checkers dont agree"
+            # save results to classification obj if all checks pass
             else:
-                updated, err = current_check.complete_check()
-                # save results to classification obj if final check
+                current_check.complete_check()
                 self.final_class = current_check.final_class
                 self.final_score = current_check.final_score
                 self.final_class_overridden = current_check.final_class_overridden
@@ -720,8 +743,7 @@ class Check(models.Model):
         self.final_score = final_score
         self.save()
 
-    @transaction.atomic
-    def complete_check(self):
+    def pre_completion_validation(self):
         if self.info_check == False:
             return False, "Please complete the Variant details tab"
         elif self.previous_classifications_check == False:
@@ -729,11 +751,14 @@ class Check(models.Model):
         elif self.classification_check == False:
             return False, "Please complete the Classification tab"
         else:
-            # set check as diagnostic if user signed off, otherwise it will flag as a training check
-            group_name = self.classification.guideline.signed_off_group.name
-            signed_off = self.user.groups.filter(name=group_name).exists()
-            self.diagnostic = signed_off
+            return True, None
 
+    @transaction.atomic
+    def complete_check(self):
+        passed_checks, err = self.pre_completion_validation()
+        if not passed_checks:
+            return False, err
+        else:
             self.check_complete = True
             self.signoff_time = timezone.now()
             self.save()
