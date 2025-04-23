@@ -28,6 +28,7 @@ class Guideline(models.Model):
     sort_order = models.ManyToManyField("ClassificationCriteriaCategory", through="CategorySortOrder")
     somatic_or_germline = models.CharField(max_length=1, choices=SOMATIC_OR_GERMLINE_CHOICES)
     final_classifications = models.ManyToManyField('FinalClassification', related_name="guidelines")
+    signed_off_group = models.ForeignKey("auth.Group", on_delete=models.PROTECT, blank=True, null=True, related_name="guideline")
 
     def __str__(self):
         return self.guideline
@@ -613,6 +614,7 @@ class Check(models.Model):
     previous_classifications_check = models.BooleanField(default=False)
     classification_check = models.BooleanField(default=False)
     check_complete = models.BooleanField(default=False)
+    diagnostic = models.BooleanField(default=True)
     signoff_time = models.DateTimeField(blank=True, null=True)
     user = models.ForeignKey("auth.User", on_delete=models.PROTECT, blank=True, null=True, related_name="classification_checker")
     final_class = models.ForeignKey("FinalClassification", on_delete=models.CASCADE, null=True, blank=True)
@@ -727,6 +729,11 @@ class Check(models.Model):
         elif self.classification_check == False:
             return False, "Please complete the Classification tab"
         else:
+            # set check as diagnostic if user signed off, otherwise it will flag as a training check
+            group_name = classification.guideline.signed_off_group.name
+            signed_off = self.user.groups.filter(name=group_name).exists()
+            self.diagnostic = signed_off
+
             self.check_complete = True
             self.signoff_time = timezone.now()
             self.save()

@@ -60,15 +60,6 @@ def classify(request, classification):
     classification_obj = ClassifyVariantInstance.objects.get(id=classification)
     current_check_obj = classification_obj.get_latest_check()
 
-    # assign user
-    if classification_obj.get_status() != "Complete":
-        if current_check_obj.user == None:
-            current_check_obj.user = request.user
-            current_check_obj.save()
-
-        if current_check_obj.user != request.user:
-            raise PermissionDenied()
-
     # load context from classification obj
     recent_classification, needs_review = classification_obj.get_most_recent_full_classification()
     context = {
@@ -81,6 +72,20 @@ def classify(request, classification):
             "recent_needs_review": needs_review,
         },
     }
+
+    # assign user
+    if classification_obj.get_status() != "Complete":
+        if current_check_obj.user == None:
+            current_check_obj.user = request.user
+            current_check_obj.save()
+
+        if current_check_obj.user != request.user:
+            raise PermissionDenied()
+
+        group_name = classification_obj.guideline.signed_off_group.name
+        signed_off = current_check_obj.user.groups.filter(name=group_name).exists()
+        if not signed_off:
+            context["warning"] = ["You are not currently signed off, this check will be flagged as a training check and will require a third check"]
 
     # load in forms and add to context
     previous_class_choices = classification_obj.get_previous_classification_choices()

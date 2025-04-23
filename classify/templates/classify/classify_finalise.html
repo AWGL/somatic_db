@@ -5,22 +5,24 @@
 <table class="table table-sm table-hover">
   <thead>
     <tr>
-      <th class="col-2">Check</th>
-      <th class="col-3">Full classification</th>
-      <th class="col-3">Class</th>
+      <th class="col-1">Check</th>
+      <th class="col-2">Full classification</th>
+      <th class="col-2">Class</th>
       <th class="col-4">User</th>
+      <th class="col-3">Date</th>
     </tr>
   </thead>
   <tbody>
   {% for c in classification_info.all_checks %}
     <tr>
+      <td>{{ forloop.counter }}</td>
       <td>
-        {{ forloop.counter }}
-        {% if classification_info.classification_obj.get_status != "Complete" and c == classification_info.current_check %}
-        <span class="badge badge-pill badge-warning">Current</span>
+        {% if c.classification.full_classification %}
+        Full classification
+        {% else %}
+        Reuse previous
         {% endif %}
       </td>
-      <td>{{ c.classification.full_classification }}</td>
       <td>
         {% if c.final_class %}
         <span class="badge badge-pill badge-{{ c.final_class|colour_by_class }}">{{ c.final_class }} ({{ c.final_score }})</span>
@@ -30,6 +32,12 @@
         {% endif %}
       </td>
       <td>{{ c.user }}</td>
+      <td>
+        {{ c.signoff_time|default_if_none:"Current check" }}
+        {% if not c.diagnostic %}
+        <span class="badge badge-pill badge-warning">Training</span>
+        {% endif %}
+      </td>
     </tr>
   {% endfor %}
   </tbody>
