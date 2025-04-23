@@ -64,7 +64,7 @@ class FinalClassification(models.Model):
         unique_together = ["final_classification", "minimum_score"]
 
     def __str__(self):
-        return f"{self.final_classification} - minimum score {self.minimum_score}"
+        return self.final_classification
 
 
 class CategorySortOrder(models.Model):
@@ -249,7 +249,7 @@ class ClassifyVariantInstance(PolymorphicModel):
             classification_info["current_score"] = current_score
             classification_info["final_class_overridden"] = current_check_obj.final_class_overridden
             if current_check_obj.final_class_overridden:
-                classification_info["current_class"] = current_check_obj.get_final_class_display()
+                classification_info["current_class"] = current_check_obj.final_class
             else:
                 classification_info["current_class"] = current_class
         return classification_info
@@ -640,12 +640,6 @@ class Check(models.Model):
                 classification = c
 
         return score_counter, classification
-    
-    def get_final_class_display(self):
-        try:
-            return self.final_class.final_classification
-        except AttributeError:
-            return "Pending"
 
     @transaction.atomic
     def update_codes(self, selections):
@@ -698,7 +692,7 @@ class Check(models.Model):
         if reuse_classification_obj:
             self.classification_check = True
             self.classification.reused_classification = reuse_classification_obj
-            self.final_class = reuse_classification_obj.final_class.final_classification
+            self.final_class = reuse_classification_obj.final_class #.final_classification
             self.final_score = reuse_classification_obj.final_score
             self.classification.save()
         else:

@@ -56,7 +56,6 @@ def colour_by_guideline(value):
     """
     colour different guidelines differently, e.g. ACMG/ SVIG
     """
-    print(value)
     if value=="G":
         return "primary"
     if value=="S":

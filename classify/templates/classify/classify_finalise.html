@@ -22,8 +22,8 @@
       </td>
       <td>{{ c.classification.full_classification }}</td>
       <td>
-        {% if c.get_final_class_display %}
-        <span class="badge badge-pill badge-{{ c.get_final_class_display|colour_by_class }}">{{ c.get_final_class_display }} ({{ c.final_score }})</span>
+        {% if c.final_class %}
+        <span class="badge badge-pill badge-{{ c.final_class|colour_by_class }}">{{ c.final_class }} ({{ c.final_score }})</span>
         {% if c.final_class_overridden %}<span class="badge badge-pill badge-warning">Overridden</span>{% endif %}
         {% else %}
         Pending
@@ -47,8 +47,8 @@
 
 {% else %}
   <h5>Final classification</h5>
-  <button class="btn btn-block btn-lg btn-disabled btn-{{ classification_info.current_check.get_final_class_display|colour_by_class }}" type="button">
-    <b>{{ classification_info.current_check.get_final_class_display }}</b>&nbsp;
+  <button class="btn btn-block btn-lg btn-disabled btn-{{ classification_info.current_check.final_class|colour_by_class }}" type="button">
+    <b>{{ classification_info.current_check.final_class }}</b>&nbsp;
     <span class="badge badge-light">
         {{ classification_info.current_check.final_score }}
         {% if classification_info.current_check.final_class_overridden %} - overridden{% endif %}

@@ -75,7 +75,7 @@
       <tr>
         <th>Classification</th>
         <td colspan="2">
-          {{ previous_classifications.recent.get_final_class_display }} 
+          {{ previous_classifications.recent.final_class }} 
           ({{ previous_classifications.recent.final_score }}) 
           {% if previous_classifications.recent.final_class_overridden %}<span class="badge badge-pill badge-warning">Overridden</span>{% endif %}
         </td>
@@ -170,7 +170,7 @@
                     {{ c.full_classification }}
                     {% if c.final_class_overridden %}<span class="badge badge-pill badge-warning">Overridden</span>{% endif %}
                 </td>
-                <td><span class="btn btn-{{ c.get_final_class_display|colour_by_class }} w-100">{{ c.get_final_class_display }} ({{ c.final_score }})</span></td>
+                <td><span class="btn btn-{{ c.final_class|colour_by_class }} w-100">{{ c.final_class }} ({{ c.final_score }})</span></td>
 
                 {% else %}
                 <td></td>
