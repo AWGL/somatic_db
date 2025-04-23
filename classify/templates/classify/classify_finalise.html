@@ -34,7 +34,7 @@
       <td>{{ c.user }}</td>
       <td>
         {{ c.signoff_time|default_if_none:"Current check" }}
-        {% if not c.diagnostic %}
+        {% if c.diagnostic == False %}
         <span class="badge badge-pill badge-warning">Training</span>
         {% endif %}
       </td>

@@ -614,7 +614,7 @@ class Check(models.Model):
     previous_classifications_check = models.BooleanField(default=False)
     classification_check = models.BooleanField(default=False)
     check_complete = models.BooleanField(default=False)
-    diagnostic = models.BooleanField(default=True)
+    diagnostic = models.BooleanField(null=True)
     signoff_time = models.DateTimeField(blank=True, null=True)
     user = models.ForeignKey("auth.User", on_delete=models.PROTECT, blank=True, null=True, related_name="classification_checker")
     final_class = models.ForeignKey("FinalClassification", on_delete=models.CASCADE, null=True, blank=True)
@@ -730,7 +730,7 @@ class Check(models.Model):
             return False, "Please complete the Classification tab"
         else:
             # set check as diagnostic if user signed off, otherwise it will flag as a training check
-            group_name = classification.guideline.signed_off_group.name
+            group_name = self.classification.guideline.signed_off_group.name
             signed_off = self.user.groups.filter(name=group_name).exists()
             self.diagnostic = signed_off
 
@@ -769,6 +769,7 @@ class Check(models.Model):
     def reopen_check(self):
         """reopen a completed check"""
         self.check_complete = False
+        self.diagnostic = None
         self.signoff_time = None
         self.save()
 
