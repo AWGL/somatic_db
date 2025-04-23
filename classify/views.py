@@ -73,6 +73,16 @@ def classify(request, classification):
         },
     }
 
+    # get any classifications on the same variant but with different guidelines
+    # TODO will need way of limiting whats seen here based on whether its TSO/ SWGS etc
+    linked_classifications = {}
+    for guideline in Guideline.objects.all().exclude(guideline=classification_obj.guideline):
+        linked_classifications[guideline.guideline] = ClassifyVariantInstance.objects.filter(
+            variant=classification_obj.variant,
+            guideline=guideline
+        )
+    context["linked_classifications"] = linked_classifications
+
     # assign user
     if classification_obj.get_status() != "Complete":
         if current_check_obj.user == None:

@@ -46,6 +46,30 @@
 <br>
 
 
+<div class="card-body bg-light">
+  <h5>Linked classifications</h5>
+
+  <table class="table table-sm table-hover">
+    <thead>
+      <tr>
+        <th class="col-4">Guideline</th>
+        <th class="col-8">classifications</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for name, classifications in linked_classifications.items %}
+      <tr>
+        <td>{{ name }}</td>
+        <td>{{ classifications }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+<br>
+<br>
+
+
 {% if classification_info.classification_obj.get_status != "Complete" %}
 
   <div class="card-body bg-light">
