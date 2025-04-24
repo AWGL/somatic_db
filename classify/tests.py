@@ -138,22 +138,21 @@ class TestModels(TestCase):
         """
         unit tests for ClassificationCriteria model
         """
-        pass
-        #TODO unit tests for ClassificationCriteria model
+        # paired benign code
+        paired_benign_obj = ClassificationCriteria.objects.get(pk=90)
+        self.assertEqual(paired_benign_obj.classify_shorthand(), "O10_NA|B7_MO")
+        self.assertEqual(paired_benign_obj.pretty_print(), "B7 Moderate (-2)")
 
-    def test_category_sort_order(self):
-        """
-        unit tests for CategorySortOrder model
-        """
-        pass
-        #TODO unit tests for CategorySortOrder model
+        # unpaired oncogenic object
+        unpaired_oncogenic_obj = ClassificationCriteria.objects.get(pk=73)
+        self.assertEqual(unpaired_oncogenic_obj.classify_shorthand(), "O7_MO")
+        self.assertEqual(unpaired_oncogenic_obj.pretty_print(), "O7 Moderate (+2)")
 
-    def test_final_classification(self):
-        """
-        unit tests for FinalClassification model
-        """
-        pass
-        #TODO unit tests for FinalClassification model
+        # paired pathogenic object
+        paired_pathogenic_obj = ClassificationCriteria.objects.get(pk=29)
+        self.assertEqual(paired_pathogenic_obj.classify_shorthand(), "PM6_ST|PS2_NA")
+        self.assertEqual(paired_pathogenic_obj.pretty_print(), "PM6 Strong (+4)")
+
 
     def test_guideline(self):
         """
