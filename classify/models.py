@@ -888,7 +888,9 @@ class CodeAnswer(models.Model):
         return self.code.code
 
     def get_score(self):
-        if self.code.pathogenic_or_benign == "B":
+        if self.applied_strength is None:
+            return "Not Applied"
+        elif self.code.pathogenic_or_benign == "B":
             return f"{self.applied_strength.evidence_points}"
         elif self.code.pathogenic_or_benign == "O" or "P":
             return f"+{self.applied_strength.evidence_points}"
