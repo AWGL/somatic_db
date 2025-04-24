@@ -82,9 +82,6 @@ class CategorySortOrder(models.Model):
 
     def __str__(self):
         return f"{self.guideline} {self.category} {self.sort_order}"
-    
-    def get_all_codes_for_category(self):
-        all_codes_for_guideline = self.guideline.criteria.all().values("criteria__code__code")
 
 
 class ClassificationCriteria(models.Model):
