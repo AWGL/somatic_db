@@ -36,7 +36,7 @@ class Guideline(models.Model):
     
     def create_final_classification_ordered_dict(self):
         """
-        Converts the final classificaiton information in to an ordered dict to work with the check model classification function
+        Converts the final classification information in to an ordered dict to work with the check model classification function
         """
         final_classification_dict = OrderedDict()
         for classification in self.final_classifications.all().order_by('minimum_score').values():
@@ -45,7 +45,7 @@ class Guideline(models.Model):
 
     def create_final_classification_tuple(self):
         """
-        Creates the final classificationn information in to a tuple for the html dropdowns
+        Creates the final classification information in to a tuple for the html dropdowns
         """
         final_classification_list = []
         for classification in self.final_classifications.all().order_by('minimum_score').values():
