@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core.exceptions import ObjectDoesNotExist
 from .models import *
 from analysis.models import SampleAnalysis, Panel, VariantInstance
 
@@ -14,6 +15,8 @@ class TestModels(TestCase):
     # include fixtures from classify and analysis to builld base models
     fixtures = ["setup_fixtures.json", "user_groups.json", 
                 "analysis/fixtures/dna_test_1.json"]
+    
+    maxDiff = None
 
     def setUp(self):
         #TODO work on this needs a more comprehensive test database
@@ -110,12 +113,13 @@ class TestModels(TestCase):
             minimum_score = 10,
             review_period = 24
         )
-        self.reuse_classification_obj = ClassifyVariantInstance.objects.create(
+        self.reuse_classification_obj = AnalysisVariantInstance.objects.create(
             variant = self.var,
             guideline = self.guideline_obj,
             tumour_subtype = tumour_subtype_obj,
             final_class = final_classification_obj,
-            final_score = 12
+            final_score = 12,
+            variant_instance=self.analysis_inst
         )
 
 
@@ -384,6 +388,174 @@ class TestModels(TestCase):
         #TODO unit tests for SWGSGermlineVariantInstance model
         #TODO unit tests for SWGSSomaticVariantInstance model
         #TODO unit tests for ManualVariantInstance model
+
+    def test_classify_variant_instance_is_complete(self):
+        self.assertFalse(self.new_var_obj.is_complete())
+        self.new_var_obj.complete_date = timezone.now()
+        self.assertTrue(self.new_var_obj.is_complete())
+
+    def test_classify_variant_instance_get_all_checks(self):
+        all_checks = self.new_var_obj.get_all_checks()
+        total_checks = 0
+        for check in all_checks:
+            total_checks += 1
+        self.assertEqual(total_checks, 2)
+
+    def test_classify_variant_instance_get_previous_checks(self):
+        previous_checks = self.new_var_obj.get_previous_checks()
+        self.assertEqual(previous_checks[0], self.check_one)
+
+    def test_classify_variant_instance_get_latest_check(self):
+        latest_check = self.new_var_obj.get_latest_check()
+        self.assertEqual(latest_check, self.check_two)
+
+    def test_classify_variant_instance_get_status(self):
+        # checks not complete
+        self.check_two.check_complete = False
+        self.assertEqual(self.new_var_obj.get_status(), "Check 2")
+        # complete 2nd check
+        # ensure validation passes
+        self.check_two.info_check = True
+        self.check_two.previous_classifications_check = True
+        self.check_two.classification_check = True
+        check, message = self.check_two.complete_check()
+        self.assertEqual(self.new_var_obj.get_status(), "Complete")
+
+    def test_classify_variant_instance_get_classification_info_reuse_classification(self):
+        self.new_var_obj.full_classification = False
+        expected_info = {
+            "classification_obj": self.new_var_obj,
+            "current_check": self.check_two,
+            "guidelines": "svig_2024",
+            "somatic_or_germline": "S",
+            "reused": False
+        }
+        info = self.new_var_obj.get_classification_info()
+        # remove the queryset from the comparison - we know this function works from earlier tests
+        del info["all_checks"]
+        self.assertEqual(info, expected_info)
+
+    def test_classify_variant_instance_get_classification_info_full_classification(self):
+        #TODO make this test work
+        pass
+        # # ensure validation passes
+        # self.check_one.info_check = True
+        # self.check_one.previous_classifications_check = True
+        # self.check_one.classification_check = True
+        # check, message = self.check_one.complete_check()
+
+        # self.check_two.info_check = True
+        # self.check_two.previous_classifications_check = True
+        # self.check_two.create_code_answers()
+        # self.new_var_obj.full_classification = True
+        # expected_info = {
+        #     "classification_obj": self.new_var_obj,
+        #     "current_check": self.check_two,
+        #     "guidelines": "svig_2024",
+        #     "somatic_or_germline": "S",
+        #     "reused": False,
+        #     "current_score": 0,
+        #     "final_class_overriden": False,
+        #     "current_class": "VUS"
+        # }
+        # info = self.new_var_obj.get_classification_info()
+        # # remove the querysets from the comparison - we know this function works from earlier tests
+        # del info["all_checks"]
+        # #del info["codes_by_category"]
+        # self.assertEqual(info, expected_info)
+
+        # # check with manual override
+        # self.check_two.final_class_overridden = True
+        # self.check_two.final_class = 1
+        # expected_info["final_class_overriden"] = True
+        # expected_info["current_class"] = "Benign"
+        # info = self.new_var_obj.get_classification_info()
+        # # remove the querysets from the comparison - we know this function works from earlier tests
+        # del info["all_checks"]
+        # #del info["codes_by_category"]
+        # self.assertEqual(info, expected_info)
+
+    def test_classify_variant_instance_get_dropdown_options(self):
+
+        # check that a list of more than 2 paired codes raises an error
+        code_list = ["PP3", "PP4", "BP6"]
+        with self.assertRaises(ValueError):
+            self.new_var_obj.get_dropdown_options(code_list)
+
+        code_list = ["O10", "B7"]
+        expected_dropdown_options = [
+            {"value": "O10_PE|B7_PE", "text": "Pending"},
+            {"value": "O10_NA|B7_NA", "text": "Not applied"},
+            {"value": "O10_MO|B7_NA", "text": "O10 Moderate (+2)"},
+            {"value": "O10_SU|B7_NA", "text": "O10 Supporting (+1)"},
+            {"value": "O10_NA|B7_SU", "text": "B7 Supporting (-1)"},
+            {"value": "O10_NA|B7_MO", "text": "B7 Moderate (-2)"}
+        ]
+        self.assertEqual(self.new_var_obj.get_dropdown_options(code_list), expected_dropdown_options)
+
+    def test_classify_variant_instance_get_dropdown_value(self):
+        # we need CodeAnswer objects for each code for this function to work
+        self.check_two.create_code_answers()
+        code_list = ["O10", "B7"]
+        expected_dropdown_value = "O10_PE|B7_PE"
+        self.assertEqual(self.new_var_obj.get_dropdown_value(code_list), expected_dropdown_value)
+        
+    def test_classify_variant_instance_get_codes_by_category(self):
+        pass
+        #TODO
+    
+
+    def test_classify_variant_instance_get_order_info(self):
+        pass
+        #TODO
+
+    def test_classify_variant_instance_get_code_info(self):
+        pass
+        #TODO
+
+    def test_classify_variant_instance_get_most_recent_full_classification(self):
+        pass
+        #TODO
+
+    def test_classify_variant_instance_get_previous_classification_choices(self):
+        pass
+        #TODO
+
+    def test_classify_variant_instance_update_tumour_type(self):
+        self.assertIsNone(self.new_var_obj.tumour_subtype)
+        self.new_var_obj.update_tumour_type(1)
+        self.assertEqual(self.new_var_obj.tumour_subtype.name, "Lung")
+
+    def test_classify_variant_instance_make_new_check(self):
+        # there's currently only 2 checks
+        with self.assertRaises(ObjectDoesNotExist):
+            Check.objects.get(pk=3)
+        self.new_var_obj.make_new_check()
+        self.assertIsInstance(Check.objects.get(pk=3), Check)
+
+    def test_classify_variant_instance_reopen_analysis(self):
+        pass
+        #TODO
+
+    def test_classify_variant_instance_signoff_check(self):
+        pass
+        #TODO
+
+    def test_analysis_variant_instance_get_sample_info(self):
+        pass
+        #TODO
+
+    def test_swgs_germline_variant_instance_get_sample_info(self):
+        #TODO write this code first
+        pass
+
+    def test_swgs_somatic_variant_instance_get_sample_info(self):
+        #TODO write this code first
+        pass
+
+    def test_manual_variant_instance_get_sample_info(self):
+        #TODO write this code first
+        pass
 
     def test_classify_variant(self):
         """
