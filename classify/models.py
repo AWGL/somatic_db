@@ -172,6 +172,7 @@ class TumourSubtype(models.Model):
     def __str__(self):
         return self.name
 
+
 class ClassifyVariant(models.Model):
     """
     A given variant for a given transcript
@@ -758,7 +759,6 @@ class Check(models.Model):
             self.final_score = reuse_classification_obj.final_score
             self.classification.save()
         else:
-            #self.full_classification = True
             self.classification.full_classification = True
             self.classification.save()
             self.create_code_answers()
