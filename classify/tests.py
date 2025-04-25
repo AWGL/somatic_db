@@ -41,6 +41,9 @@ class TestModels(TestCase):
             classification = self.new_var_obj,
             diagnostic = True
         )
+        self.check_two = Check.objects.create(
+            classification = self.new_var_obj
+        )
 
         # benign code
         self.b1_code_obj = ClassificationCriteriaCode.objects.get(pk=28)
@@ -351,9 +354,8 @@ class TestModels(TestCase):
         """
         unit tests for the Check model
         """
-        check_two = Check.objects.create(classification = self.new_var_obj)
-        check_two.create_code_answers()
-        all_code_answers = check_two.get_code_answers()
+        self.check_two.create_code_answers()
+        all_code_answers = self.check_two.get_code_answers()
         code_answer_count = 0
         for code in all_code_answers:
             code_answer_count += 1
@@ -446,10 +448,22 @@ class TestModels(TestCase):
         self.assertEqual(paired_pathogenic_obj.classify_shorthand(), "PM6_ST|PS2_NA")
         self.assertEqual(paired_pathogenic_obj.pretty_print(), "PM6 Strong (+4)")
 
-
     def test_guideline(self):
         """
         unit tests for Guideline model
         """
-        pass
-        #TODO unit tests for guideline model
+        
+        expected_classification_dict = {
+            "Benign": -9999,
+            "Likely benign": -6,
+            "VUS": 0,
+            "Likely oncogenic": 6,
+            "Oncogenic": 10
+        }
+
+        expected_classification_tuple = (
+            (1, "Benign"), (2, "Likely benign"), (3, "VUS"), (7, "Likely oncogenic"), (9, "Oncogenic")
+        )
+
+        self.assertEqual(self.guideline_obj.create_final_classification_ordered_dict(), expected_classification_dict)
+        self.assertEqual(self.guideline_obj.create_final_classification_tuple(), expected_classification_tuple)
