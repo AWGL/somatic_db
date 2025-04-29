@@ -1823,7 +1823,7 @@
     "model": "analysis.panel",
     "pk": 71,
     "fields": {
-        "panel_name": "Urothelial",
+        "panel_name": "urothelial",
         "pretty_print": "Urothelial",
         "version": 1,
         "live": true,
