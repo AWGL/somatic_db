@@ -467,7 +467,6 @@ class ClassifyVariantInstance(PolymorphicModel):
                     "description": description,
                     "annotations": annotations
                 }
-            
         return codes_dict
 
     def get_all_previous_classifications(self):
@@ -490,6 +489,7 @@ class ClassifyVariantInstance(PolymorphicModel):
                 review_period = most_recent.final_class.review_period
                 review_period_diff = datetime.timedelta(days=review_period*365/12)
             else:
+                #TODO assume we shouldn't get here because a completed full classification should have a final class?
                 return None, False
 
             # TODO maybe a warning if multiple pending classifications for same variant?
@@ -511,6 +511,7 @@ class ClassifyVariantInstance(PolymorphicModel):
         """
         previous_classification, needs_review = self.get_most_recent_full_classification()
         if self.get_all_checks().count() > 1:
+            # ensure same option is used for all checks in a single classification
             if self.full_classification:
                 return (("new", "Perform full classification"),)
             else:
@@ -592,10 +593,10 @@ class ClassifyVariantInstance(PolymorphicModel):
             # last two checkers were same person # TODO remove comments when testing done
             #elif len(last_two_checkers) == 1:
             #    return False, "Cannot complete analysis, last two checkers are the same analyst"
-            # two classifciations agree
+            # two classifications don't agree
             elif len(last_two_results) > 1:
                 return False, "Cannot complete analysis, overall classification from last two checkers dont agree"
-            # two scores agree
+            # two scores don't agree
             elif len(last_two_scores) > 1:
                 return False, "Cannot complete analysis, scores from last two checkers dont agree"
             # save results to classification obj if all checks pass
@@ -619,9 +620,12 @@ class AnalysisVariantInstance(ClassifyVariantInstance):
         sample_info = {
             "sample_id": self.variant_instance.sample_analysis.sample.sample_id,
             "worksheet_id": self.variant_instance.sample_analysis.worksheet.ws_id,
-            "svd_panel": self.variant_instance.sample_analysis.panel,
-            "specific_tumour_type": "TODO",
+            "svd_panel": self.variant_instance.sample_analysis.panel.panel_name
         }
+        try:
+            sample_info["specific_tumour_type"] = self.tumour_subtype.name
+        except AttributeError:
+            sample_info["specific_tumour_type"] = None
         return sample_info
 
 
@@ -902,3 +906,14 @@ class CodeAnswer(models.Model):
             return f"{self.code} {self.applied_strength.pretty_print()} ({self.get_score()})"
         else:
             return "Not applied"
+        
+    # def get_all_comments(self):
+    #     return CodeAnswer.objects.filter(classification=self).order_by("pk")
+
+# class CodeAnswerComment(models.Model):
+#     """
+#     A comment for the application of a code
+#     """
+#     comment = models.CharField(max_length=500, null=True, blank=True)
+#     code_answer = models.ForeignKey("CodeAnswer", on_delete=models.CASCADE)
+#     comment_time = models.DateTimeField(blank=True, null=True)

@@ -1,10 +1,14 @@
 from django.test import TestCase
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.models import User
 from .models import *
 from analysis.models import SampleAnalysis, Panel, VariantInstance
+from .test_data import expected_results
+from unittest import mock
 
 # Create your tests here.
 class TestViews(TestCase):
+    #TODO views unit tests
     pass
 
 class TestModels(TestCase):
@@ -19,8 +23,14 @@ class TestModels(TestCase):
     maxDiff = None
 
     def setUp(self):
-        #TODO work on this needs a more comprehensive test database
-
+        self.user_one = User.objects.create_user(
+            username = "userone",
+            email = "userone@user.com"
+        )
+        self.user_two = User.objects.create_user(
+            username = "usertwo",
+            email = "usertwo@user.com"
+        )
         # setup test variants
         panel_obj = Panel.objects.get(panel_name="Tumour", assay='1', genome_build=37, live=True)
         sample_obj = SampleAnalysis.objects.get(sample_id='dna_test_1', panel=panel_obj)
@@ -42,11 +52,16 @@ class TestModels(TestCase):
         )
         self.check_one = Check.objects.create(
             classification = self.new_var_obj,
-            diagnostic = True
+            diagnostic = True,
+            user = self.user_one
         )
         self.check_two = Check.objects.create(
-            classification = self.new_var_obj
+            classification = self.new_var_obj,
+            user = self.user_two
         )
+
+        self.classification_one_obj = FinalClassification.objects.get(pk=1)
+        self.classification_two_obj = FinalClassification.objects.get(pk=2)
 
         # benign code
         self.b1_code_obj = ClassificationCriteriaCode.objects.get(pk=28)
@@ -121,7 +136,6 @@ class TestModels(TestCase):
             final_score = 12,
             variant_instance=self.analysis_inst
         )
-
 
     def test_code_answer(self):
         """
@@ -377,18 +391,6 @@ class TestModels(TestCase):
             code_answer_count += 1
         self.assertEqual(code_answer_count, 0)
 
-    def test_classify_variant_instance(self):
-        """
-        unit tests for ClassifyVariantInstance model and children
-        AnalysisVariantInstance, SWGSGermlineVariantInstance, SWGSSomaticVariantInstance, ManualVariantInstance
-        """
-        pass
-        #TODO unit tests for ClassifyVariantInstance model
-        #TODO unit tests for AnalysisVariantInstance model
-        #TODO unit tests for SWGSGermlineVariantInstance model
-        #TODO unit tests for SWGSSomaticVariantInstance model
-        #TODO unit tests for ManualVariantInstance model
-
     def test_classify_variant_instance_is_complete(self):
         self.assertFalse(self.new_var_obj.is_complete())
         self.new_var_obj.complete_date = timezone.now()
@@ -501,25 +503,44 @@ class TestModels(TestCase):
         self.assertEqual(self.new_var_obj.get_dropdown_value(code_list), expected_dropdown_value)
         
     def test_classify_variant_instance_get_codes_by_category(self):
+        #TODO Erik this is doing ajax things
         pass
-        #TODO
-    
 
     def test_classify_variant_instance_get_order_info(self):
+        #TODO Erik this is doing ajax things
         pass
-        #TODO
 
     def test_classify_variant_instance_get_code_info(self):
-        pass
-        #TODO
+        # Expected code info based on SVIG 2024
+        self.assertEqual(self.new_var_obj.get_code_info(), expected_results.expected_codes_dict)
 
+    # mock timezone now for time difference
+    # @mock.patch(
+    #         "timezone.now", 
+    #         return_value=datetime(2025, 6, 30, tzinfo=timezone.utc),
+    #         autospec=True
+    #         )
     def test_classify_variant_instance_get_most_recent_full_classification(self):
         pass
         #TODO
+        # test no previous completed classifications
+
+        # test only response is current object
+
+        # test previous classification but review is needed
+
+        # test previous classification and review is not needed
 
     def test_classify_variant_instance_get_previous_classification_choices(self):
         pass
         #TODO
+        # test within-classification full classification
+
+        # test within-classification previous classification
+
+        # test between classifications both options
+
+        # test between classifications full classification only
 
     def test_classify_variant_instance_update_tumour_type(self):
         self.assertIsNone(self.new_var_obj.tumour_subtype)
@@ -534,16 +555,143 @@ class TestModels(TestCase):
         self.assertIsInstance(Check.objects.get(pk=3), Check)
 
     def test_classify_variant_instance_reopen_analysis(self):
-        pass
-        #TODO
+        # test with expected user
+        status, message = self.new_var_obj.reopen_analysis(self.user_two)
+        self.assertTrue(status)
+        self.assertIsNone(message)
+        self.assertIsNone(self.new_var_obj.final_class)
+        self.assertIsNone(self.new_var_obj.final_score)
+        self.assertFalse(self.new_var_obj.final_class_overridden)
+        self.assertIsNone(self.new_var_obj.complete_date)
+        # test with incorrect user
+        status, message = self.new_var_obj.reopen_analysis("KEVIN")
+        self.assertFalse(status)
+        self.assertEqual("Only usertwo can reopen this case", message)
 
-    def test_classify_variant_instance_signoff_check(self):
-        pass
-        #TODO
+    def test_classify_variant_instance_signoff_check_extra_check(self):
+        # extra check, possible to close check
+        self.check_one.info_check = True
+        self.check_one.previous_classifications_check = True
+        self.check_one.classification_check = True
+        self.check_one.complete_check()
+        status, message = self.new_var_obj.signoff_check(self.check_one, "extra_check")
+        self.assertTrue(status)
+        self.assertIsNone(message)
+
+    def test_classify_variant_instance_signoff_check_extra_check_cannot_close(self):
+        # extra check, not possible to close check
+        status, message = self.new_var_obj.signoff_check(self.check_two, "extra_check")
+        self.assertFalse(status)
+    
+    def test_classify_variant_instance_signoff_check_send_back(self):
+        # send back, possible to send back
+        status, message = self.new_var_obj.signoff_check(self.check_two, "send_back")
+        self.assertTrue(status)
+        self.assertIsNone(message)
+
+    def test_classify_variant_instance_signoff_check_send_back_cannot_send_back(self):
+        # send back, not possible to send back
+        self.check_two.delete()
+        status, message = self.new_var_obj.signoff_check(self.check_one, "send_back")
+        self.assertFalse(status)
+        self.assertEqual(message, "Cannot send back, this is the first check")
+
+    def test_classify_variant_instance_signoff_check_current_check_not_passable(self):
+        # complete analysis, current check not passable
+        status, message = self.new_var_obj.signoff_check(self.check_two, "complete")
+        self.assertFalse(status)
+
+    def test_classify_variant_instance_signoff_check_fewer_than_two_checks(self):
+        self.check_one.info_check = True
+        self.check_one.previous_classifications_check = True
+        self.check_one.classification_check = True
+        self.check_one.final_class = self.classification_one_obj
+        self.check_one.complete_check()
+        self.check_two.delete()
+        # complete anaysis, fewer than two checks
+        status, message = self.new_var_obj.signoff_check(self.check_one, "complete")
+        self.assertFalse(status)
+        self.assertEqual(message, "Cannot complete analysis, two checks required")
+
+    def test_classify_variant_instance_signoff_check_fewer_than_two_diagnostic_checks(self):
+        self.check_one.info_check = True
+        self.check_one.previous_classifications_check = True
+        self.check_one.classification_check = True
+        self.check_one.diagnostic = True
+        self.check_one.final_class = self.classification_one_obj
+        self.check_one.complete_check()
+        self.check_two.info_check = True
+        self.check_two.previous_classifications_check = True
+        self.check_two.classification_check = True
+        self.check_two.diagnostic = False
+        self.check_two.final_class = self.classification_one_obj
+        self.check_two.complete_check()
+        # complete analysis, fewer than two diagnostic checks
+        status, message = self.new_var_obj.signoff_check(self.check_two, "complete")
+        self.assertFalse(status)
+        self.assertEqual(message, "Cannot complete analysis, some of the checks are training checks")
+
+    def test_classify_variant_instance_signoff_check_classifications_disagree(self):
+        self.check_one.info_check = True
+        self.check_one.previous_classifications_check = True
+        self.check_one.classification_check = True
+        self.check_one.diagnostic = True
+        self.check_one.final_class = self.classification_one_obj
+        self.check_one.final_score = 10
+        self.check_one.complete_check()
+        self.check_two.info_check = True
+        self.check_two.previous_classifications_check = True
+        self.check_two.classification_check = True
+        self.check_two.diagnostic = True
+        self.check_two.final_class = self.classification_two_obj
+        self.check_two.final_score = 9
+        self.check_two.complete_check()
+
+        # complete analysis, two checks by the same person
+        #TODO add in this test after done with testing - currently commented out
+        #self.check_two.user = self.user_one
+        #status, message = self.new_var_obj.signoff_check(self.check_two, "complete")
+        #self.assertFalse(status)
+        #self.assertEqual(message, "Cannot complete analysis, last two checkers are the same analyst")
+        #self.check_two.user = self.user
+
+        # complete analysis, last two classifications don't agree
+        status, message = self.new_var_obj.signoff_check(self.check_two, "complete")
+        self.assertFalse(status)
+        self.assertEqual(message, "Cannot complete analysis, overall classification from last two checkers dont agree")
+        
+        # complete analysis, last two scores don't agree
+        #TODO fix this
+        self.check_two.final_class = self.classification_one_obj
+        status, message = self.new_var_obj.signoff_check(self.check_two, "complete")
+        self.assertFalse(status)
+        self.assertEqual(message, "Cannot complete analysis, scores from last two checkers dont agree")
+
+        # all checks pass, update object
+        self.check_two.final_score = 10
+        status, message = self.new_var_obj.signoff_check(self.check_two, "complete")
+        self.assertTrue(status)
+        self.assertIsNone(message)
 
     def test_analysis_variant_instance_get_sample_info(self):
-        pass
-        #TODO
+        # check sample info when tumour type not assigned
+        expected_sample_info = {
+            "sample_id": "dna_test_1",
+            "worksheet_id": "dna_ws_1",
+            "svd_panel": "Tumour",
+            "specific_tumour_type": None
+        }
+        self.assertEqual(self.new_var_obj.get_sample_info(), expected_sample_info)
+        # check sample info when tumour type assigned
+        self.new_var_obj.update_tumour_type(1)
+        expected_sample_info = {
+            "sample_id": "dna_test_1",
+            "worksheet_id": "dna_ws_1",
+            "svd_panel": "Tumour",
+            "specific_tumour_type": "Lung"
+        }
+        self.assertEqual(self.new_var_obj.get_sample_info(), expected_sample_info)
+
 
     def test_swgs_germline_variant_instance_get_sample_info(self):
         #TODO write this code first
