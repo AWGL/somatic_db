@@ -6,7 +6,18 @@
   <div class="container">
     <ol class="breadcrumb" style="background-color: transparent;">
       <li class="breadcrumb-item"><a href="{% url 'home' %}"><span class="fa fa-home"></span></a></li>
+
+      {% if query == 'training' %}
+      <li class="breadcrumb-item active">Worksheets (training)</li>
+      {% elif query == 'recent' %}
+      <li class="breadcrumb-item active">Worksheets (recent)</li>
+      {% elif query == 'pending' %}
+      <li class="breadcrumb-item active">Worksheets (pending)</li>
+      {% elif query == 'qc' %}
+      <li class="breadcrumb-item active">Worksheets (QC)</li>
+      {% else %}
       <li class="breadcrumb-item active">Worksheets</li>
+      {% endif %}
     </ol>
   </div>
 </div>
@@ -14,8 +25,20 @@
 
 {% block content %}
 <div class="container">
+  {% if query == 'training' %}
+  <h5>Training/ validation worksheets</h5>
+  {% elif query == 'recent' %}
+  <h5>Recent worksheets</h5>
+  {% elif query == 'pending' %}
+  <h5>Worksheets not completed</h5>
+  {% elif query == 'qc' %}
+  <h5>Worksheets awaiting QC</h5>
+  {% else %}
   <h5>Worksheets</h5>
+  {% endif %}
   <br>
+
+  <!-- when filtered, warning box to say that not all worksheets are shown -->
   {% if filtered %}
   <div class="alert alert-warning">
     <div class="container">
@@ -27,6 +50,8 @@
           <strong>Showing the most recent 30 worksheets</strong><br>Click to view all worksheets (this will take some time to load).
           {% elif query == 'pending' %}
           <strong>Showing all pending worksheets (with at least one sample going through IGV checking)</strong><br>Click to view all worksheets (this will take some time to load).
+          {% elif query == 'qc' %}
+          <strong>Showing all worksheets pending bioinformatics QC</strong><br>Click to view all worksheets (this will take some time to load).
           {% endif %}
         </div>
         <div class="col-4">
@@ -37,28 +62,42 @@
   </div>
   {% endif %}
 
+  <!-- worksheets table -->
   <table class="table" id="worksheets-table">
     <thead>
       <tr>
-        <th scope="col">WS ID</th>
-        <th scope="col">Run ID</th>
-        <th scope="col">Assay</th>
-        <th scope="col">Status</th>
-        <th scope="col"></th>
-        <th scope="col"></th>
+        <th class="col-2">WS ID</th>
+        <th class="col-3">Run ID</th>
+        <th class="col-2">Assay</th>
+        <th class="col-3">Status</th>
+        <th class="col-2"></th><!-- samples column, used for searching by sample but column hidden by datatables -->
+        <th></th>
       </tr>
     </thead>
     <tbody>
       {% for ws in worksheets %}
       <tr>
-        <td>{{ ws.worksheet_id }}</td>
+        <td>{{ ws.worksheet_id }}&nbsp;
+          {% if not ws.signed_off %}<br><span class="badge badge-pill badge-warning">QC pending</span>{% endif %}
+          {% if not ws.diagnostic %}<br><span class="badge badge-pill badge-info">Training</span>{% endif %}
+        </td>
         <td>{{ ws.run_id }}</td>
         <td>{{ ws.assay }}</td>
         <td>{{ ws.status }}</td>
         <td style="text-align:right">
-          <a class="btn btn-secondary" href="{% url 'view_ws_samples' ws.worksheet_id %}" role="button">
-              View samples
-          </a>
+          <!-- button when QC required and user has permissions to do it -->
+          {% if ws.signed_off == False and in_qc_user_group == True %}
+          <a class="btn btn-warning btn-block" href="{% url 'view_ws_samples' ws.worksheet_id %}" role="button">QC</a>
+
+          <!-- button when QC required but user does not have permission -->
+          {% elif ws.signed_off == False and in_qc_user_group == False %}
+          <a class="btn btn-secondary btn-block disabled">QC pending</a>
+
+          <!-- button to view samples -->
+          {% else %}
+          <a class="btn btn-info btn-block" href="{% url 'view_ws_samples' ws.worksheet_id %}" role="button">View samples</a>
+
+          {% endif %}
         </td>
         <td>{{ ws.samples }}</td>
       </tr>

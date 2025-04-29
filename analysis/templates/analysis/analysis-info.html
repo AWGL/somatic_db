@@ -9,15 +9,6 @@
       <td class="col-8">{{ sample_data.sample_id }}</td>
     </tr>
     <tr>
-      <td><b>Patient name</b></td>
-      <td>
-        {{ sample_data.sample_name }}
-        {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail'%}
-        <button type="button" style="float: right;" class="btn btn-sm btn-warning w-25" data-toggle="modal" data-target="#update-name">Update</button>
-        {% endif %}
-      </td>
-    </tr>
-    <tr>
       <td><b>Worksheet</b></td>
       <td>{{ sample_data.worksheet_id }}</td>
     </tr>
@@ -43,26 +34,16 @@
     </tr>
   </tbody>
 </table>
-
 <br>
 
-
-<!-- Patient name Modal -->
-<div class="modal fade" id="update-name" tabindex="-1" role="dialog" aria-labelledby="update-name-label" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="update-name-label">Update patient name</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-
-        {% crispy update_name_form %}
-
-      </div>
-
-    </div>
+{% if 'IGV' in sample_data.status %}
+<div class="card">
+  <div class="card-body">
+    <h5>Patient demographics check</h5>
+    <br>
+    {% crispy demographics_form %}
   </div>
 </div>
+
+{% endif %}
+<br>
