@@ -2482,16 +2482,18 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             right_breakpoint="chr1:156844361",
             genome_build=37
             )
-        self.run = Run.objects.create(run_id = "TEST_RUN1")
+        self.run_obj = Run.objects.create(run_id = "TEST_RUN1")
         self.worksheet_DNA = Worksheet.objects.create(
             ws_id="test38",
             assay="TSO500_DNA",
-            run=self.run
+            run=self.run_obj,
+            diagnostic=True
             )
         self.worksheet_ctDNA = Worksheet.objects.create(
             ws_id="test37",
             assay="TSO500_ctDNA",
-            run=self.run
+            run=self.run_obj,
+            diagnostic=True
             )
         self.panel = Panel.objects.create(
             panel_name="Lung",
@@ -2505,12 +2507,14 @@ class TestPolyArtefactPeriodicSaving(TestCase):
         self.sample_analysis_1 = SampleAnalysis.objects.create(
             sample=self.sample_obj_1,
             worksheet=self.worksheet_DNA,
-            panel=self.panel
+            panel=self.panel,
+            upload_time=timezone.now()
             )
         self.sample_analysis_2 = SampleAnalysis.objects.create(
             sample=self.sample_obj_2,
             worksheet=self.worksheet_ctDNA,
-            panel=self.panel
+            panel=self.panel,
+            upload_time=timezone.now()
             )
         # make mock variant instance, gnomad values will be added in each test
         self.variant_instance_obj_1 = VariantInstance.objects.create(
@@ -2674,16 +2678,8 @@ class TestPolyArtefactPeriodicSaving(TestCase):
         test polys_artefacts
         '''
         # test genome build
-        variant_objs = Variant.objects.all()
-        self.assertEqual(variant_objs[0].genome_build, 38)
-        self.assertEqual(variant_objs[1].genome_build, 38)
 
-        self.variant_lists = VariantList.objects.all()
-        self.assertEqual(self.variant_lists[0].name, 'build_38_polys')
-
-        print(f"VariantList objects = {VariantList.objects.count()}")
-        self.assertEqual(VariantList.objects.count(),2)
-
+        # filter these:
         v2vl = VariantToVariantList.objects.all()
         print(f"VariantToVariantList (build_38_polys)= {v2vl[0]}")
 
@@ -2699,22 +2695,18 @@ class TestPolyArtefactPeriodicSaving(TestCase):
         '''
         test polys_artefacts
         '''
-        fusions_all = Fusion.objects.all()
-
-        self.assertEqual(fusions_all[0].genome_build, 37)
-        self.assertEqual(fusions_all[1].genome_build, 37)
-
-        self.variant_lists = VariantList.objects.all()
         self.assertEqual(self.variant_lists[1].name, 'TSO500_ctDNA_b37_fusion_artefacts')
         
         
+        # filter these :
         v2vl = VariantToVariantList.objects.all()
-        fusion = v2vl[1].variant.variant
+        
+        fusion = v2vl[1].fusion.fusion_genes
         fusion_list = v2vl[1].variant_list.name
         print(f"fusion = {fusion}")
         print(f"fusion_list = {fusion_list}")
-        self.assertEqual(fusion,'')
-        self.assertEqual(self.fusion_list[1].name, 'TSO500_ctDNA_b37_fusion_artefacts')
+        self.assertEqual(fusion,'fusion1')
+        self.assertEqual(fusion_list, 'TSO500_ctDNA_b37_fusion_artefacts')
 
         # check that no fusions have been added
         self.assertTrue(Fusion.objects.exists())

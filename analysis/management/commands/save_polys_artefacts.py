@@ -2,7 +2,7 @@
 # Periodic script for adding variants and fusions (called in the last 28 days) to poly and artefacts lists if they meet the required number of checks
 #
 # Date: 28/02/2025 - AW
-# Use: python manage.py shell < /u01/apps/svd/somatic_db/queries/periodic_polys_artefacts.py (with somatic_variant_db env activated)
+# Use: python manage.py shell save_polys_artefacts (with somatic_variant_db env activated)
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -19,19 +19,12 @@ class Command(BaseCommand):
         """
         takes a variant, its variant object, created (bool) and build list and saves it to the given build list
         """
-        # point to global variables
-        global VariantToVariantList
-        global VariantList
-        global timezone
-        global User
-        polys_to_add = []
         build_list = VariantList.objects.get(name=build)
         if fusion:
             variant_list, created = VariantToVariantList.objects.get_or_create(fusion=variant_obj, variant_list=build_list)
         else:
             variant_list, created = VariantToVariantList.objects.get_or_create(variant=variant_obj, variant_list=build_list)
         if created:
-            polys_to_add.append(variant)
             # if the poly list instance is newly created, add user info
             variant_list.upload_user = self.user
             variant_list.upload_time = timezone.now()
@@ -47,15 +40,17 @@ class Command(BaseCommand):
         self.user = User.objects.get(username='admin')
         required_checks = 2
         query_days = 28
-
+        upload_days = 100
         # set date range
-        today = datetime.date.today()
-        end_date = today + datetime.timedelta(days=1)
-        start_date = today - datetime.timedelta(days=query_days)
+        end_date = datetime.date.today()
+        start_date = end_date - datetime.timedelta(days=query_days)
+        filter_date = end_date - datetime.timedelta(days=upload_days)
         print(f"date range = {start_date} - {end_date}, i.e. last {query_days} days")
 
         #Get all sample analyses
-        sas = SampleAnalysis.objects.all()
+        sas = SampleAnalysis.objects.filter(
+            worksheet__diagnostic=True,
+            upload_time__gt=filter_date)
 
         # create empty lists for polys and artefacts
         polys = []
