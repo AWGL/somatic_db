@@ -2470,6 +2470,10 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             variant='1:1111C>G',
             genome_build=38
             )
+        self.variant_obj_3 = Variant.objects.create(
+            variant='2:2222C>G',
+            genome_build=38
+            )
         self.fusion_obj_1 = Fusion.objects.create(
             fusion_genes='fusion1',
             left_breakpoint="chr1:154142876",
@@ -2478,8 +2482,14 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             )
         self.fusion_obj_2 = Fusion.objects.create(
             fusion_genes='fusion2',
-            left_breakpoint="chr1:154142876",
-            right_breakpoint="chr1:156844361",
+            left_breakpoint="chr1:123456789",
+            right_breakpoint="chr1:124356789",
+            genome_build=37
+            )
+        self.fusion_obj_3 = Fusion.objects.create(
+            fusion_genes='fusion3',
+            left_breakpoint="chr1:164142876",
+            right_breakpoint="chr1:166844361",
             genome_build=37
             )
         self.run_obj = Run.objects.create(run_id = "TEST_RUN1")
@@ -2508,14 +2518,20 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             sample=self.sample_obj_1,
             worksheet=self.worksheet_DNA,
             panel=self.panel,
-            upload_time=timezone.now()
+            upload_time=timezone.now()-datetime.timedelta(days=1)
             )
         self.sample_analysis_2 = SampleAnalysis.objects.create(
             sample=self.sample_obj_2,
             worksheet=self.worksheet_ctDNA,
             panel=self.panel,
-            upload_time=timezone.now()
+            upload_time=timezone.now()-datetime.timedelta(days=1)
             )
+        # self.sample_analysis_2 = SampleAnalysis.objects.create(
+        #     sample=self.sample_obj_2,
+        #     worksheet=self.worksheet_ctDNA,
+        #     panel=self.panel,
+        #     upload_time=timezone.now()-datetime.timedelta(days=1)
+        #     )
         # make mock variant instance, gnomad values will be added in each test
         self.variant_instance_obj_1 = VariantInstance.objects.create(
             sample = self.sample_obj_1,
@@ -2549,7 +2565,7 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             gene = 'BRAF',
             exon = '1/5',
             hgvs_c = 'c.11111C>G',
-            hgvs_p = 'p.Ala456Arg',
+            hgvs_p = 'p.Pro222Arg',
             total_count = 10,
             alt_count = 1,
             in_ntc = False,
@@ -2561,13 +2577,39 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             variant = self.variant_obj_2,
             gene = 'BRAF',
             exon = '1/5',
-            hgvs_c = 'c.11111C>G',
-            hgvs_p = 'p.Ala456Arg',
+            hgvs_c = 'c.22222C>G',
+            hgvs_p = 'p.Leu272Arg',
             total_count = 10,
             alt_count = 1,
             in_ntc = False,
             manual_upload = False,
             final_decision = 'G'
+            )
+        self.variant_instance_obj_5 = VariantInstance.objects.create(
+            sample = self.sample_obj_1,
+            variant = self.variant_obj_3,
+            gene = 'BRAF',
+            exon = '1/5',
+            hgvs_c = 'c.22222C>G',
+            hgvs_p = 'p.Leu272Arg',
+            total_count = 10,
+            alt_count = 1,
+            in_ntc = False,
+            manual_upload = False,
+            final_decision = 'P'
+            )
+        self.variant_instance_obj_6 = VariantInstance.objects.create(
+            sample = self.sample_obj_2,
+            variant = self.variant_obj_3,
+            gene = 'BRAF',
+            exon = '1/5',
+            hgvs_c = 'c.22222C>G',
+            hgvs_p = 'p.Leu272Arg',
+            total_count = 10,
+            alt_count = 1,
+            in_ntc = False,
+            manual_upload = False,
+            final_decision = 'P'
             )
         self.check_obj_1 = Check.objects.create(
             analysis = self.sample_analysis_1,
@@ -2578,12 +2620,20 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             analysis = self.sample_analysis_2,
             signoff_time = timezone.now()
             )
+        self.check_obj_3 = Check.objects.create(
+            analysis = self.sample_analysis_3,
+            signoff_time = timezone.now()-datetime.timedelta(days=30)
+            )
         self.variant_panel_analysis_1 = VariantPanelAnalysis.objects.create(
             sample_analysis=self.sample_analysis_1,
             variant_instance=self.variant_instance_obj_1
             )
         self.variant_panel_analysis_2 = VariantPanelAnalysis.objects.create(
             sample_analysis=self.sample_analysis_2,
+            variant_instance=self.variant_instance_obj_2
+            )
+        self.variant_panel_analysis_3 = VariantPanelAnalysis.objects.create(
+            sample_analysis=self.sample_analysis_3,
             variant_instance=self.variant_instance_obj_2
             )
         self.fusion_analysis_1 = FusionAnalysis.objects.create(
@@ -2681,22 +2731,30 @@ class TestPolyArtefactPeriodicSaving(TestCase):
 
         # filter these:
         v2vl = VariantToVariantList.objects.all()
-        print(f"VariantToVariantList (build_38_polys)= {v2vl[0]}")
+        print(f"VariantToVariantList = {v2vl[0]}")
 
         variant = v2vl[0].variant.variant
         variant_list = v2vl[0].variant_list.name
         print(f"variant = {variant}")
         print(f"variant_list = {variant_list}")
-        self.assertEqual(variant,'1:2345C>G')
+        
+        variant_should_be_added = '1:2345C>G'
+        variant_not_enough_checks = 'c.11111C>G'
+        variant_outside_date_range = ''
+
+        for variant in v2vl:
+            v = variant.variant.variant
+            present
+        self.assertEqual(v2vl[0].variant.variant,'1:2345C>G')
         self.assertEqual(VariantToVariantList.objects.count(), 2)
-        self.assertEqual(variant_list,'build_38_polys')
+
+        self.assertFalse(v2vl[0].variant.variant,'1:2345C>G')
+        self.assertFalse(VariantToVariantList.objects.count(), 2)
 
     def test_fusions(self):
         '''
         test polys_artefacts
-        '''
-        self.assertEqual(self.variant_lists[1].name, 'TSO500_ctDNA_b37_fusion_artefacts')
-        
+        '''        
         
         # filter these :
         v2vl = VariantToVariantList.objects.all()
@@ -2705,10 +2763,12 @@ class TestPolyArtefactPeriodicSaving(TestCase):
         fusion_list = v2vl[1].variant_list.name
         print(f"fusion = {fusion}")
         print(f"fusion_list = {fusion_list}")
+
+
         self.assertEqual(fusion,'fusion1')
         self.assertEqual(fusion_list, 'TSO500_ctDNA_b37_fusion_artefacts')
 
-        # check that no fusions have been added
+        # check that fusions have been added
         self.assertTrue(Fusion.objects.exists())
         self.assertTrue(FusionAnalysis.objects.exists())
         self.assertFalse(FusionAnalysis.objects.filter(fusion_caller='Fusion').exists())

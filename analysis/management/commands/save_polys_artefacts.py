@@ -2,7 +2,7 @@
 # Periodic script for adding variants and fusions (called in the last 28 days) to poly and artefacts lists if they meet the required number of checks
 #
 # Date: 28/02/2025 - AW
-# Use: python manage.py shell save_polys_artefacts (with somatic_variant_db env activated)
+# Use: python manage.py save_polys_artefacts (with somatic_variant_db env activated)
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -42,10 +42,10 @@ class Command(BaseCommand):
         query_days = 28
         upload_days = 100
         # set date range
-        end_date = datetime.date.today()
+        end_date = timezone.now()
         start_date = end_date - datetime.timedelta(days=query_days)
         filter_date = end_date - datetime.timedelta(days=upload_days)
-        print(f"date range = {start_date} - {end_date}, i.e. last {query_days} days")
+        print(f"date range = {start_date.date()} - {end_date.date()}, i.e. last {query_days} days")
 
         #Get all sample analyses
         sas = SampleAnalysis.objects.filter(
@@ -85,7 +85,7 @@ class Command(BaseCommand):
             # if the check is between the dates, get it
             if checks[0].signoff_time != None:
                 # print("check not none")
-                within_timeframe = start_date <= checks[0].signoff_time.date() <= end_date
+                within_timeframe = start_date <= checks[0].signoff_time <= end_date
                 if within_timeframe:
 
                     # get in-date VariantInstance objects
