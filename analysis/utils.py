@@ -1265,3 +1265,4 @@ def validate_variant(chrm, position, ref, alt, build):
     # If json file had some sort of unexpected structure, return this so we can investigate
     else:
         return 'Unexpected Error, contact Bioinformatics'
+
