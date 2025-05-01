@@ -1504,7 +1504,8 @@
         "show_fusion_coverage": false,
         "fusion_genes": null,
         "splice_genes": null,
-        "show_fusion_vaf": false
+        "show_fusion_vaf": false,
+        "minimum_supporting_reads": 23
     }
 },
 {

@@ -2346,6 +2346,93 @@ class TestGnomad(TestCase):
             self.variant_instance_obj.gnomad_link()
 
 
+class TestBRCAFiltering(TestCase):
+    """
+    Checks BRCA filtering will be applied correctly
+    """
+
+    def setUp(self):
+        ''' runs before each test '''
+        # make mock sample object
+        self.sample_obj = Sample(sample_id='test_sample',
+                                 tumour_content = None)
+
+        # make mock variant object, build 37 for most tests as build doesnt matter for most
+        self.variant_obj = Variant(variant='1:2345C>G', genome_build=37)
+
+        # make mock variant instance, gnomad values will be added in each test
+        self.variant_instance_obj = VariantInstance(
+            sample = self.sample_obj,
+            variant = self.variant_obj,
+            gene = 'BRCA1',
+            exon = '1/5',
+            hgvs_c = 'c.12345C>G',
+            hgvs_p = 'p.Ala456Arg',
+            total_count = 10,
+            alt_count = 1,
+            in_ntc = False,
+            manual_upload = False,
+            final_decision = '-',
+            gnomad_popmax = None
+        )
+
+    def test_is_brca_deep_intronic_exonic(self):
+        # default is exonic
+        self.assertFalse(self.variant_instance_obj.is_brca_deep_intronic())
+    
+    def test_is_brca_deep_intronic_close_intronic(self):
+        self.variant_instance_obj.hgvs_c = 'c.12345-10C>G'
+        self.assertFalse(self.variant_instance_obj.is_brca_deep_intronic())
+
+    def test_is_brca_deep_intronic_deep_intronic(self):
+        self.variant_instance_obj.hgvs_c = 'c.12345-50C>G'
+        self.assertTrue(self.variant_instance_obj.is_brca_deep_intronic())
+
+    def test_is_brca_deep_intronic_excluded(self):
+        #TODO update this when i get the excluded variant
+        self.variant_instance_obj.hgvs_c = 'known_variant_here'
+        self.assertFalse(self.variant_instance_obj.is_brca_deep_intronic())
+
+    def test_is_brca_poly_none(self):
+        # default is none
+        self.assertFalse(self.variant_instance_obj.is_brca_poly())
+
+    def test_is_brca_poly_missing_from_gnomad(self):
+        self.variant_instance_obj.gnomad_popmax = -1.00000
+        self.assertFalse(self.variant_instance_obj.is_brca_poly())
+    
+    def test_is_brca_poly_below_threshold(self):
+        self.variant_instance_obj.gnomad_popmax = 0.0001
+        self.assertFalse(self.variant_instance_obj.is_brca_poly())
+    
+    def test_is_brca_poly_above_threshold(self):
+        self.variant_instance_obj.gnomad_popmax = 0.1
+        self.assertTrue(self.variant_instance_obj.is_brca_poly())
+
+    def test_brca_above_tumour_content_threshold_not_set(self):
+        # default is not set
+        self.assertEqual(self.variant_instance_obj.brca_above_tumour_content_threshold(), 1)
+    
+    def test_brca_above_tumour_content_threshold_above(self):
+        self.sample_obj.tumour_content = 50
+        self.assertTrue(self.variant_instance_obj.brca_above_tumour_content_threshold())
+    
+    def test_brca_above_tumour_content_threshold_below(self):
+        self.sample_obj.tumour_content = 100
+        self.assertFalse(self.variant_instance_obj.brca_above_tumour_content_threshold())
+    
+    def test_brca_above_tumour_content_threshold_germline(self):
+        self.sample_obj.tumour_content = 0
+        self.assertFalse(self.variant_instance_obj.brca_above_tumour_content_threshold())
+    
+
+
+
+    def tearDown(self):
+        pass
+
+
+
 class TestLIMSInitials(TestCase):
     """
     Check to make sure that someone doesnt set their initials to a value already used by someone else
