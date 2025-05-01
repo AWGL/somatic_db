@@ -47,7 +47,7 @@ class Command(BaseCommand):
         filter_date = end_date - datetime.timedelta(days=upload_days)
         print(f"date range = {start_date.date()} - {end_date.date()}, i.e. last {query_days} days")
 
-        #Get all sample analyses
+        #Get sample analyses flagged as diagnostic and uploaded since the filter date
         sas = SampleAnalysis.objects.filter(
             worksheet__diagnostic=True,
             upload_time__gt=filter_date)
@@ -136,17 +136,17 @@ class Command(BaseCommand):
                     if fusion_analysis.count() > 0:  
                         # Get checks
                         for f in fusion_analysis:
-                            # Get decision, variant string, genome build, set fusion_boolean to False
+                            # Get decision, fusion string, genome build, set fusion_boolean to False
                             decision = f.final_decision
                             fusion = f.fusion_genes.fusion_genes
                             genome_build = f.fusion_genes.genome_build
                             fusion_boolean = True
 
-                            # Get or create variant object
+                            # Get or create fusion object
                             fusion_obj, created = Fusion.objects.get_or_create(fusion_genes=fusion)
                             # If artefact save to artefacts list
                             if decision == "A":
-                                # Check if variant has sufficient number of checks
+                                # Check if fusion has sufficient number of checks
                                 artefacts.append(fusion)
                                 if artefacts.count(fusion) >= required_checks:
                                     self.save_variant_to_list(
@@ -157,5 +157,5 @@ class Command(BaseCommand):
                                         fusion_boolean
                                         )
                                 else:
-                                    # Print variant to console if insufficient checks
+                                    # Print fusion to console if insufficient checks
                                     print(f"INFO\t{timezone.now()}\t{fusion}, seen fewer times than required ({required_checks}), not added to list")      

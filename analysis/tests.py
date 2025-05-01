@@ -2460,9 +2460,10 @@ class TestPolyArtefactPeriodicSaving(TestCase):
         # make mock sample object
         self.sample_obj_1 = Sample.objects.create(sample_id='test_sample_1')
         self.sample_obj_2 = Sample.objects.create(sample_id='test_sample_2')
+        self.sample_obj_3 = Sample.objects.create(sample_id='test_sample_3')
         # make mock variant object, build 37 for most tests as build doesnt matter for most
 
-        self.variant_obj = Variant.objects.create(
+        self.variant_obj_1 = Variant.objects.create(
             variant='1:2345C>G',
             genome_build=38
             )
@@ -2526,16 +2527,16 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             panel=self.panel,
             upload_time=timezone.now()-datetime.timedelta(days=1)
             )
-        # self.sample_analysis_2 = SampleAnalysis.objects.create(
-        #     sample=self.sample_obj_2,
-        #     worksheet=self.worksheet_ctDNA,
-        #     panel=self.panel,
-        #     upload_time=timezone.now()-datetime.timedelta(days=1)
-        #     )
+        self.sample_analysis_3 = SampleAnalysis.objects.create(
+            sample=self.sample_obj_3,
+            worksheet=self.worksheet_ctDNA,
+            panel=self.panel,
+            upload_time=timezone.now()-datetime.timedelta(days=40)
+            )
         # make mock variant instance, gnomad values will be added in each test
         self.variant_instance_obj_1 = VariantInstance.objects.create(
             sample = self.sample_obj_1,
-            variant = self.variant_obj,
+            variant = self.variant_obj_1,
             gene = 'BRAF',
             exon = '1/5',
             hgvs_c = 'c.12345C>G',
@@ -2548,7 +2549,7 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             )
         self.variant_instance_obj_2 = VariantInstance.objects.create(
             sample = self.sample_obj_2,
-            variant = self.variant_obj,
+            variant = self.variant_obj_1,
             gene = 'BRAF',
             exon = '1/5',
             hgvs_c = 'c.12345C>G',
@@ -2599,7 +2600,7 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             final_decision = 'P'
             )
         self.variant_instance_obj_6 = VariantInstance.objects.create(
-            sample = self.sample_obj_2,
+            sample = self.sample_obj_3,
             variant = self.variant_obj_3,
             gene = 'BRAF',
             exon = '1/5',
@@ -2614,7 +2615,6 @@ class TestPolyArtefactPeriodicSaving(TestCase):
         self.check_obj_1 = Check.objects.create(
             analysis = self.sample_analysis_1,
             signoff_time = timezone.now()
-            # signoff_time = timezone.now() - datetime.timedelta(days=30)
             )
         self.check_obj_2 = Check.objects.create(
             analysis = self.sample_analysis_2,
@@ -2634,7 +2634,19 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             )
         self.variant_panel_analysis_3 = VariantPanelAnalysis.objects.create(
             sample_analysis=self.sample_analysis_3,
-            variant_instance=self.variant_instance_obj_2
+            variant_instance=self.variant_instance_obj_3
+            )
+        self.variant_panel_analysis_4 = VariantPanelAnalysis.objects.create(
+            sample_analysis=self.sample_analysis_1,
+            variant_instance=self.variant_instance_obj_4
+            )
+        self.variant_panel_analysis_5 = VariantPanelAnalysis.objects.create(
+            sample_analysis=self.sample_analysis_2,
+            variant_instance=self.variant_instance_obj_5
+            )
+        self.variant_panel_analysis_6 = VariantPanelAnalysis.objects.create(
+            sample_analysis=self.sample_analysis_3,
+            variant_instance=self.variant_instance_obj_6
             )
         self.fusion_analysis_1 = FusionAnalysis.objects.create(
             sample=self.sample_analysis_1,
@@ -2663,6 +2675,20 @@ class TestPolyArtefactPeriodicSaving(TestCase):
             fusion_supporting_reads=339,
             ref_reads_1=2452,
             final_decision = "G"
+            )
+        self.fusion_analysis_5 = FusionAnalysis.objects.create(
+            sample=self.sample_analysis_1,
+            fusion_genes=self.fusion_obj_3,
+            fusion_supporting_reads=339,
+            ref_reads_1=2452,
+            final_decision = "A"
+            )
+        self.fusion_analysis_6 = FusionAnalysis.objects.create(
+            sample=self.sample_analysis_3,
+            fusion_genes=self.fusion_obj_3,
+            fusion_supporting_reads=339,
+            ref_reads_1=2452,
+            final_decision = "A"
             )
         self.fusion_panel_analysis_1 = FusionPanelAnalysis.objects.create(
             sample_analysis=self.sample_analysis_1,
@@ -2717,8 +2743,8 @@ class TestPolyArtefactPeriodicSaving(TestCase):
         fusions = VariantToVariantList.objects.filter(variant_list=self.fusion_list)
         print(f"variants in list before script run = {variants}")
         print(f"fusions in list before script run = {fusions}")
-        checks = self.sample_analysis_1.get_checks()['all_checks']
-        print(f"checks in sample_analysis_1 before script run = {checks}")
+
+
         # run import management command - wrap in contextlib to prevent output printing to screen
         with contextlib.redirect_stdout(None):
             call_command('save_polys_artefacts')
@@ -2730,46 +2756,47 @@ class TestPolyArtefactPeriodicSaving(TestCase):
         # test genome build
 
         # filter these:
-        v2vl = VariantToVariantList.objects.all()
-        print(f"VariantToVariantList = {v2vl[0]}")
+        variants_dict = {
+            '1:2345C>G': True,
+            '1:1111C>G': False,
+            '2:2222C>G': False,
+        }
 
-        variant = v2vl[0].variant.variant
-        variant_list = v2vl[0].variant_list.name
-        print(f"variant = {variant}")
-        print(f"variant_list = {variant_list}")
-        
-        variant_should_be_added = '1:2345C>G'
-        variant_not_enough_checks = 'c.11111C>G'
-        variant_outside_date_range = ''
+        for variant, test_result in variants_dict.items():
+            try:
+                v2vl = VariantToVariantList.objects.get(variant__variant=variant)
+                print(f"v2vl = {v2vl}")
+                print(f"variant_list = {v2vl.variant_list.name}")
+                print(f"variant = {v2vl.variant.variant}")
 
-        for variant in v2vl:
-            v = variant.variant.variant
-            present
-        self.assertEqual(v2vl[0].variant.variant,'1:2345C>G')
-        self.assertEqual(VariantToVariantList.objects.count(), 2)
-
-        self.assertFalse(v2vl[0].variant.variant,'1:2345C>G')
-        self.assertFalse(VariantToVariantList.objects.count(), 2)
+            except:
+                v2vl = False
+            if test_result:
+                self.assertEqual(variant, v2vl.variant.variant)
+            else:
+                self.assertFalse(v2vl)
 
     def test_fusions(self):
         '''
         test polys_artefacts
         '''        
         
-        # filter these :
-        v2vl = VariantToVariantList.objects.all()
-        
-        fusion = v2vl[1].fusion.fusion_genes
-        fusion_list = v2vl[1].variant_list.name
-        print(f"fusion = {fusion}")
-        print(f"fusion_list = {fusion_list}")
+        fusions_dict = {
+            'fusion1': True,
+            'fusion2': False,
+            'fusion3': False,
+        }
 
+        for fusion_name, test_result in fusions_dict.items():
+            try:
+                v2vl = VariantToVariantList.objects.get(fusion__fusion_genes=fusion_name)
+                print(f"v2vl = {v2vl}")
+                print(f"variant_list = {v2vl.variant_list.name}")
+                print(f"fusion = {v2vl.fusion.fusion_genes}")
 
-        self.assertEqual(fusion,'fusion1')
-        self.assertEqual(fusion_list, 'TSO500_ctDNA_b37_fusion_artefacts')
-
-        # check that fusions have been added
-        self.assertTrue(Fusion.objects.exists())
-        self.assertTrue(FusionAnalysis.objects.exists())
-        self.assertFalse(FusionAnalysis.objects.filter(fusion_caller='Fusion').exists())
-        self.assertFalse(FusionAnalysis.objects.filter(fusion_caller='Splice').exists())        
+            except:
+                v2vl = False
+            if test_result:
+                self.assertEqual(fusion_name, v2vl.fusion.fusion_genes)
+            else:
+                self.assertFalse(v2vl)
