@@ -73,6 +73,9 @@
 
       </tr>
       {% endfor %}
+      {% if somatic_snvs_tier_one|length == 0 %}
+        <td>No variants in somatic tier 1</td>
+      {% endif %}
     </tbody>
   </table>
   <br>
@@ -128,6 +131,9 @@
 
       </tr>
       {% endfor %}
+      {% if somatic_snvs_tier_two|length == 0 %}
+        <td>No variants in somatic tier 2</td>
+      {% endif %}
     </tbody>
   </table>
   <br>
@@ -185,6 +191,9 @@
 
       </tr>
       {% endfor %}
+      {% if germline_snvs_tier_one|length == 0 %}
+        <td>No variants in germline tier 1</td>
+      {% endif %}
     </tbody>
   </table>
   <br>
@@ -240,6 +249,9 @@
         
       </tr>
       {% endfor %}
+      {% if germline_snvs_tier_three|length == 0 %}
+        <td>No variants in germline tier 3</td>
+      {% endif %}
     </tbody>
   </table>
   <br>
