@@ -439,7 +439,7 @@ class Variant(models.Model):
     """
     #TODO find a way to default to b38
     id = models.AutoField(primary_key=True)
-    variant = models.CharField(max_length=200)
+    variant = models.CharField(max_length=200, unique=True)
     genome_build = models.ForeignKey("GenomeBuild", on_delete=models.CASCADE)
 
     def __str__(self):
@@ -562,11 +562,16 @@ class SomaticVEPAnnotations(AbstractVEPAnnotations):
 
     #TODO unique_together
 
+    
+
 class AbstractVariantInstance(models.Model):
     """
-    Abstract class for variant instance. Stores the fields common to germline and somatic instances
+    Abstract class for variant instance. 
+    Stores the fields common to 
+     - germline and somatic instances
+     - SNVs, CNVs and SVs
+     - checks
     """
-    
     OUTCOME_CHOICES = (
         ('G', 'Genuine'),
         ('A', 'Artefact'),
@@ -579,13 +584,7 @@ class AbstractVariantInstance(models.Model):
     )
     
     id = models.AutoField(primary_key=True)
-    variant = models.ForeignKey("Variant", on_delete=models.CASCADE)
     patient_analysis = models.ForeignKey("PatientAnalysis", on_delete=models.CASCADE)
-    ad = models.CharField(max_length=10)
-    af = models.DecimalField(max_digits=7, decimal_places=6)
-    dp = models.IntegerField()
-    qual = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    max_splice_ai = models.DecimalField(max_digits=4, decimal_places=3, null=True, blank=True)
     gnomad_popmax_af = models.DecimalField(max_digits=4, decimal_places=3, null=True, blank=True)
     gnomad_nhomalt = models.IntegerField(null=True, blank=True)
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
@@ -593,12 +592,6 @@ class AbstractVariantInstance(models.Model):
     
     class Meta:
         abstract = True
-
-    @staticmethod
-    def get_chrom_and_pos(variant_id):
-        chrom = variant_id.split(":")[0]
-        pos = int(variant_id.split(":")[1])
-        return chrom, pos
     
     @staticmethod
     def get_worst_modifier_from_vep_annotations(vep_annotations):
@@ -616,10 +609,32 @@ class AbstractVariantInstance(models.Model):
             return "LOW"
         else:
             return "MODIFIER"
-
-class GermlineVariantInstance(AbstractVariantInstance):
+        
+class AbstractSnvInstance(AbstractVariantInstance):
     """
-    
+    Abstract base class for SNVs and small indels
+    """
+
+    variant = models.ForeignKey("Variant", on_delete=models.CASCADE)
+    ad = models.CharField(max_length=10)
+    af = models.DecimalField(max_digits=7, decimal_places=6)
+    dp = models.IntegerField()
+    qual = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    max_splice_ai = models.DecimalField(max_digits=4, decimal_places=3, null=True, blank=True)
+
+    class Meta:
+        abstract = True
+
+    @staticmethod
+    def get_chrom_and_pos(variant_id):
+        chrom = variant_id.split(":")[0]
+        pos = int(variant_id.split(":")[1])
+        return chrom, pos
+
+
+class GermlineVariantInstance(AbstractSnvInstance):
+    """
+    Germline SNV or small indel
     """
     vep_annotations = models.ManyToManyField("GermlineVEPAnnotations")
 
@@ -721,9 +736,9 @@ class GermlineVariantInstance(AbstractVariantInstance):
                     self.status = "C"
                     self.save()        
 
-class SomaticVariantInstance(AbstractVariantInstance):
+class SomaticVariantInstance(AbstractSnvInstance):
     """
-    
+    Somatic SNV or small indel
     """
     vep_annotations = models.ManyToManyField("SomaticVEPAnnotations")
 
@@ -823,6 +838,74 @@ class SomaticVariantInstance(AbstractVariantInstance):
                     self.decision = all_checks[0].decision
                     self.status = "C"
                     self.save() 
+
+
+class CnvSvType(models.Model):
+    """
+    Types of CNV and SV
+    """
+    id = models.AutoField(primary_key=True)
+    type = models.CharField(max_length=50, unqiue=True)
+
+class CnvSv(models.Model):
+    """
+    An individual CNV or SV (including individual breakpoints)
+    """
+
+    id = models.AutoField(primary_key=True)
+    variant = models.CharField(max_length=200, unique=True)
+    genome_build = models.ForeignKey("GenomeBuild", on_delete=models.CASCADE)
+    type = models.ForeignKey("CnvSvType", on_delete=models.CASCADE)
+    svlen = models.IntegerField(null=True, blank=True)
+    genes = models.ManyToManyField("Gene", related_name="cnv_sv")
+
+    def __str__(self):
+        return f"{self.variant}"
+    
+class AbstractCnvSvInstance(AbstractVariantInstance):
+    """
+    Shared fields for germline and somatic CNV/SVs
+    """
+    pr = models.CharField(max_length=50, null=True, blank=True)
+    sr = models.CharField(max_length=50, null=True, blank=True)
+    vf = models.CharField(max_length=50, null=True, blank=True)
+    imprecise = models.BooleanField(default=False)
+
+class GermlineCnvSvInstance(AbstractCnvSvInstance):
+    """
+    Model for germline CNVs/SVs
+    """
+    vep_annotations = models.ManyToManyField("GermlineVEPAnnotations")
+
+class SomaticCnvSvInstance(AbstractCnvSvInstance):
+    """
+    Model for somatic CNVs/SVs
+    """
+    vep_annotations = models.ManyToManyField("SomaticVEPAnnotations")
+
+class Fusion(models.Model):
+    """
+    A gene fusion (2 breakpoints)
+    """
+    id = models.AutoField(primary_key=True)
+    fusion_name = models.CharField(max_length=200)
+    breakpoint1 = models.ForeignKey("CnvSv", on_delete=models.CASCADE, related_name="breakpoint1")
+    breakpoint2 = models.ForeignKey("CnvSv", on_delete=models.CASCADE, related_name="breakpoint2")
+
+    class Meta:
+        unique_together = ["breakpoint1", "breakpoint2"]
+
+class FusionInstance(models.Model):
+    """
+    A fusion instance for the somatic sample only
+    """
+    id = models.AutoField(primary_key=True)
+    fusion = models.ForeignKey("Fusion", on_delete=models.CASCADE)
+
+
+##############
+### Checks ###
+##############
 
 class AbstractVariantChecks(models.Model):
     """
