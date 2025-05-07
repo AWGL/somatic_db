@@ -141,6 +141,41 @@ class SomaticVariantInstanceAdmin(admin.ModelAdmin):
 
 admin.site.register(SomaticVariantInstance, SomaticVariantInstanceAdmin)
 
+class CnvSvAdmin(admin.ModelAdmin):
+    list_display = ["variant", "type", "svlen", "caller"]
+    filter_horizontal = ["genes"]
+    search_fields = ["id", "variant", "type", "caller"]
+
+admin.site.register(CnvSv, CnvSvAdmin)
+
+class GermlineCnvInstanceAdmin(admin.ModelAdmin):
+    filter_horizontal = ["vep_annotations"]
+    list_display = ["cnv", "gt", "cn", "maf", "ncn", "patient_analysis"]
+    search_fields = ["id", "cnv__variant", "patient_analysis__patient__nhs_number"]
+
+admin.site.register(GermlineCnvInstance, GermlineCnvInstanceAdmin)
+
+class SomaticCnvInstanceAdmin(admin.ModelAdmin):
+    filter_horizontal = ["vep_annotations"]
+    list_display = ["cnv", "gt", "cn", "maf", "ncn", "patient_analysis"]
+    search_fields = ["id", "cnv__variant", "patient_analysis__patient__nhs_number"]
+
+admin.site.register(SomaticCnvInstance, SomaticCnvInstanceAdmin)
+
+class GermlineSvInstanceAdmin(admin.ModelAdmin):
+    filter_horizontal = ["vep_annotations"]
+    list_display = ["sv", "pr", "sr", "vf", "imprecise", "somatic_score", "patient_analysis"]
+    search_fields = ["id", "sv__variant", "patient_analysis__patient__nhs_number"]
+
+admin.site.register(GermlineSvInstance, GermlineSvInstanceAdmin)
+
+class SomaticSvInstanceAdmin(admin.ModelAdmin):
+    filter_horizontal = ["vep_annotations"]
+    list_display = ["sv", "pr", "sr", "vf", "imprecise", "somatic_score", "patient_analysis"]
+    search_fields = ["id", "sv__variant", "patient_analysis__patient__nhs_number"]
+
+admin.site.register(SomaticSvInstance, SomaticSvInstanceAdmin)
+
 class VEPAnnotationsConsequenceAdmin(admin.ModelAdmin):
     list_display = ["consequence", "get_impact"]
     search_fields = ["consequence"]
