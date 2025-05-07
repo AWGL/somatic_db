@@ -845,7 +845,7 @@ class CnvSvType(models.Model):
     Types of CNV and SV
     """
     id = models.AutoField(primary_key=True)
-    type = models.CharField(max_length=50, unqiue=True)
+    type = models.CharField(max_length=50, unique=True)
 
 class CnvSv(models.Model):
     """
@@ -853,33 +853,61 @@ class CnvSv(models.Model):
     """
 
     id = models.AutoField(primary_key=True)
-    variant = models.CharField(max_length=200, unique=True)
+    variant = models.CharField(max_length=200)
     genome_build = models.ForeignKey("GenomeBuild", on_delete=models.CASCADE)
     type = models.ForeignKey("CnvSvType", on_delete=models.CASCADE)
     svlen = models.IntegerField(null=True, blank=True)
     genes = models.ManyToManyField("Gene", related_name="cnv_sv")
+    caller = models.CharField(max_length=50, null=True, blank=True)
+
+    class Meta:
+        unique_together = ["variant", "svlen"]
 
     def __str__(self):
         return f"{self.variant}"
     
-class AbstractCnvSvInstance(AbstractVariantInstance):
+class AbstractCnvInstance(AbstractVariantInstance):
     """
-    Shared fields for germline and somatic CNV/SVs
+    Shared fields for germline and somatic CNVs
     """
+    cnv = models.ForeignKey("CnvSv", on_delete=models.CASCADE)
+    gt = models.CharField(max_length=10)
+    cn = models.IntegerField()
+    maf = models.DecimalField(max_digits=4, decimal_places=3, null=True, blank=True)
+    ncn = models.IntegerField(null=True, blank=True)
+
+class GermlineCnvInstance(AbstractCnvInstance):
+    """
+    Model for germline CNVs
+    """
+    vep_annotations = models.ManyToManyField("GermlineVEPAnnotations")
+
+class SomaticCnvInstance(AbstractCnvInstance):
+    """
+    Model for somatic CNVs
+    """
+    vep_annotations = models.ManyToManyField("SomaticVEPAnnotations")
+    
+class AbstractSvInstance(AbstractVariantInstance):
+    """
+    Shared fields for germline and somatic SVs
+    """
+    sv = models.ForeignKey("CnvSv", on_delete=models.CASCADE)
     pr = models.CharField(max_length=50, null=True, blank=True)
     sr = models.CharField(max_length=50, null=True, blank=True)
     vf = models.CharField(max_length=50, null=True, blank=True)
     imprecise = models.BooleanField(default=False)
+    somatic_score = models.IntegerField(null=True, blank=True)
 
-class GermlineCnvSvInstance(AbstractCnvSvInstance):
+class GermlineSvInstance(AbstractSvInstance):
     """
-    Model for germline CNVs/SVs
+    Model for germline SVs
     """
     vep_annotations = models.ManyToManyField("GermlineVEPAnnotations")
 
-class SomaticCnvSvInstance(AbstractCnvSvInstance):
+class SomaticSvInstance(AbstractSvInstance):
     """
-    Model for somatic CNVs/SVs
+    Model for somatic SVs
     """
     vep_annotations = models.ManyToManyField("SomaticVEPAnnotations")
 
