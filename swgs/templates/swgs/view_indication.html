@@ -20,7 +20,7 @@
       <div class="container">
         <h1 class="display-4"> {{ indication_dict.indication_name }} </h1>
         <br>
-        <h3>Somatic Tier 1</h3>
+        <h3>Somatic SNV Domain 1</h3>
         {% for panel in indication_dict.genes_and_panels.somatic_tier_one.panels %}
         <a class="btn btn-info" href="{% url 'view_panel'  panel.panel_id %}" role="button">
           {{ panel.panel_name }}
@@ -35,7 +35,22 @@
         {% endfor %}
         <br>
         <br>
-        <h3>Somatic Tier 2</h3>
+        <h3>Somatic CNV Domain 1</h3>
+        {% for panel in indication_dict.genes_and_panels.somatic_cnv_domain_one.panels %}
+        <a class="btn btn-info" href="{% url 'view_panel'  panel.panel_id %}" role="button">
+          {{ panel.panel_name }}
+        </a>
+        {% endfor %}
+        <br>
+        <br>
+        {% for gene in indication_dict.display_genes.somatic_cnv_domain_one %}
+        <a class="badge badge-success">
+            {{ gene }}
+        </a>
+        {% endfor %}
+        <br>
+        <br>
+        <h3>Somatic SNV Domain 2</h3>
         {% for panel in indication_dict.genes_and_panels.somatic_tier_two.panels %}
         <a class="btn btn-info" href="{% url 'view_panel'  panel.panel_id %}" role="button">
           {{ panel.panel_name }}
@@ -50,7 +65,22 @@
         {% endfor %}
         <br>
         <br>
-        <h3>Germline Tier 1</h3>
+        <h3>Somatic CNV Domain 2</h3>
+        {% for panel in indication_dict.genes_and_panels.somatic_cnv_domain_two.panels %}
+        <a class="btn btn-info" href="{% url 'view_panel'  panel.panel_id %}" role="button">
+          {{ panel.panel_name }}
+        </a>
+        {% endfor %}
+        <br>
+        <br>
+        {% for gene in indication_dict.display_genes.somatic_cnv_domain_two %}
+        <a class="badge badge-warning">
+            {{ gene }}
+        </a>
+        {% endfor %}
+        <br>
+        <br>
+        <h3>Germline SNV/CNV Tier 1</h3>
         {% for panel in indication_dict.genes_and_panels.germline_tier_one.panels %}
         <a class="btn btn-info" href="{% url 'view_panel'  panel.panel_id %}" role="button">
           {{ panel.panel_name }}
@@ -65,7 +95,7 @@
         {% endfor %}
         <br>
         <br>
-        <h3>Germline Tier 3</h3>
+        <h3>Germline SNV/CNV Tier 3</h3>
         {% for panel in indication_dict.genes_and_panels.germline_tier_three.panels %}
         <a class="btn btn-info" href="{% url 'view_panel'  panel.panel_id %}" role="button">
           {{ panel.panel_name }}

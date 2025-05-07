@@ -35,11 +35,11 @@
         <h3 class="display-4"> Somatic Panels</h3>
         {% for panel in somatic_panels %}
         {% if panel.is_active %}
-        <a class="btn btn-warning" href="{% url 'view_panel'  panel.panel_id %}" role="button">
+        <a class="btn btn-warning padding-2" href="{% url 'view_panel'  panel.panel_id %}" role="button">
             {{ panel.panel_name }}
         </a>
         {% else %}
-        <a class="btn btn-secondary" href="{% url 'view_panel'  panel.panel_id %}" role="button">
+        <a class="btn btn-secondary padding-2" href="{% url 'view_panel'  panel.panel_id %}" role="button">
             {{ panel.panel_name }}
         </a>
         {% endif %}

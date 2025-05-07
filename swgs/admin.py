@@ -37,8 +37,11 @@ class SampleAdmin(admin.ModelAdmin):
 admin.site.register(Sample, SampleAdmin)
 
 class IndicationAdmin(admin.ModelAdmin):
+    #TODO sort panels alphabetically
     filter_horizontal = ["germline_panels_tier_zero", "germline_panels_tier_one", "germline_panels_tier_three", 
-                         "somatic_panels_tier_zero", "somatic_panels_tier_one", "somatic_panels_tier_two"]
+                         "somatic_panels_tier_zero", "somatic_panels_tier_one", "somatic_panels_tier_two",
+                         "germline_cnv_panels_tier_zero", "germline_cnv_panels_tier_one", "germline_cnv_panels_tier_three",
+                         "somatic_cnv_panels_domain_zero", "somatic_cnv_panels_domain_one", "somatic_cnv_panels_domain_two"]
     list_display = ["indication", "indication_pretty_print", "lims_code"]
     search_fields = ["indication", "indication_pretty_print", "lims_code"]
 

@@ -97,7 +97,8 @@ def view_panel(request, panel_id):
         "panel_name": panel.display_panel_name(),
         "panel_notes": panel.panel_notes,
         "genes": panel.get_gene_names(),
-        "somatic_or_germline": panel.display_somatic_or_germline()
+        "somatic_or_germline": panel.display_somatic_or_germline(),
+        "type": panel.get_type()
     }
 
     context = {
@@ -153,26 +154,35 @@ def view_patient_analysis(request, patient_analysis_id):
     download_csv_form = DownloadCsvForm()
 
     # Get patient analysis by ID
-    patient_analysis = PatientAnalysis.objects.get(id=patient_analysis_id)
+    patient_analysis_obj = PatientAnalysis.objects.get(id=patient_analysis_id)
     
     # Get information for details and QC page
-    patient_analysis_info_dict = patient_analysis.create_patient_analysis_info_dict()
-    patient_analysis_qc_dict = patient_analysis.create_qc_dict()
+    patient_analysis_info_dict = patient_analysis_obj.create_patient_analysis_info_dict()
+    patient_analysis_qc_dict = patient_analysis_obj.create_qc_dict()
 
     check_options = AbstractVariantInstance.OUTCOME_CHOICES
     #TODO most of this can be moved to the models
 
     # Germline SNV tiering
-    germline_snvs_query = GermlineVariantInstance.objects.filter(patient_analysis=patient_analysis)
+    germline_snvs_query = GermlineVariantInstance.objects.filter(patient_analysis=patient_analysis_obj)
     germline_snvs_tier_one, germline_snvs_tier_three = germline_snv_tiering(germline_snvs_query)
 
     # Somatic SNV tiering
-    somatic_snvs_query = SomaticVariantInstance.objects.filter(patient_analysis=patient_analysis)
+    somatic_snvs_query = SomaticVariantInstance.objects.filter(patient_analysis=patient_analysis_obj)
     somatic_snvs_tier_one, somatic_snvs_tier_two = somatic_snv_tiering(somatic_snvs_query)
+
+    # Germline SV/CNV Tiering
+    germline_cnvs_query = GermlineCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+    germline_svs_query = GermlineSvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+
+    # Somatic SV/CNV Tiering
+    # Somatic Fusion Tiering
+    somatic_cnvs_query = SomaticCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+    somatic_svs_query = SomaticSvInstance.objects.filter(patient_analysis=patient_analysis_obj)
     
     context = {
         "form": download_csv_form,
-        "patient_analysis": patient_analysis,
+        "patient_analysis": patient_analysis_obj,
         "patient_analysis_info_dict": patient_analysis_info_dict,
         "patient_analysis_qc_dict": patient_analysis_qc_dict,
         "somatic_snvs_tier_one": somatic_snvs_tier_one,
@@ -186,7 +196,7 @@ def view_patient_analysis(request, patient_analysis_id):
     if request.POST:
 
         today = datetime.date.today().strftime("%Y%m%d")
-        filename = f"{patient_analysis.tumour_sample.sample_id}_{patient_analysis.germline_sample.sample_id}_{today}"
+        filename = f"{patient_analysis_obj.tumour_sample.sample_id}_{patient_analysis_obj.germline_sample.sample_id}_{today}"
         response = HttpResponse(content_type = "text/csv")
         response["Content-Disposition"] = f"attachement; filename={filename}"
         

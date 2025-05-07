@@ -116,6 +116,14 @@ class Panel(models.Model):
             return "Germline"
         else:
             return "Unknown"
+        
+    def get_type(self):
+        if "_cnv_" in self.panel_name:
+            return "cnv"
+        elif "_fusion_" in self.panel_name:
+            return "fusion"
+        else:
+            return "snv"
 
     def get_gene_names(self):
 
@@ -125,6 +133,8 @@ class Panel(models.Model):
             gene_names.append(gene.gene)
         
         return gene_names
+    
+    #TODO fusion panel model
         
 
 class Indication(models.Model):
@@ -137,12 +147,23 @@ class Indication(models.Model):
     version = models.IntegerField(null=True, blank=True)
     indication_pretty_print = models.CharField(max_length=100, null=True, blank=True)
     lims_code = models.CharField(max_length=20, null=True, blank=True)
+    # germline SNV panels
     germline_panels_tier_zero = models.ManyToManyField("Panel", related_name="germline_panels_tier_zero", blank=True)
     germline_panels_tier_one = models.ManyToManyField("Panel", related_name="germline_panels_tier_one")
     germline_panels_tier_three = models.ManyToManyField("Panel", related_name="germline_panels_tier_three")
+    # somatic SNV panels
     somatic_panels_tier_zero = models.ManyToManyField("Panel", related_name="somatic_panels_tier_zero", blank=True)
     somatic_panels_tier_one = models.ManyToManyField("Panel", related_name="somatic_panels_tier_one")
     somatic_panels_tier_two = models.ManyToManyField("Panel", related_name="somatic_panels_tier_two")
+    # germline CNV panels
+    germline_cnv_panels_tier_zero = models.ManyToManyField("Panel", related_name="germline_panels_cnv_tier_zero", blank=True)
+    germline_cnv_panels_tier_one = models.ManyToManyField("Panel", related_name="germline_panels_cnv_tier_one")
+    germline_cnv_panels_tier_three = models.ManyToManyField("Panel", related_name="germline_panels_cnv_tier_three")
+    # somatic CNV panels
+    somatic_cnv_panels_domain_zero = models.ManyToManyField("Panel", related_name="somatic_panels_cnv_domain_zero", blank=True)
+    somatic_cnv_panels_domain_one = models.ManyToManyField("Panel", related_name="somatic_panels_cnv_domain_one")
+    somatic_cnv_panels_domain_two = models.ManyToManyField("Panel", related_name="somatic_panels_cnv_domain_two")
+    #TODO fusions
 
     def __repr__(self):
         return f"Indication: {self.indication_pretty_print}"
@@ -175,7 +196,13 @@ class Indication(models.Model):
             "somatic_tier_two": self.get_genes_and_panels(self.somatic_panels_tier_two.all()),
             "germline_tier_zero": self.get_genes_and_panels(self.germline_panels_tier_zero.all()),
             "germline_tier_one": self.get_genes_and_panels(self.germline_panels_tier_one.all()),
-            "germline_tier_three": self.get_genes_and_panels(self.germline_panels_tier_three.all())
+            "germline_tier_three": self.get_genes_and_panels(self.germline_panels_tier_three.all()),
+            "germline_cnv_tier_zero": self.get_genes_and_panels(self.germline_cnv_panels_tier_zero.all()),
+            "germline_cnv_tier_one": self.get_genes_and_panels(self.germline_cnv_panels_tier_one.all()),
+            "germline_cnv_tier_three": self.get_genes_and_panels(self.germline_cnv_panels_tier_three.all()),
+            "somatic_cnv_domain_zero": self.get_genes_and_panels(self.somatic_cnv_panels_domain_zero.all()),
+            "somatic_cnv_domain_one": self.get_genes_and_panels(self.somatic_cnv_panels_domain_one.all()),
+            "somatic_cnv_domain_two": self.get_genes_and_panels(self.somatic_cnv_panels_domain_two.all())
         }
 
         return genes_and_panels_dict
@@ -185,14 +212,24 @@ class Indication(models.Model):
         somatic_tier_two = [
             gene for gene in genes_and_panels_dict["somatic_tier_two"]["genes"] if gene not in genes_and_panels_dict["somatic_tier_one"]["genes"]
         ]
+        somatic_cnv_domain_two = [
+            gene for gene in genes_and_panels_dict["somatic_cnv_domain_two"]["genes"] if gene not in genes_and_panels_dict["somatic_cnv_domain_one"]["genes"]
+        ]
         germline_tier_three = [
             gene for gene in genes_and_panels_dict["germline_tier_three"]["genes"] if gene not in genes_and_panels_dict["germline_tier_one"]["genes"]
+        ]
+        germline_cnv_tier_three = [
+            gene for gene in genes_and_panels_dict["germline_cnv_tier_three"]["genes"] if gene not in genes_and_panels_dict["germline_cnv_tier_one"]["genes"]
         ]
         display_genes_dict = {
             "somatic_tier_one": sorted(genes_and_panels_dict["somatic_tier_one"]["genes"]),
             "somatic_tier_two": sorted(somatic_tier_two),
+            "somatic_cnv_domain_one": sorted(genes_and_panels_dict["somatic_cnv_domain_one"]["genes"]),
+            "somatic_cnv_domain_two": somatic_cnv_domain_two,
             "germline_tier_one": sorted(genes_and_panels_dict["germline_tier_one"]["genes"]),
-            "germline_tier_three": sorted(germline_tier_three)
+            "germline_tier_three": sorted(germline_tier_three),
+            "germline_cnv_tier_one": sorted(genes_and_panels_dict["germline_cnv_tier_one"]["genes"]),
+            "germline_cnv_tier_three": sorted(germline_cnv_tier_three)
         }
 
         return display_genes_dict
