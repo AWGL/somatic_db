@@ -21,7 +21,7 @@ class Gene(models.Model):
     
     def __str__(self):
         return f"{self.gene}"
-    
+
 class Transcript(models.Model):
     """
     NCBI transcript identifiers
@@ -903,6 +903,12 @@ class CnvSv(models.Model):
     def __str__(self):
         return f"{self.variant}"
     
+    def get_all_genes(self):
+        all_genes = self.genes.all()
+        all_genes = [gene.gene for gene in all_genes]
+        all_genes.sort()
+        return list(set(all_genes))
+    
 class AbstractCnvInstance(AbstractVariantInstance):
     """
     Shared fields for germline and somatic CNVs
@@ -913,17 +919,91 @@ class AbstractCnvInstance(AbstractVariantInstance):
     maf = models.DecimalField(max_digits=4, decimal_places=3, null=True, blank=True)
     ncn = models.IntegerField(null=True, blank=True)
 
+    def display_genotype(self):
+        return self.gt
+    
+    def display_in_panel_genes(self, tier_or_domain):
+        cnv_genes = self.cnv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        genes_of_interest = all_genes_and_panels[tier_or_domain]["genes"]
+        genes_in_panel = [gene for gene in cnv_genes if gene in genes_of_interest]
+        print(genes_in_panel)
+        return list(set(genes_in_panel))
+
 class GermlineCnvInstance(AbstractCnvInstance):
     """
     Model for germline CNVs
     """
     vep_annotations = models.ManyToManyField("GermlineVEPAnnotations")
 
+    def display_in_tier_zero(self):
+        variant_genes = self.cnv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        indication_genes = all_genes_and_panels["germline_cnv_tier_zero"]["genes"]
+        if any(gene in variant_genes for gene in indication_genes):
+            return True
+        else:
+            return False
+
+    def display_in_tier_one(self):
+        """
+        Returns a Boolean for if a panel should be displayed in Tier 1
+        """
+        variant_genes = self.cnv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        indication_genes = all_genes_and_panels["germline_cnv_tier_one"]["genes"]
+        if any(gene in variant_genes for gene in indication_genes):
+            return True
+        else:
+            return False
+        
+    def display_in_tier_three(self):
+        variant_genes = self.cnv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        indication_genes = all_genes_and_panels["germline_cnv_tier_three"]["genes"]
+        if any(gene in variant_genes for gene in indication_genes):
+            return True
+        else:
+            return False
+
+        #for testing 
+        #return True
+
 class SomaticCnvInstance(AbstractCnvInstance):
     """
     Model for somatic CNVs
     """
     vep_annotations = models.ManyToManyField("SomaticVEPAnnotations")
+
+    def display_in_domain_zero(self):
+        variant_genes = self.cnv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        indication_genes = all_genes_and_panels["somatic_cnv_domain_zero"]["genes"]
+        if any(gene in variant_genes for gene in indication_genes):
+            return True
+        else:
+            return False
+
+    def display_in_domain_one(self):
+        """
+        Returns a Boolean for if a panel should be displayed in Tier 1
+        """
+        variant_genes = self.cnv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        indication_genes = all_genes_and_panels["somatic_cnv_domain_one"]["genes"]
+        if any(gene in variant_genes for gene in indication_genes):
+            return True
+        else:
+            return False
+        
+    def display_in_domain_two(self):
+        variant_genes = self.cnv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        indication_genes = all_genes_and_panels["somatic_cnv_domain_two"]["genes"]
+        if any(gene in variant_genes for gene in indication_genes):
+            return True
+        else:
+            return False
     
 class AbstractSvInstance(AbstractVariantInstance):
     """
@@ -941,6 +1021,9 @@ class GermlineSvInstance(AbstractSvInstance):
     Model for germline SVs
     """
     vep_annotations = models.ManyToManyField("GermlineVEPAnnotations")
+
+    def display_in_cnv_sv_tier_zero(self):
+        variant_gene = self.vep_annotations.first().transcript.gene
 
 class SomaticSvInstance(AbstractSvInstance):
     """

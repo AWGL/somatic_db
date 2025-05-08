@@ -115,7 +115,6 @@ class Command(BaseCommand):
             if cnv_snv_sv == "cnv" or cnv_snv_sv == "sv":
                 # find all the gene objects in the genes list
                 genes_list = []
-                print(variant_dict[f"abstract_{cnv_snv_sv}_instance"])
                 for gene in variant_dict[f"{cnv_snv_sv}"]["gene"]:
                     gene_obj, _ = Gene.objects.get_or_create(gene=gene)
                     genes_list.append(gene_obj)
@@ -123,11 +122,9 @@ class Command(BaseCommand):
                 # change the key name for model upload
                 variant_info["variant"] = variant_info[cnv_snv_sv]
                 variant_info.pop(cnv_snv_sv)
-                print(variant_info)
                 # get the SV/CNV type
                 cnv_sv_type_obj, _ = CnvSvType.objects.get_or_create(type=variant_info["type"])
                 variant_info["type"] = cnv_sv_type_obj
-                print(variant_info)
             
             variant_obj, created = variant_model.objects.get_or_create(**variant_dict[cnv_snv_sv])
 

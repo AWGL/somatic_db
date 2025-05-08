@@ -173,11 +173,13 @@ def view_patient_analysis(request, patient_analysis_id):
 
     # Germline SV/CNV Tiering
     germline_cnvs_query = GermlineCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+    germline_cnvs_tier_one, germline_cnvs_tier_three = germline_cnv_tiering(germline_cnvs_query)
     germline_svs_query = GermlineSvInstance.objects.filter(patient_analysis=patient_analysis_obj)
 
     # Somatic SV/CNV Tiering
     # Somatic Fusion Tiering
     somatic_cnvs_query = SomaticCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+    somatic_cnvs_domain_one, somatic_cnvs_domain_two = somatic_cnv_tiering(somatic_cnvs_query)
     somatic_svs_query = SomaticSvInstance.objects.filter(patient_analysis=patient_analysis_obj)
     
     context = {
@@ -187,8 +189,12 @@ def view_patient_analysis(request, patient_analysis_id):
         "patient_analysis_qc_dict": patient_analysis_qc_dict,
         "somatic_snvs_tier_one": somatic_snvs_tier_one,
         "somatic_snvs_tier_two": somatic_snvs_tier_two,
+        "somatic_cnvs_domain_one": somatic_cnvs_domain_one,
+        "somatic_cnvs_domain_two": somatic_cnvs_domain_two,
         "germline_snvs_tier_one": germline_snvs_tier_one,
         "germline_snvs_tier_three": germline_snvs_tier_three,
+        "germline_cnvs_tier_one": germline_cnvs_tier_one,
+        "germline_cnvs_tier_three": germline_cnvs_tier_three,
         "check_options": check_options
     }
 
