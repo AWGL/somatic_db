@@ -253,7 +253,7 @@ def germline_sv_tiering(germline_svs_query):
                 "id": id,
                 "var_type": var_type,
                 #"checks": checks,
-                "cnv_or_sv": "cnv",
+                "cnv_or_sv": "sv",
                 "caller": caller,
                 "svlen": svlen
             }
@@ -393,7 +393,7 @@ def somatic_sv_tiering(somatic_svs_query):
                 "id": id,
                 "var_type": var_type,
                 #"checks": checks,
-                "cnv_or_sv": "cnv",
+                "cnv_or_sv": "sv",
                 "caller": caller,
                 "svlen": svlen
             }
