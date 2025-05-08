@@ -176,10 +176,8 @@ def view_patient_analysis(request, patient_analysis_id):
     germline_cnvs_tier_one, germline_cnvs_tier_three = germline_cnv_tiering(germline_cnvs_query)
     # all SVs except BND - not looking for fusions
     germline_svs_query = GermlineSvInstance.objects.filter(patient_analysis=patient_analysis_obj, sv__type__type__in=["INS", "DEL", "DUP"])
-    print(germline_svs_query)
     germline_svs_tier_one, germline_svs_tier_three = germline_sv_tiering(germline_svs_query)
     germline_cnvs_tier_one += germline_svs_tier_one
-    print(germline_cnvs_tier_one)
     germline_cnvs_tier_three += germline_svs_tier_three
     # Somatic SV/CNV Tiering
     # Somatic Fusion Tiering
@@ -187,10 +185,12 @@ def view_patient_analysis(request, patient_analysis_id):
     somatic_cnvs_domain_one, somatic_cnvs_domain_two = somatic_cnv_tiering(somatic_cnvs_query)
     # all SVs except BND - not looking for fusions
     somatic_svs_query = SomaticSvInstance.objects.filter(patient_analysis=patient_analysis_obj, sv__type__type__in=["INS", "DEL", "DUP"])
-    print(somatic_svs_query)
     somatic_svs_domain_one, somatic_svs_domain_two = somatic_sv_tiering(somatic_svs_query)    
     somatic_cnvs_domain_one += somatic_svs_domain_one
     somatic_cnvs_domain_two += somatic_svs_domain_two
+    # fusions
+    somatic_fusions_query = Fusion.objects.filter(breakpoint1__patient_analysis=patient_analysis_obj)
+    fusions_domain_one, fusions_domain_two = fusion_tiering(somatic_fusions_query)
 
     context = {
         "form": download_csv_form,
@@ -201,6 +201,8 @@ def view_patient_analysis(request, patient_analysis_id):
         "somatic_snvs_tier_two": somatic_snvs_tier_two,
         "somatic_cnvs_domain_one": somatic_cnvs_domain_one,
         "somatic_cnvs_domain_two": somatic_cnvs_domain_two,
+        "fusions_domain_one": fusions_domain_one,
+        "fusions_domain_two": fusions_domain_two,
         "germline_snvs_tier_one": germline_snvs_tier_one,
         "germline_snvs_tier_three": germline_snvs_tier_three,
         "germline_cnvs_tier_one": germline_cnvs_tier_one,

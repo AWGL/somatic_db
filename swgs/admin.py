@@ -179,6 +179,12 @@ class SomaticSvInstanceAdmin(admin.ModelAdmin):
 
 admin.site.register(SomaticSvInstance, SomaticSvInstanceAdmin)
 
+class FusionAdmin(admin.ModelAdmin):
+    list_display = ["fusion_name", "breakpoint1", "breakpoint2"]
+    search_fields = ["fusion_name"]
+
+admin.site.register(Fusion, FusionAdmin)
+
 class VEPAnnotationsConsequenceAdmin(admin.ModelAdmin):
     list_display = ["consequence", "get_impact"]
     search_fields = ["consequence"]

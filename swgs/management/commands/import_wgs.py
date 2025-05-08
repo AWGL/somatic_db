@@ -35,7 +35,8 @@ class Command(BaseCommand):
         somatic_cnv_json = self.find_file(f"{directory}/*_somatic_cnv.json")
         germline_sv_json = self.find_file(f"{directory}/*_germline_sv.json")
         somatic_sv_json = self.find_file(f"{directory}/*_somatic_sv.json")
-        return patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json
+        somatic_fusion_json = self.find_file(f"{directory}/*_somatic_fusion.json")
+        return patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json, somatic_fusion_json
 
     def update_vep_annotations(self, vep_annotations_model, vep_dictionary, transcript):
         """
@@ -145,12 +146,37 @@ class Command(BaseCommand):
                 # Add VEP annotations to germline variant instance
                 cnv_sv_instance_obj.vep_annotations.add(germline_vep_annotations_obj)
 
+    def update_fusion_obj(self, somatic_fusion_json, patient_analysis_obj):
+        """
+        Creates the models for somatic fusions to link two breakends
+        """
+
+        with open(somatic_fusion_json) as f:
+            all_fusions = json.load(f)
+
+        for fusion in all_fusions:
+            breakpoint_obj_1 = SomaticSvInstance.objects.get(sv__variant=fusion["sv"], patient_analysis=patient_analysis_obj)
+            if len(breakpoint_obj_1.sv.get_all_genes()) > 1:
+                gene_1 = "|".join(breakpoint_obj_1.sv.get_all_genes())
+            else:
+                gene_1 = breakpoint_obj_1.sv.get_all_genes()[0]
+            breakpoint_obj_2 = SomaticSvInstance.objects.get(sv__variant=fusion["mate"], patient_analysis=patient_analysis_obj)
+            if len(breakpoint_obj_2.sv.get_all_genes()) > 1:
+                gene_2 = "|".join(breakpoint_obj_2.sv.get_all_genes())
+            else:
+                gene_2 = breakpoint_obj_2.sv.get_all_genes()[0]
+
+            # create new fusion object
+            #TODO make naming be good
+            fusion_name = f"{gene_1}::{gene_2}"
+            Fusion.objects.create(fusion_name=fusion_name, breakpoint1=breakpoint_obj_1, breakpoint2=breakpoint_obj_2, fusion_type=fusion["fusion_type"])
+
         
     @transaction.atomic
     def handle(self, *args, **options):
 
         # get arguments from options
-        patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json = self.find_all_files(options["directory"])
+        patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json, somatic_fusion_json = self.find_all_files(options["directory"])
 
         # load in the patient info json
         with open(patient_json, "r") as f:
@@ -226,7 +252,6 @@ class Command(BaseCommand):
         self.update_variant_obj(germline_sv_json, "sv", CnvSv, GermlineSvInstance, GermlineVEPAnnotations, genome_build_obj, patient_analysis_obj)
         # update somatic svs
         self.update_variant_obj(somatic_sv_json, "sv", CnvSv, SomaticSvInstance, SomaticVEPAnnotations, genome_build_obj, patient_analysis_obj)
-
-
-        #TODO somatic fusions
+        # update somatic fusions
+        self.update_fusion_obj(somatic_fusion_json, patient_analysis_obj)
             

@@ -891,6 +891,7 @@ class CnvSv(models.Model):
 
     id = models.AutoField(primary_key=True)
     variant = models.CharField(max_length=200)
+    chrom_pos = models.CharField(max_length=200)
     genome_build = models.ForeignKey("GenomeBuild", on_delete=models.CASCADE)
     type = models.ForeignKey("CnvSvType", on_delete=models.CASCADE)
     svlen = models.IntegerField(null=True, blank=True)
@@ -898,7 +899,7 @@ class CnvSv(models.Model):
     caller = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
-        unique_together = ["variant", "svlen"]
+        unique_together = ["variant", "svlen", "chrom_pos", "type", "caller"]
 
     def __str__(self):
         return f"{self.variant}"
@@ -1100,18 +1101,12 @@ class Fusion(models.Model):
     """
     id = models.AutoField(primary_key=True)
     fusion_name = models.CharField(max_length=200)
-    breakpoint1 = models.ForeignKey("CnvSv", on_delete=models.CASCADE, related_name="breakpoint1")
-    breakpoint2 = models.ForeignKey("CnvSv", on_delete=models.CASCADE, related_name="breakpoint2")
+    breakpoint1 = models.ForeignKey("SomaticSvInstance", on_delete=models.CASCADE, related_name="breakpoint1")
+    breakpoint2 = models.ForeignKey("SomaticSvInstance", on_delete=models.CASCADE, related_name="breakpoint2")
+    fusion_type = models.CharField(max_length=5, null=True, blank=True)
 
     class Meta:
         unique_together = ["breakpoint1", "breakpoint2"]
-
-class FusionInstance(models.Model):
-    """
-    A fusion instance for the somatic sample only
-    """
-    id = models.AutoField(primary_key=True)
-    fusion = models.ForeignKey("Fusion", on_delete=models.CASCADE)
 
 
 ##############
