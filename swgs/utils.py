@@ -364,8 +364,8 @@ def somatic_sv_tiering(somatic_svs_query):
         vep_annotations = v.vep_annotations.first()
         hgvsc = vep_annotations.hgvsc
         hgvsp = vep_annotations.hgvsp
-        genes_tier_one = v.display_in_panel_genes("somatic_cnv_domain_one")
-        genes_tier_three = v.display_in_panel_genes("somatic_cnv_domain_two")
+        genes_domain_one = v.display_in_panel_genes("somatic_cnv_domain_one")
+        genes_domain_two = v.display_in_panel_genes("somatic_cnv_domain_two")
         consequences = vep_annotations.consequence.all()
         impacts = list(set(consequence.impact.impact for consequence in consequences))
         consequences = [c.consequence for c in consequences]
@@ -386,8 +386,8 @@ def somatic_sv_tiering(somatic_svs_query):
                 "somatic_score": somatic_score,
                 "hgvsc": hgvsc,
                 "hgvsp": hgvsp,
-                "genes_tier_one": genes_tier_one,
-                "genes_tier_three": genes_tier_three,
+                "genes_domain_one": genes_domain_one,
+                "genes_domain_two": genes_domain_two,
                 "consequence": consequences_formatted,
                 "status": status,
                 "id": id,
