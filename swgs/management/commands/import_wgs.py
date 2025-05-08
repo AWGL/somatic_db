@@ -128,7 +128,7 @@ class Command(BaseCommand):
             
             variant_obj, created = variant_model.objects.get_or_create(**variant_dict[cnv_snv_sv])
 
-            if cnv_snv_sv == "cnv" or "cnv_snv_sv" == "sv":
+            if cnv_snv_sv == "cnv" or cnv_snv_sv == "sv":
                 for gene in genes_list:
                     variant_obj.genes.add(gene)
 

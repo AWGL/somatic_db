@@ -927,7 +927,6 @@ class AbstractCnvInstance(AbstractVariantInstance):
         all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
         genes_of_interest = all_genes_and_panels[tier_or_domain]["genes"]
         genes_in_panel = [gene for gene in cnv_genes if gene in genes_of_interest]
-        print(genes_in_panel)
         return list(set(genes_in_panel))
 
 class GermlineCnvInstance(AbstractCnvInstance):
@@ -1016,20 +1015,84 @@ class AbstractSvInstance(AbstractVariantInstance):
     imprecise = models.BooleanField(default=False)
     somatic_score = models.IntegerField(null=True, blank=True)
 
+    def display_in_panel_genes(self, tier_or_domain):
+        sv_genes = self.sv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        genes_of_interest = all_genes_and_panels[tier_or_domain]["genes"]
+        genes_in_panel = [gene for gene in sv_genes if gene in genes_of_interest]
+        return list(set(genes_in_panel))
+
 class GermlineSvInstance(AbstractSvInstance):
     """
     Model for germline SVs
     """
     vep_annotations = models.ManyToManyField("GermlineVEPAnnotations")
 
-    def display_in_cnv_sv_tier_zero(self):
-        variant_gene = self.vep_annotations.first().transcript.gene
+    def display_in_tier_zero(self):
+        variant_genes = self.sv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        indication_genes = all_genes_and_panels["germline_cnv_tier_zero"]["genes"]
+        if any(gene in variant_genes for gene in indication_genes):
+            return True
+        else:
+            return False
+
+    def display_in_tier_one(self):
+        """
+        Returns a Boolean for if a panel should be displayed in Tier 1
+        """
+        variant_genes = self.sv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        indication_genes = all_genes_and_panels["germline_cnv_tier_one"]["genes"]
+        if any(gene in variant_genes for gene in indication_genes):
+            return True
+        else:
+            return False
+        
+    def display_in_tier_three(self):
+        variant_genes = self.sv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        indication_genes = all_genes_and_panels["germline_cnv_tier_three"]["genes"]
+        if any(gene in variant_genes for gene in indication_genes):
+            return True
+        else:
+            return False
 
 class SomaticSvInstance(AbstractSvInstance):
     """
     Model for somatic SVs
     """
     vep_annotations = models.ManyToManyField("SomaticVEPAnnotations")
+
+    def display_in_domain_zero(self):
+        variant_genes = self.sv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        indication_genes = all_genes_and_panels["somatic_cnv_domain_zero"]["genes"]
+        if any(gene in variant_genes for gene in indication_genes):
+            return True
+        else:
+            return False
+
+    def display_in_domain_one(self):
+        """
+        Returns a Boolean for if a panel should be displayed in Tier 1
+        """
+        variant_genes = self.sv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        indication_genes = all_genes_and_panels["somatic_cnv_domain_one"]["genes"]
+        if any(gene in variant_genes for gene in indication_genes):
+            return True
+        else:
+            return False
+        
+    def display_in_domain_two(self):
+        variant_genes = self.sv.get_all_genes()
+        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        indication_genes = all_genes_and_panels["somatic_cnv_domain_two"]["genes"]
+        if any(gene in variant_genes for gene in indication_genes):
+            return True
+        else:
+            return False
 
 class Fusion(models.Model):
     """

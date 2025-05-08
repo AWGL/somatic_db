@@ -174,14 +174,24 @@ def view_patient_analysis(request, patient_analysis_id):
     # Germline SV/CNV Tiering
     germline_cnvs_query = GermlineCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
     germline_cnvs_tier_one, germline_cnvs_tier_three = germline_cnv_tiering(germline_cnvs_query)
-    germline_svs_query = GermlineSvInstance.objects.filter(patient_analysis=patient_analysis_obj)
-
+    # all SVs except BND - not looking for fusions
+    germline_svs_query = GermlineSvInstance.objects.filter(patient_analysis=patient_analysis_obj, sv__type__type__in=["INS", "DEL", "DUP"])
+    print(germline_svs_query)
+    germline_svs_tier_one, germline_svs_tier_three = germline_sv_tiering(germline_svs_query)
+    germline_cnvs_tier_one += germline_svs_tier_one
+    print(germline_cnvs_tier_one)
+    germline_cnvs_tier_three += germline_svs_tier_three
     # Somatic SV/CNV Tiering
     # Somatic Fusion Tiering
     somatic_cnvs_query = SomaticCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
     somatic_cnvs_domain_one, somatic_cnvs_domain_two = somatic_cnv_tiering(somatic_cnvs_query)
-    somatic_svs_query = SomaticSvInstance.objects.filter(patient_analysis=patient_analysis_obj)
-    
+    # all SVs except BND - not looking for fusions
+    somatic_svs_query = SomaticSvInstance.objects.filter(patient_analysis=patient_analysis_obj, sv__type__type__in=["INS", "DEL", "DUP"])
+    print(somatic_svs_query)
+    somatic_svs_domain_one, somatic_svs_domain_two = somatic_sv_tiering(somatic_svs_query)    
+    somatic_cnvs_domain_one += somatic_svs_domain_one
+    somatic_cnvs_domain_two += somatic_svs_domain_two
+
     context = {
         "form": download_csv_form,
         "patient_analysis": patient_analysis_obj,

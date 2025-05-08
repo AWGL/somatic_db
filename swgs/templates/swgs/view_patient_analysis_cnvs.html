@@ -5,6 +5,7 @@
 <div class="container">
   <h3>CNVs for tumour sample {{ patient_analysis.tumour_sample.sample_id }} and germline sample {{ patient_analysis.germline_sample.sample_id }}</h3>
   <h5>CNVs have been filtered to panels only. Only in-panel genes are displayed, but large CNVs contain multiple genes.</h5>
+  <h5>This page includes both large CNVs called by the Dragen and small CNVs/SVs called by Manta</h5>
   <!-- <br>
   <br>
   <div class="float-right">
@@ -19,8 +20,7 @@
       <tr>
         <th class="col-md-4">Variant</th>
         <th class="col-md-5">Genes</th>
-        <th class="col-md-1">MAF</th>
-        <th class="col-md-2">GT | CN</th>
+        <th class="col-md-3">Call Information</th>
         <th class="col-md-4">Checks</th>
         <th class="col-md-2">Action</th>
       </tr>
@@ -42,8 +42,25 @@
             {% endfor %}
           {% endif %}
         </td>
-        <td>{{ v.maf }}</td>
-        <td>{{ v.gt }} | {{ v.cn }}</td>
+        <td>
+          <table>
+            <tbody>
+            <tr><strong>Caller: </strong>{{ v.caller }}</tr>
+            <tr><strong>SVLEN: </strong>{{ v.svlen }}</tr>
+            {% if v.cnv_or_sv == "cnv" %}
+              <tr><strong>MAF: </strong>{{ v.maf }}</tr>
+              <tr><strong>GT: </strong>{{ v.gt }}</tr>
+              <tr><strong>CN: </strong>{{ v.cn }}</tr>
+            {% else %}
+              <tr><strong>PR: </strong>{{ v.pr }}</tr>
+              <tr><strong>SR: </strong>{{ v.sr }}</tr>
+              <tr><strong>VF: </strong>{{ v.vf }}</tr>
+              <tr><strong>Imprecise: </strong>{{ v.imprecise }}</tr>
+              <tr><strong>Somatic Score: </strong>{{ v.somatic_score}}</tr>
+            {% endif %}
+          </tbody>
+          </table>
+        </td>
 
         <!-- {% if v.checks|length > 0 %}
         <td>
@@ -81,8 +98,7 @@
       <tr>
         <th class="col-md-4">Variant</th>
         <th class="col-md-5">Genes</th>
-        <th class="col-md-1">MAF</th>
-        <th class="col-md-2">GT | CN</th>
+        <th class="col-md-3">Call Information</th>
         <th class="col-md-4">Checks</th>
         <th class="col-md-2">Action</th>
       </tr>
@@ -104,8 +120,23 @@
                 {% endfor %}
             {% endif %}
             </td>
-        <td>{{ v.maf }}</td>
-        <td>{{ v.gt }} | {{ v.cn }}</td>
+            <td>
+              <table>
+                <tr><strong>Caller: </strong>{{ v.caller }}</tr>
+                <tr><strong>SVLEN: </strong>{{ v.svlen }}</tr>
+                {% if v.cnv_or_sv == "cnv" %}
+                  <tr><strong>MAF: </strong>{{ v.maf }}</tr>
+                  <tr><strong>GT: </strong>{{ v.gt }}</tr>
+                  <tr><strong>CN: </strong>{{ v.cn }}</tr>
+                {% else %}
+                  <tr><strong>PR: </strong>{{ v.pr }}</tr>
+                  <tr><strong>SR: </strong>{{ v.sr }}</tr>
+                  <tr><strong>VF: </strong>{{ v.vf }}</tr>
+                  <tr><strong>Imprecise: </strong>{{ v.imprecise }}</tr>
+                  <tr><strong>Somatic Score: </strong>{{ v.somatic_score}}</tr>
+                {% endif %}
+              </table>
+            </td>
 
         <!-- {% if v.checks|length > 0 %}
         <td>
@@ -154,15 +185,13 @@
       <tr>
         <th class="col-md-4">Variant</th>
         <th class="col-md-5">Genes</th>
-        <th class="col-md-1">MAF</th>
-        <th class="col-md-2">GT | CN</th>
+        <th class="col-md-3">Call Information</th>
         <th class="col-md-4">Checks</th>
         <th class="col-md-2">Action</th>
       </tr>
     </thead>
     <tbody>
       {% for v in germline_cnvs_tier_one %}
-      <tr>{{ v }}</tr>
       <tr>
         <!-- <td class="variant-id" style="display:none">{{ v.id }}</td>
         <td class="var-type" style="display:none">{{ v.var_type }}</td> -->
@@ -178,8 +207,23 @@
             {% endfor %}
           {% endif %}
         </td>
-        <td>{{ v.maf }}</td>
-        <td>{{ v.gt }} | {{ v.cn }}</td>
+        <td>
+          <table>
+            <tr><strong>Caller: </strong>{{ v.caller }}</tr>
+            <tr><strong>SVLEN: </strong>{{ v.svlen }}</tr>
+            {% if v.cnv_or_sv == "cnv" %}
+              <tr><strong>MAF: </strong>{{ v.maf }}</tr>
+              <tr><strong>GT: </strong>{{ v.gt }}</tr>
+              <tr><strong>CN: </strong>{{ v.cn }}</tr>
+            {% else %}
+              <tr><strong>PR: </strong>{{ v.pr }}</tr>
+              <tr><strong>SR: </strong>{{ v.sr }}</tr>
+              <tr><strong>VF: </strong>{{ v.vf }}</tr>
+              <tr><strong>Imprecise: </strong>{{ v.imprecise }}</tr>
+              <tr><strong>Somatic Score: </strong>{{ v.somatic_score}}</tr>
+            {% endif %}
+          </table>
+        </td>
 
         <!-- {% if v.checks|length > 0 %}
         <td>
@@ -217,8 +261,7 @@
       <tr>
         <th class="col-md-4">Variant</th>
         <th class="col-md-5">Genes</th>
-        <th class="col-md-1">MAF</th>
-        <th class="col-md-2">GT | CN</th>
+        <th class="col-md-3">Call Information</th>
         <th class="col-md-4">Checks</th>
         <th class="col-md-2">Action</th>
       </tr>
@@ -240,8 +283,23 @@
             {% endfor %}
           {% endif %}
         </td>
-        <td>{{ v.maf }}</td>
-        <td>{{ v.gt }} | {{ v.cn }}</td>
+        <td>
+          <table>
+            <tr><strong>Caller: </strong>{{ v.caller }}</tr>
+            <tr><strong>SVLEN: </strong>{{ v.svlen }}</tr>
+            {% if v.cnv_or_sv == "cnv" %}
+              <tr><strong>MAF: </strong>{{ v.maf }}</tr>
+              <tr><strong>GT: </strong>{{ v.gt }}</tr>
+              <tr><strong>CN: </strong>{{ v.cn }}</tr>
+            {% else %}
+              <tr><strong>PR: </strong>{{ v.pr }}</tr>
+              <tr><strong>SR: </strong>{{ v.sr }}</tr>
+              <tr><strong>VF: </strong>{{ v.vf }}</tr>
+              <tr><strong>Imprecise: </strong>{{ v.imprecise }}</tr>
+              <tr><strong>Somatic Score: </strong>{{ v.somatic_score}}</tr>
+            {% endif %}
+          </table>
+        </td>
 
         <!-- {% if v.checks|length > 0 %}
         <td>
