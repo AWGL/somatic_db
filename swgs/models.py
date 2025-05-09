@@ -676,33 +676,36 @@ class GermlineVariantInstance(AbstractSnvInstance):
     vep_annotations = models.ManyToManyField("GermlineVEPAnnotations")
 
     def display_in_tier_zero(self):
-        variant_gene = self.vep_annotations.first().transcript.gene
-        associated_panels = variant_gene.panels.all()
-        # if any of the associated panels are in a tier 0 panel, display
-        for panel in associated_panels:
-            if panel in self.patient_analysis.indication.germline_panels_tier_zero.all():
-                return True
+        for annotation in self.vep_annotations.all():
+            variant_gene = annotation.transcript.gene
+            associated_panels = variant_gene.panels.all()
+            # if any of the associated panels are in a tier 0 panel, display
+            for panel in associated_panels:
+                if panel in self.patient_analysis.indication.germline_panels_tier_zero.all():
+                    return True
         return False
 
     def display_in_tier_one(self):
         """
         Returns a Boolean for if a panel should be displayed in Tier 1
         """
-        variant_gene = self.vep_annotations.first().transcript.gene
-        associated_panels = variant_gene.panels.all()
-        # if any of the associated panels are in a tier 1 panel, display
-        for panel in associated_panels:
-            if panel in self.patient_analysis.indication.germline_panels_tier_one.all():
-                return True
+        for annotation in self.vep_annotations.all():
+            variant_gene = annotation.transcript.gene
+            associated_panels = variant_gene.panels.all()
+            # if any of the associated panels are in a tier 1 panel, display
+            for panel in associated_panels:
+                if panel in self.patient_analysis.indication.germline_panels_tier_one.all():
+                    return True
         return False
         
     def display_in_tier_three(self):
-        variant_gene = self.vep_annotations.first().transcript.gene
-        associated_panels = variant_gene.panels.all()
-        # if any of the associated panels are in a tier 3 panel, display
-        for panel in associated_panels:
-            if panel in self.patient_analysis.indication.germline_panels_tier_three.all():
-                return True
+        for annotation in self.vep_annotations.all():
+            variant_gene = annotation.transcript.gene
+            associated_panels = variant_gene.panels.all()
+            # if any of the associated panels are in a tier 3 panel, display
+            for panel in associated_panels:
+                if panel in self.patient_analysis.indication.germline_panels_tier_three.all():
+                    return True
         return False
     
     def force_display(self):
@@ -780,33 +783,36 @@ class SomaticVariantInstance(AbstractSnvInstance):
     vep_annotations = models.ManyToManyField("SomaticVEPAnnotations")
 
     def display_in_tier_zero(self):
-        variant_gene = self.vep_annotations.first().transcript.gene
-        associated_panels = variant_gene.panels.all()
-        # if any of the associated panels are in a tier 0 panel, display
-        for panel in associated_panels:
-            if panel in self.patient_analysis.indication.somatic_panels_tier_zero.all():
-                return True
+        for annotation in self.vep_annotations.all():
+            variant_gene = annotation.transcript.gene
+            associated_panels = variant_gene.panels.all()
+            # if any of the associated panels are in a tier 0 panel, display
+            for panel in associated_panels:
+                if panel in self.patient_analysis.indication.somatic_panels_tier_zero.all():
+                    return True
         return False
 
     def display_in_tier_one(self):
         """
         Returns a Boolean for if a panel should be displayed in Tier 1
         """
-        variant_gene = self.vep_annotations.first().transcript.gene
-        associated_panels = variant_gene.panels.all()
-        # if any of the associated panels are in a tier 1 panel, display
-        for panel in associated_panels:
-            if panel in self.patient_analysis.indication.somatic_panels_tier_one.all():
-                return True
+        for annotation in self.vep_annotations.all():
+            variant_gene = annotation.transcript.gene
+            associated_panels = variant_gene.panels.all()
+            # if any of the associated panels are in a tier 1 panel, display
+            for panel in associated_panels:
+                if panel in self.patient_analysis.indication.somatic_panels_tier_one.all():
+                    return True
         return False
         
     def display_in_tier_two(self):
-        variant_gene = self.vep_annotations.first().transcript.gene
-        associated_panels = variant_gene.panels.all()
-        # if any of the associated panels are in a tier 2 panel, display
-        for panel in associated_panels:
-            if panel in self.patient_analysis.indication.somatic_panels_tier_two.all():
-                return True
+        for annotation in self.vep_annotations.all():
+            variant_gene = annotation.transcript.gene
+            associated_panels = variant_gene.panels.all()
+            # if any of the associated panels are in a tier 2 panel, display
+            for panel in associated_panels:
+                if panel in self.patient_analysis.indication.somatic_panels_tier_two.all():
+                    return True
         return False
     
     def force_display(self):

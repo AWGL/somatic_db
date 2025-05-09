@@ -10,15 +10,24 @@ def somatic_snv_tiering(somatic_snvs_query):
         variant = v.variant.variant
         gnomad = v.gnomad_popmax_af
         vaf = float(v.af) * 100
-        vep_annotations = v.vep_annotations.first()
-        hgvsc = vep_annotations.hgvsc
-        hgvsp = vep_annotations.hgvsp
-        gene = vep_annotations.transcript.gene.gene
-        consequences = vep_annotations.consequence.all()
-        impacts = list(set(consequence.impact.impact for consequence in consequences))
-        consequences = [c.consequence for c in consequences]
+        all_vep_annotations = v.vep_annotations.all()
+        all_hgvsc = []
+        all_hgvsp = []
+        all_gene = []
+        all_consequences = []
+        for vep_annotation in all_vep_annotations:
+            all_hgvsc.append(vep_annotation.hgvsc)
+            all_hgvsp.append(vep_annotation.hgvsp)
+            all_gene.append(vep_annotation.transcript.gene.gene)
+            consequences = vep_annotation.consequence.all()
+            for consequence in consequences:
+                all_consequences.append(consequence)
+        impacts = list(set(consequence.impact.impact for consequence in all_consequences))
+        consequences = [c.consequence for c in all_consequences]
         consequences_formatted = [c.replace("_", " ") for c in consequences]
-        consequences_formatted = " | ".join(consequences)
+        consequences_formatted = " | ".join(list(set(consequences)))
+        hgvsc_formatted = " | ".join(all_hgvsc)
+        hgvsp_formatted = " | ".join(all_hgvsp)
         force_display = v.force_display()
         status = v.get_status_display()
         id = v.id
@@ -36,9 +45,9 @@ def somatic_snv_tiering(somatic_snvs_query):
                 "pk": variant,
                 "gnomad": gnomad_formatted,
                 "vaf": f"{vaf:.2f}",
-                "hgvsc": hgvsc,
-                "hgvsp": hgvsp,
-                "gene": gene,
+                "hgvsc": hgvsc_formatted,
+                "hgvsp": hgvsp_formatted,
+                "gene": list(set(all_gene)),
                 "consequence": consequences_formatted,
                 "force_display": force_display,
                 "status": status,
@@ -81,15 +90,24 @@ def germline_snv_tiering(germline_snvs_query):
         variant = v.variant.variant
         gnomad = v.gnomad_popmax_af
         vaf = float(v.af) * 100
-        vep_annotations = v.vep_annotations.first()
-        hgvsc = vep_annotations.hgvsc
-        hgvsp = vep_annotations.hgvsp
-        gene = vep_annotations.transcript.gene.gene
-        consequences = vep_annotations.consequence.all()
-        impacts = list(set(consequence.impact.impact for consequence in consequences))
-        consequences = [c.consequence for c in consequences]
+        all_vep_annotations = v.vep_annotations.all()
+        all_hgvsc = []
+        all_hgvsp = []
+        all_gene = []
+        all_consequences = []
+        for vep_annotation in all_vep_annotations:
+            all_hgvsc.append(vep_annotation.hgvsc)
+            all_hgvsp.append(vep_annotation.hgvsp)
+            all_gene.append(vep_annotation.transcript.gene.gene)
+            consequences = vep_annotation.consequence.all()
+            for consequence in consequences:
+                all_consequences.append(consequence)
+        impacts = list(set(consequence.impact.impact for consequence in all_consequences))
+        consequences = [c.consequence for c in all_consequences]
         consequences_formatted = [c.replace("_", " ") for c in consequences]
-        consequences_formatted = " | ".join(consequences)
+        consequences_formatted = " | ".join(list(set(consequences)))
+        hgvsc_formatted = " | ".join(all_hgvsc)
+        hgvsp_formatted = " | ".join(all_hgvsp)
         force_display = v.force_display()
         status = v.get_status_display()
         id = v.id
@@ -107,9 +125,9 @@ def germline_snv_tiering(germline_snvs_query):
                 "pk": variant,
                 "gnomad": gnomad_formatted,
                 "vaf": f"{vaf:.2f}",
-                "hgvsc": hgvsc,
-                "hgvsp": hgvsp,
-                "gene": gene,
+                "hgvsc": hgvsc_formatted,
+                "hgvsp": hgvsp_formatted,
+                "gene": list(set(all_gene)),
                 "consequence": consequences_formatted,
                 "force_display": force_display,
                 "status": status,
@@ -155,16 +173,26 @@ def germline_cnv_tiering(germline_cnvs_query):
             maf = f"{(float(v.maf)*100):.1f}%"
         except TypeError:
             maf = "N/A"
-        vep_annotations = v.vep_annotations.first()
-        hgvsc = vep_annotations.hgvsc
-        hgvsp = vep_annotations.hgvsp
         genes_tier_one = v.display_in_panel_genes("germline_cnv_tier_one")
         genes_tier_three = v.display_in_panel_genes("germline_cnv_tier_three")
-        consequences = vep_annotations.consequence.all()
-        impacts = list(set(consequence.impact.impact for consequence in consequences))
-        consequences = [c.consequence for c in consequences]
+        all_vep_annotations = v.vep_annotations.all()
+        all_hgvsc = []
+        all_hgvsp = []
+        all_gene = []
+        all_consequences = []
+        for vep_annotation in all_vep_annotations:
+            all_hgvsc.append(vep_annotation.hgvsc)
+            all_hgvsp.append(vep_annotation.hgvsp)
+            all_gene.append(vep_annotation.transcript.gene.gene)
+            consequences = vep_annotation.consequence.all()
+            for consequence in consequences:
+                all_consequences.append(consequence)
+        impacts = list(set(consequence.impact.impact for consequence in all_consequences))
+        consequences = [c.consequence for c in all_consequences]
         consequences_formatted = [c.replace("_", " ") for c in consequences]
-        consequences_formatted = " | ".join(consequences)
+        consequences_formatted = " | ".join(list(set(consequences)))
+        hgvsc_formatted = " | ".join(all_hgvsc)
+        hgvsp_formatted = " | ".join(all_hgvsp)
         status = v.get_status_display()
         id = v.id
         var_type = "germline"
@@ -176,8 +204,8 @@ def germline_cnv_tiering(germline_cnvs_query):
                 "gt": gt,
                 "cn": cn,
                 "maf": maf,
-                "hgvsc": hgvsc,
-                "hgvsp": hgvsp,
+                "hgvsc": hgvsc_formatted,
+                "hgvsp": hgvsp_formatted,
                 "genes_tier_one": genes_tier_one,
                 "genes_tier_three": genes_tier_three,
                 "consequence": consequences_formatted,
@@ -221,16 +249,26 @@ def germline_sv_tiering(germline_svs_query):
         vf = v.vf
         imprecise = v.imprecise
         somatic_score = v.somatic_score
-        vep_annotations = v.vep_annotations.first()
-        hgvsc = vep_annotations.hgvsc
-        hgvsp = vep_annotations.hgvsp
         genes_tier_one = v.display_in_panel_genes("germline_cnv_tier_one")
         genes_tier_three = v.display_in_panel_genes("germline_cnv_tier_three")
-        consequences = vep_annotations.consequence.all()
-        impacts = list(set(consequence.impact.impact for consequence in consequences))
-        consequences = [c.consequence for c in consequences]
+        all_vep_annotations = v.vep_annotations.all()
+        all_hgvsc = []
+        all_hgvsp = []
+        all_gene = []
+        all_consequences = []
+        for vep_annotation in all_vep_annotations:
+            all_hgvsc.append(vep_annotation.hgvsc)
+            all_hgvsp.append(vep_annotation.hgvsp)
+            all_gene.append(vep_annotation.transcript.gene.gene)
+            consequences = vep_annotation.consequence.all()
+            for consequence in consequences:
+                all_consequences.append(consequence)
+        impacts = list(set(consequence.impact.impact for consequence in all_consequences))
+        consequences = [c.consequence for c in all_consequences]
         consequences_formatted = [c.replace("_", " ") for c in consequences]
-        consequences_formatted = " | ".join(consequences)
+        consequences_formatted = " | ".join(list(set(consequences)))
+        hgvsc_formatted = " | ".join(all_hgvsc)
+        hgvsp_formatted = " | ".join(all_hgvsp)
         status = v.get_status_display()
         id = v.id
         var_type = "germline"
@@ -244,8 +282,8 @@ def germline_sv_tiering(germline_svs_query):
                 "vf": vf,
                 "imprecise": imprecise,
                 "somatic_score": somatic_score,
-                "hgvsc": hgvsc,
-                "hgvsp": hgvsp,
+                "hgvsc": hgvsc_formatted,
+                "hgvsp": hgvsp_formatted,
                 "genes_tier_one": genes_tier_one,
                 "genes_tier_three": genes_tier_three,
                 "consequence": consequences_formatted,
@@ -294,16 +332,26 @@ def somatic_cnv_tiering(somatic_cnvs_query):
             maf = f"{(float(v.maf)*100):.1f}%"
         except TypeError:
             maf = "N/A"
-        vep_annotations = v.vep_annotations.first()
-        hgvsc = vep_annotations.hgvsc
-        hgvsp = vep_annotations.hgvsp
         genes_domain_one = v.display_in_panel_genes("somatic_cnv_domain_one")
         genes_domain_two = v.display_in_panel_genes("somatic_cnv_domain_two")
-        consequences = vep_annotations.consequence.all()
-        impacts = list(set(consequence.impact.impact for consequence in consequences))
-        consequences = [c.consequence for c in consequences]
+        all_vep_annotations = v.vep_annotations.all()
+        all_hgvsc = []
+        all_hgvsp = []
+        all_gene = []
+        all_consequences = []
+        for vep_annotation in all_vep_annotations:
+            all_hgvsc.append(vep_annotation.hgvsc)
+            all_hgvsp.append(vep_annotation.hgvsp)
+            all_gene.append(vep_annotation.transcript.gene.gene)
+            consequences = vep_annotation.consequence.all()
+            for consequence in consequences:
+                all_consequences.append(consequence)
+        impacts = list(set(consequence.impact.impact for consequence in all_consequences))
+        consequences = [c.consequence for c in all_consequences]
         consequences_formatted = [c.replace("_", " ") for c in consequences]
-        consequences_formatted = " | ".join(consequences)
+        consequences_formatted = " | ".join(list(set(consequences)))
+        hgvsc_formatted = " | ".join(all_hgvsc)
+        hgvsp_formatted = " | ".join(all_hgvsp)
         status = v.get_status_display()
         id = v.id
         var_type = "somatic"
@@ -315,8 +363,8 @@ def somatic_cnv_tiering(somatic_cnvs_query):
                 "gt": gt,
                 "cn": cn,
                 "maf": maf,
-                "hgvsc": hgvsc,
-                "hgvsp": hgvsp,
+                "hgvsc": hgvsc_formatted,
+                "hgvsp": hgvsp_formatted,
                 "genes_domain_one": genes_domain_one,
                 "genes_domain_two": genes_domain_two,
                 "consequence": consequences_formatted,
@@ -361,16 +409,26 @@ def somatic_sv_tiering(somatic_svs_query):
         vf = v.vf
         imprecise = v.imprecise
         somatic_score = v.somatic_score
-        vep_annotations = v.vep_annotations.first()
-        hgvsc = vep_annotations.hgvsc
-        hgvsp = vep_annotations.hgvsp
         genes_domain_one = v.display_in_panel_genes("somatic_cnv_domain_one")
         genes_domain_two = v.display_in_panel_genes("somatic_cnv_domain_two")
-        consequences = vep_annotations.consequence.all()
-        impacts = list(set(consequence.impact.impact for consequence in consequences))
-        consequences = [c.consequence for c in consequences]
+        all_vep_annotations = v.vep_annotations.all()
+        all_hgvsc = []
+        all_hgvsp = []
+        all_gene = []
+        all_consequences = []
+        for vep_annotation in all_vep_annotations:
+            all_hgvsc.append(vep_annotation.hgvsc)
+            all_hgvsp.append(vep_annotation.hgvsp)
+            all_gene.append(vep_annotation.transcript.gene.gene)
+            consequences = vep_annotation.consequence.all()
+            for consequence in consequences:
+                all_consequences.append(consequence)
+        impacts = list(set(consequence.impact.impact for consequence in all_consequences))
+        consequences = [c.consequence for c in all_consequences]
         consequences_formatted = [c.replace("_", " ") for c in consequences]
-        consequences_formatted = " | ".join(consequences)
+        consequences_formatted = " | ".join(list(set(consequences)))
+        hgvsc_formatted = " | ".join(all_hgvsc)
+        hgvsp_formatted = " | ".join(all_hgvsp)
         status = v.get_status_display()
         id = v.id
         var_type = "somatic"
@@ -384,8 +442,8 @@ def somatic_sv_tiering(somatic_svs_query):
                 "vf": vf,
                 "imprecise": imprecise,
                 "somatic_score": somatic_score,
-                "hgvsc": hgvsc,
-                "hgvsp": hgvsp,
+                "hgvsc": hgvsc_formatted,
+                "hgvsp": hgvsp_formatted,
                 "genes_domain_one": genes_domain_one,
                 "genes_domain_two": genes_domain_two,
                 "consequence": consequences_formatted,

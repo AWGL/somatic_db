@@ -45,7 +45,13 @@
           <td>{{ v.pk }}</br>{{ v.consequence }}</td>
         {% endif %}
         <td>{{ v.hgvsc }}</br>{{ v.hgvsp }}</td>
-        <td>{{ v.gene }}</td>
+        <td>
+          {% for gene in v.gene %}
+          <a class="badge badge-info">
+            {{ gene }}
+          </a>
+          {% endfor %}
+        </td>
         <td>{{ v.vaf }}%</td>
         <td>{{ v.gnomad }}</td>
         
@@ -103,7 +109,13 @@
           <td>{{ v.pk }}</br>{{ v.consequence }}</td>
         {% endif %}
         <td>{{ v.hgvsc }}</br>{{ v.hgvsp }}</td>
-        <td>{{ v.gene }}</td>
+        <td>
+          {% for gene in v.gene %}
+          <a class="badge badge-info">
+            {{ gene }}
+          </a>
+          {% endfor %}
+        </td>
         <td>{{ v.vaf }}%</td>
         <td>{{ v.gnomad }}</td>
 
@@ -163,7 +175,13 @@
           <td>{{ v.pk }}</br>{{ v.consequence }}</td>
         {% endif %}
         <td>{{ v.hgvsc }}</br>{{ v.hgvsp }}</td>
-        <td>{{ v.gene }}</td>
+        <td>
+          {% for gene in v.gene %}
+          <a class="badge badge-info">
+            {{ gene }}
+          </a>
+          {% endfor %}
+        </td>
         <td>{{ v.vaf }}%</td>
         <td>{{ v.gnomad }}</td>
 
@@ -221,7 +239,13 @@
           <td>{{ v.pk }}</br>{{ v.consequence }}</td>
         {% endif %}
         <td>{{ v.hgvsc }}</br>{{ v.hgvsp }}</td>
-        <td>{{ v.gene }}</td>
+        <td>
+          {% for gene in v.gene %}
+          <a class="badge badge-info">
+            {{ gene }}
+          </a>
+          {% endfor %}
+        </td>
         <td>{{ v.vaf }}%</td>
         <td>{{ v.gnomad }}</td>
 
