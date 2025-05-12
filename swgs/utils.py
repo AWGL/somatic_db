@@ -165,7 +165,10 @@ def germline_cnv_tiering(germline_cnvs_query):
 
     for v in germline_cnvs_query:
         variant = v.cnv.variant
-        svlen = v.cnv.svlen
+        try:
+            svlen = abs(v.cnv.svlen)
+        except TypeError:
+            svlen = v.cnv.svlen
         caller = v.cnv.caller
         gt = v.display_genotype()
         cn = v.cn
@@ -242,7 +245,10 @@ def germline_sv_tiering(germline_svs_query):
 
     for v in germline_svs_query:
         variant = v.sv.variant
-        svlen = v.sv.svlen
+        try:
+            svlen = abs(v.sv.svlen)
+        except TypeError:
+            svlen = v.sv.svlen
         caller = v.sv.caller
         pr = v.pr
         sr = v.sr
@@ -324,7 +330,10 @@ def somatic_cnv_tiering(somatic_cnvs_query):
 
     for v in somatic_cnvs_query:
         variant = v.cnv.variant
-        svlen = v.cnv.svlen
+        try:
+            svlen = abs(v.cnv.svlen)
+        except TypeError:
+            svlen = v.cnv.svlen
         caller = v.cnv.caller
         gt = v.display_genotype()
         cn = v.cn
@@ -402,7 +411,10 @@ def somatic_sv_tiering(somatic_svs_query):
 
     for v in somatic_svs_query:
         variant = v.sv.variant
-        svlen = v.sv.svlen
+        try:
+            svlen = abs(v.sv.svlen)
+        except TypeError:
+            svlen = v.sv.svlen
         caller = v.sv.caller
         pr = v.pr
         sr = v.sr
