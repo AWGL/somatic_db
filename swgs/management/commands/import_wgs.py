@@ -1,3 +1,4 @@
+import datetime
 import glob
 import json
 
@@ -106,6 +107,8 @@ class Command(BaseCommand):
         with open(variant_json) as f:
             all_variants = json.load(f)
 
+        print(f"Updating {len(all_variants)} variants")
+
         # loop through the germline CNV/SVs and add to the database
         for variant_dict in all_variants:
             
@@ -156,24 +159,26 @@ class Command(BaseCommand):
 
         for fusion in all_fusions:
             breakpoint_obj_1 = SomaticSvInstance.objects.get(sv__variant=fusion["sv"], patient_analysis=patient_analysis_obj)
-            if len(breakpoint_obj_1.sv.get_all_genes()) > 1:
-                gene_1 = "|".join(breakpoint_obj_1.sv.get_all_genes())
-            else:
-                gene_1 = breakpoint_obj_1.sv.get_all_genes()[0]
+            # if len(breakpoint_obj_1.sv.get_all_genes()) > 1:
+            #     gene_1 = "|".join(breakpoint_obj_1.sv.get_all_genes())
+            # else:
+            #     gene_1 = breakpoint_obj_1.sv.get_all_genes()[0]
             breakpoint_obj_2 = SomaticSvInstance.objects.get(sv__variant=fusion["mate"], patient_analysis=patient_analysis_obj)
-            if len(breakpoint_obj_2.sv.get_all_genes()) > 1:
-                gene_2 = "|".join(breakpoint_obj_2.sv.get_all_genes())
-            else:
-                gene_2 = breakpoint_obj_2.sv.get_all_genes()[0]
+            # if len(breakpoint_obj_2.sv.get_all_genes()) > 1:
+            #     gene_2 = "|".join(breakpoint_obj_2.sv.get_all_genes())
+            # else:
+            #     gene_2 = breakpoint_obj_2.sv.get_all_genes()[0]
 
             # create new fusion object
             #TODO make naming be good
-            fusion_name = f"{gene_1}::{gene_2}"
+            fusion_name = f"{breakpoint_obj_1.get_pick_gene()}::{breakpoint_obj_2.get_pick_gene()}"
             Fusion.objects.create(fusion_name=fusion_name, breakpoint1=breakpoint_obj_1, breakpoint2=breakpoint_obj_2, fusion_type=fusion["fusion_type"])
 
         
     @transaction.atomic
     def handle(self, *args, **options):
+
+        print(f"Importing WGS data {datetime.datetime.today()}")
 
         # get arguments from options
         patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json, somatic_fusion_json = self.find_all_files(options["directory"])
@@ -181,6 +186,9 @@ class Command(BaseCommand):
         # load in the patient info json
         with open(patient_json, "r") as f:
             patient_info_dict = json.load(f)
+        
+        print(f"Importing data for {patient_info_dict['run_id']}")
+        print("Creating sample objects")
         
         # create a patient object with a standin NHS number - this can be input by the scientists in SVD
         patient_obj = Patient.objects.create()
@@ -211,6 +219,7 @@ class Command(BaseCommand):
                 quality_dict["status"] = "F"
         
         # get or create QC objects for each metric
+        print("Creating QC objects")
         qc_somatic_vaf_distribution_obj, created = QCSomaticVAFDistribution.objects.get_or_create(**overall_qc_dict["somatic_vaf_distribution"])
         qc_tumour_in_normal_contamination_obj, created = QCTumourInNormalContamination.objects.get_or_create(**overall_qc_dict["tinc"])
         qc_germline_cnv_quality_obj, created = QCGermlineCNVQuality.objects.get_or_create(**overall_qc_dict["germline_cnv_qc"])
@@ -220,7 +229,8 @@ class Command(BaseCommand):
         qc_relatedness_obj, created = QCRelatedness.objects.get_or_create(**overall_qc_dict["somalier_qc"])
         qc_tumour_purity_obj, created = QCTumourPurity.objects.get_or_create(**overall_qc_dict["tumour_purity"])
 
-        # get or create the patient analysis objcet
+        # get or create the patient analysis object
+        print("Creating patient analysis object")
         patient_analysis_obj, created = PatientAnalysis.objects.get_or_create(
             patient=patient_obj,
             tumour_sample=tumour_sample_obj,
@@ -241,17 +251,26 @@ class Command(BaseCommand):
         genome_build_obj, created = GenomeBuild.objects.get_or_create(genome_build="GRCh38")
 
         # update germline snvs
+        print("Updating germline SNVs")
         self.update_variant_obj(germline_snv_json, "snv", Variant, GermlineVariantInstance, GermlineVEPAnnotations, genome_build_obj, patient_analysis_obj)
         # update somatic snvs
+        print("Updating somatic SNVs")
         self.update_variant_obj(somatic_snv_json, "snv", Variant, SomaticVariantInstance, SomaticVEPAnnotations, genome_build_obj, patient_analysis_obj)
         # update germline cnvs
+        print("Updating germline CNVs")
         self.update_variant_obj(germline_cnv_json, "cnv", CnvSv, GermlineCnvInstance, GermlineVEPAnnotations, genome_build_obj, patient_analysis_obj)
         # update somatic cnvs
+        print("Updating somatic CNVs")
         self.update_variant_obj(somatic_cnv_json, "cnv", CnvSv, SomaticCnvInstance, SomaticVEPAnnotations, genome_build_obj, patient_analysis_obj)
         # update germline svs
+        print("Updating germline SVs")
         self.update_variant_obj(germline_sv_json, "sv", CnvSv, GermlineSvInstance, GermlineVEPAnnotations, genome_build_obj, patient_analysis_obj)
         # update somatic svs
+        print("Updating somatic SVs")
         self.update_variant_obj(somatic_sv_json, "sv", CnvSv, SomaticSvInstance, SomaticVEPAnnotations, genome_build_obj, patient_analysis_obj)
         # update somatic fusions
+        print("Updating somatic fusions")
         self.update_fusion_obj(somatic_fusion_json, patient_analysis_obj)
+
+        print("Update complete")
             

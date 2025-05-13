@@ -579,6 +579,10 @@ class AbstractVEPAnnotations(models.Model):
     hgvsp = models.CharField(max_length=100, null=True, blank=True)
     existing_variation = models.ManyToManyField("VEPAnnotationsExistingVariation")
     pubmed_id = models.ManyToManyField("VEPAnnotationsPubmed")
+    is_mane_select = models.BooleanField(null=True, blank= True)
+    is_mane_plus_clinical = models.BooleanField(null=True, blank=True)
+    is_pick = models.BooleanField(null=True, blank=True)
+    is_additional_transcript = models.BooleanField(null=True, blank=True)
 
     class Meta:
         abstract = True
@@ -674,7 +678,8 @@ class GermlineVariantInstance(AbstractSnvInstance):
     Germline SNV or small indel
     """
     vep_annotations = models.ManyToManyField("GermlineVEPAnnotations")
-
+    gt = models.CharField(max_length=10, null=True, blank=True)
+    
     def display_in_tier_zero(self):
         for annotation in self.vep_annotations.all():
             variant_gene = annotation.transcript.gene
@@ -898,6 +903,7 @@ class CnvSv(models.Model):
     id = models.AutoField(primary_key=True)
     variant = models.CharField(max_length=200)
     chrom_pos = models.CharField(max_length=200)
+    chrom_pos_end = models.CharField(max_length=200, null=True, blank=True)
     genome_build = models.ForeignKey("GenomeBuild", on_delete=models.CASCADE)
     type = models.ForeignKey("CnvSvType", on_delete=models.CASCADE)
     svlen = models.IntegerField(null=True, blank=True)
@@ -905,7 +911,7 @@ class CnvSv(models.Model):
     caller = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
-        unique_together = ["variant", "svlen", "chrom_pos", "type", "caller"]
+        unique_together = ["variant", "svlen", "chrom_pos", "chrom_pos_end", "type", "caller"]
 
     def __str__(self):
         return f"{self.variant}"
@@ -1100,6 +1106,21 @@ class SomaticSvInstance(AbstractSvInstance):
             return True
         else:
             return False
+        
+    def get_pick_gene(self):
+        mane_select = [v for v in self.vep_annotations.filter(is_mane_select=True)]
+        mane_select_plus_clinical = [v for v in self.vep_annotations.filter(is_mane_plus_clinical=True)]
+        additional_transcript = [v for v in self.vep_annotations.filter(is_additional_transcript=True)]
+        pick_transcript = [v for v in self.vep_annotations.filter(is_pick=True)]
+        if len(mane_select) > 0:
+            return mane_select[0].transcript.gene.gene
+        elif len(mane_select_plus_clinical) > 0:
+            return mane_select_plus_clinical[0].transcript.gene.gene
+        elif len(additional_transcript) > 0:
+            return mane_select_plus_clinical[0].transcript.gene.gene
+        else:
+            return pick_transcript[0].transcript.gene.gene
+        
 
 class Fusion(models.Model):
     """
