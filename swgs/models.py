@@ -671,6 +671,9 @@ class GermlineVariantInstance(AbstractSnvInstance):
     """
     vep_annotations = models.ManyToManyField("GermlineVEPAnnotations")
     gt = models.CharField(max_length=10, null=True, blank=True)
+    is_tier_zero = models.BooleanField(null=True, blank=True)
+    is_tier_one = models.BooleanField(null=True, blank=True)
+    is_tier_three = models.BooleanField(null=True, blank=True)
     
     def display_in_tier_zero(self):
         for annotation in self.vep_annotations.all():
@@ -778,8 +781,11 @@ class SomaticVariantInstance(AbstractSnvInstance):
     Somatic SNV or small indel
     """
     vep_annotations = models.ManyToManyField("SomaticVEPAnnotations")
+    is_domain_zero = models.BooleanField(null=True, blank=True)
+    is_domain_one = models.BooleanField(null=True, blank=True)
+    is_domain_two = models.BooleanField(null=True, blank=True)
 
-    def display_in_tier_zero(self):
+    def display_in_domain_zero(self):
         for annotation in self.vep_annotations.all():
             variant_gene = annotation.transcript.gene
             associated_panels = variant_gene.panels.all()
@@ -789,7 +795,7 @@ class SomaticVariantInstance(AbstractSnvInstance):
                     return True
         return False
 
-    def display_in_tier_one(self):
+    def display_in_domain_one(self):
         """
         Returns a Boolean for if a panel should be displayed in Tier 1
         """
@@ -802,7 +808,7 @@ class SomaticVariantInstance(AbstractSnvInstance):
                     return True
         return False
         
-    def display_in_tier_two(self):
+    def display_in_domain_two(self):
         for annotation in self.vep_annotations.all():
             variant_gene = annotation.transcript.gene
             associated_panels = variant_gene.panels.all()
@@ -939,7 +945,10 @@ class GermlineCnvInstance(AbstractCnvInstance):
     Model for germline CNVs
     """
     vep_annotations = models.ManyToManyField("GermlineVEPAnnotations")
-
+    is_tier_zero = models.BooleanField(null=True, blank=True)
+    is_tier_one = models.BooleanField(null=True, blank=True)
+    is_tier_three = models.BooleanField(null=True, blank=True)
+    
     def display_in_tier_zero(self):
         variant_genes = self.cnv.get_all_genes()
         all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
@@ -978,6 +987,9 @@ class SomaticCnvInstance(AbstractCnvInstance):
     Model for somatic CNVs
     """
     vep_annotations = models.ManyToManyField("SomaticVEPAnnotations")
+    is_domain_zero = models.BooleanField(null=True, blank=True)
+    is_domain_one = models.BooleanField(null=True, blank=True)
+    is_domain_two = models.BooleanField(null=True, blank=True)
 
     def display_in_domain_zero(self):
         variant_genes = self.cnv.get_all_genes()
@@ -1032,6 +1044,9 @@ class GermlineSvInstance(AbstractSvInstance):
     Model for germline SVs
     """
     vep_annotations = models.ManyToManyField("GermlineVEPAnnotations")
+    is_tier_zero = models.BooleanField(null=True, blank=True)
+    is_tier_one = models.BooleanField(null=True, blank=True)
+    is_tier_three = models.BooleanField(null=True, blank=True)
 
     def display_in_tier_zero(self):
         variant_genes = self.sv.get_all_genes()
@@ -1068,6 +1083,9 @@ class SomaticSvInstance(AbstractSvInstance):
     Model for somatic SVs
     """
     vep_annotations = models.ManyToManyField("SomaticVEPAnnotations")
+    is_domain_zero = models.BooleanField(null=True, blank=True)
+    is_domain_one = models.BooleanField(null=True, blank=True)
+    is_domain_two = models.BooleanField(null=True, blank=True)
 
     def display_in_domain_zero(self):
         variant_genes = self.sv.get_all_genes()
@@ -1123,9 +1141,30 @@ class Fusion(models.Model):
     breakpoint1 = models.ForeignKey("SomaticSvInstance", on_delete=models.CASCADE, related_name="breakpoint1")
     breakpoint2 = models.ForeignKey("SomaticSvInstance", on_delete=models.CASCADE, related_name="breakpoint2")
     fusion_type = models.CharField(max_length=5, null=True, blank=True)
+    is_domain_zero = models.BooleanField(null=True, blank=True)
+    is_domain_one = models.BooleanField(null=True, blank=True)
+    is_domain_two = models.BooleanField(null=True, blank=True)
 
     class Meta:
         unique_together = ["breakpoint1", "breakpoint2"]
+
+    def display_in_domain_zero(self):
+        if self.breakpoint1.display_in_domain_zero() or self.breakpoint2.display_in_domain_zero():
+            return True
+        else:
+            return False
+
+    def display_in_domain_one(self):
+        if self.breakpoint1.display_in_domain_one() or self.breakpoint2.display_in_domain_one():
+            return True
+        else:
+            return False
+        
+    def display_in_domain_two(self):
+        if self.breakpoint1.display_in_domain_two() or self.breakpoint2.display_in_domain_two():
+            return True
+        else:
+            return False
 
 ################
 ### Coverage ###

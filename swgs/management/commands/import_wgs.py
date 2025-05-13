@@ -167,6 +167,24 @@ class Command(BaseCommand):
             fusion_name = f"{breakpoint_obj_1.get_pick_gene()}::{breakpoint_obj_2.get_pick_gene()}"
             Fusion.objects.create(fusion_name=fusion_name, breakpoint1=breakpoint_obj_1, breakpoint2=breakpoint_obj_2, fusion_type=fusion["fusion_type"])
 
+    def tier_variant_instances(self, variant_instance_query, somatic_or_germline):
+        """
+        Tiers the variants and updates the model for easier page loading
+        """
+
+        if somatic_or_germline == "somatic":
+            for variant_instance in variant_instance_query:
+                variant_instance.is_domain_zero = variant_instance.display_in_domain_zero()
+                variant_instance.is_domain_zero = variant_instance.display_in_domain_one()
+                variant_instance.is_domain_two = variant_instance.display_in_domain_two()
+                variant_instance.save()
+        elif somatic_or_germline == "germline":
+            for variant_instance in variant_instance_query:
+                variant_instance.is_tier_zero = variant_instance.display_in_tier_zero()
+                variant_instance.is_tier_one = variant_instance.display_in_tier_one()
+                variant_instance.is_tier_three = variant_instance.display_in_tier_three()
+                variant_instance.save()
+
     def update_coverage_obj(self, coverage_json, patient_analysis_obj):
         """
         Creates the models for coverage instances
@@ -264,24 +282,45 @@ class Command(BaseCommand):
         # update germline snvs
         print("Updating germline SNVs")
         self.update_variant_obj(germline_snv_json, "snv", Variant, GermlineVariantInstance, GermlineVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        print("Tiering germline SNVs")
+        germline_variant_instances = GermlineVariantInstance.objects.filter(patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(germline_variant_instances, "germline")
         # update somatic snvs
         print("Updating somatic SNVs")
         self.update_variant_obj(somatic_snv_json, "snv", Variant, SomaticVariantInstance, SomaticVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        print("Tiering somatic SNVs")
+        somatic_variant_instances = SomaticVariantInstance.objects.filter(patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(somatic_variant_instances, "somatic")
         # update germline cnvs
         print("Updating germline CNVs")
         self.update_variant_obj(germline_cnv_json, "cnv", CnvSv, GermlineCnvInstance, GermlineVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        print("Tiering germline CNVs")
+        germline_cnv_instances = GermlineCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(germline_cnv_instances, "germline")
         # update somatic cnvs
         print("Updating somatic CNVs")
         self.update_variant_obj(somatic_cnv_json, "cnv", CnvSv, SomaticCnvInstance, SomaticVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        print("Tiering somatic CNVs")
+        somatic_cnv_instances = SomaticCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(somatic_cnv_instances, "somatic")
         # update germline svs
         print("Updating germline SVs")
         self.update_variant_obj(germline_sv_json, "sv", CnvSv, GermlineSvInstance, GermlineVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        print("Tiering germline SVs")
+        germline_sv_instances = GermlineSvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(germline_sv_instances, "germline")
         # update somatic svs
         print("Updating somatic SVs")
         self.update_variant_obj(somatic_sv_json, "sv", CnvSv, SomaticSvInstance, SomaticVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        print("Tiering somatic SVs")
+        somatic_sv_instances = SomaticSvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(somatic_sv_instances, "somatic")
         # update somatic fusions
         print("Updating somatic fusions")
         self.update_fusion_obj(somatic_fusion_json, patient_analysis_obj)
+        print("Tiering somatic fusions")
+        somatic_fusion_instances = Fusion.objects.filter(breakpoint1__patient_analysis=patient_analysis_obj, breakpoint2__patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(somatic_fusion_instances, "somatic")
 
-        print("Update complete")
+        print("Upload complete")
             

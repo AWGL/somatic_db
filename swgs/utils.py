@@ -63,13 +63,13 @@ def somatic_snv_tiering(somatic_snvs_query):
                 continue
 
         # Put in tier list
-        if v.display_in_tier_zero():
+        if v.is_domain_zero:
             variant_dict["tier"] = "0"
             somatic_snvs_tier_one.append(variant_dict)
-        elif v.display_in_tier_one():
+        elif v.is_domain_one:
             variant_dict["tier"] = "1"
             somatic_snvs_tier_one.append(variant_dict)
-        elif v.display_in_tier_two():
+        elif v.is_domain_two:
             variant_dict["tier"] = "2"
             somatic_snvs_tier_two.append(variant_dict)
         else:
@@ -142,13 +142,13 @@ def germline_snv_tiering(germline_snvs_query):
                 continue
 
         # Put in tier list
-        if v.display_in_tier_zero():
+        if v.is_tier_zero:
             variant_dict["tier"] = "0"
             germline_snvs_tier_one.append(variant_dict)
-        elif v.display_in_tier_one():
+        elif v.is_tier_one:
             variant_dict["tier"] = "1"
             germline_snvs_tier_one.append(variant_dict)
-        elif v.display_in_tier_three():
+        elif v.is_tier_three:
             variant_dict["tier"] = "3"
             germline_snvs_tier_three.append(variant_dict)
         else:
@@ -222,13 +222,13 @@ def germline_cnv_tiering(germline_cnvs_query):
             }
 
         # Put in tier list
-        if v.display_in_tier_zero():
+        if v.is_tier_zero:
             variant_dict["tier"] = "0"
             germline_cnvs_tier_one.append(variant_dict)
-        elif v.display_in_tier_one():
+        elif v.is_tier_one:
             variant_dict["tier"] = "1"
             germline_cnvs_tier_one.append(variant_dict)
-        elif v.display_in_tier_three():
+        elif v.is_tier_three:
             variant_dict["tier"] = "3"
             germline_cnvs_tier_three.append(variant_dict)
         else:
@@ -303,13 +303,13 @@ def germline_sv_tiering(germline_svs_query):
             }
 
         # Put in tier list
-        if v.display_in_tier_zero():
+        if v.is_tier_zero:
             variant_dict["tier"] = "0"
             germline_svs_tier_one.append(variant_dict)
-        elif v.display_in_tier_one():
+        elif v.is_tier_one:
             variant_dict["tier"] = "1"
             germline_svs_tier_one.append(variant_dict)
-        elif v.display_in_tier_three():
+        elif v.is_tier_three:
             variant_dict["tier"] = "3"
             germline_svs_tier_three.append(variant_dict)
         else:
@@ -383,13 +383,13 @@ def somatic_cnv_tiering(somatic_cnvs_query):
             }
 
         # Put in tier list
-        if v.display_in_domain_zero():
+        if v.is_domain_zero:
             variant_dict["tier"] = "0"
             somatic_cnvs_domain_one.append(variant_dict)
-        elif v.display_in_domain_one():
+        elif v.is_domain_one:
             variant_dict["tier"] = "1"
             somatic_cnvs_domain_one.append(variant_dict)
-        elif v.display_in_domain_two():
+        elif v.is_domain_two:
             variant_dict["tier"] = "2"
             somatic_cnvs_domain_two.append(variant_dict)
         else:
@@ -465,13 +465,13 @@ def somatic_sv_tiering(somatic_svs_query):
             }
 
         # Put in tier list
-        if v.display_in_domain_zero():
+        if v.is_domain_zero:
             variant_dict["tier"] = "0"
             somatic_svs_domain_one.append(variant_dict)
-        elif v.display_in_domain_one():
+        elif v.is_domain_one:
             variant_dict["tier"] = "1"
             somatic_svs_domain_one.append(variant_dict)
-        elif v.display_in_domain_two():
+        elif v.is_domain_two:
             variant_dict["tier"] = "2"
             somatic_svs_domain_two.append(variant_dict)
         else:
@@ -524,13 +524,13 @@ def fusion_tiering(somatic_fusions_query):
         }
 
         # Put in tier list
-        if f.breakpoint1.display_in_domain_zero() or f.breakpoint2.display_in_domain_zero():
+        if f.is_domain_zero:
             variant_dict["tier"] = "0"
             fusions_domain_one.append(variant_dict)
-        elif f.breakpoint1.display_in_domain_one() or f.breakpoint2.display_in_domain_one():
+        elif f.is_domain_one:
             variant_dict["tier"] = "1"
             fusions_domain_one.append(variant_dict)
-        elif f.breakpoint1.display_in_domain_two() or f.breakpoint2.display_in_domain_two():
+        elif f.is_domain_two:
             variant_dict["tier"] = "2"
             fusions_domain_two.append(variant_dict)
     
@@ -544,7 +544,7 @@ def display_coverage(coverage_query, indication_obj):
     gene_coverage = []
     #TODO handle threshold data better so it's flexible
     germline_threshold = 20
-    somatic_threshold = 100
+    somatic_threshold = 70
     #TODO filter this so it's in panel genes only
     _, all_genes = indication_obj.get_all_genes_and_panels()
     for coverage in coverage_query:
