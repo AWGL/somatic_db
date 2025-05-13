@@ -1623,7 +1623,7 @@
         "genome_build": 38,
         "lims_test_code": "TSO500DNA",
         "show_snvs": true,
-        "show_myeloid_gaps_summary": true,
+        "show_myeloid_gaps_summary": false,
         "depth_cutoffs": "135,270",
         "vaf_cutoff": "1.40000",
         "manual_review_required": false,
