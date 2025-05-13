@@ -205,7 +205,13 @@ class Indication(models.Model):
             "somatic_cnv_domain_two": self.get_genes_and_panels(self.somatic_cnv_panels_domain_two.all())
         }
 
-        return genes_and_panels_dict
+        # get a list of all genes over the indication for coverage
+        all_genes = []
+        for k, v in genes_and_panels_dict.items():
+            all_genes += v["genes"]
+        all_genes = list(set(all_genes))
+
+        return genes_and_panels_dict, all_genes
     
     @staticmethod
     def display_genes(genes_and_panels_dict):
@@ -441,20 +447,6 @@ class QCTumourPurity(AbstractQCCheck):
 
     class Meta:
         unique_together = ["status", "message", "tumour_purity"]
-
-################
-### Coverage ###
-################
-
-class GeneCoverage(models.Model):
-    """
-    Coverage information for a given gene
-    """
-    id = models.AutoField(primary_key=True)
-    gene = models.ForeignKey("Gene", on_delete=models.CASCADE)
-    is_germline = models.BooleanField()
-    mean_coverage = models.DecimalField(max_digits=7, decimal_places=1)
-    # threshold coverage
 
 ################
 ### Variants ###
@@ -937,7 +929,7 @@ class AbstractCnvInstance(AbstractVariantInstance):
     
     def display_in_panel_genes(self, tier_or_domain):
         cnv_genes = self.cnv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         genes_of_interest = all_genes_and_panels[tier_or_domain]["genes"]
         genes_in_panel = [gene for gene in cnv_genes if gene in genes_of_interest]
         return list(set(genes_in_panel))
@@ -950,7 +942,7 @@ class GermlineCnvInstance(AbstractCnvInstance):
 
     def display_in_tier_zero(self):
         variant_genes = self.cnv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         indication_genes = all_genes_and_panels["germline_cnv_tier_zero"]["genes"]
         if any(gene in variant_genes for gene in indication_genes):
             return True
@@ -962,7 +954,7 @@ class GermlineCnvInstance(AbstractCnvInstance):
         Returns a Boolean for if a panel should be displayed in Tier 1
         """
         variant_genes = self.cnv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         indication_genes = all_genes_and_panels["germline_cnv_tier_one"]["genes"]
         if any(gene in variant_genes for gene in indication_genes):
             return True
@@ -971,7 +963,7 @@ class GermlineCnvInstance(AbstractCnvInstance):
         
     def display_in_tier_three(self):
         variant_genes = self.cnv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         indication_genes = all_genes_and_panels["germline_cnv_tier_three"]["genes"]
         if any(gene in variant_genes for gene in indication_genes):
             return True
@@ -989,7 +981,7 @@ class SomaticCnvInstance(AbstractCnvInstance):
 
     def display_in_domain_zero(self):
         variant_genes = self.cnv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         indication_genes = all_genes_and_panels["somatic_cnv_domain_zero"]["genes"]
         if any(gene in variant_genes for gene in indication_genes):
             return True
@@ -1001,7 +993,7 @@ class SomaticCnvInstance(AbstractCnvInstance):
         Returns a Boolean for if a panel should be displayed in Tier 1
         """
         variant_genes = self.cnv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         indication_genes = all_genes_and_panels["somatic_cnv_domain_one"]["genes"]
         if any(gene in variant_genes for gene in indication_genes):
             return True
@@ -1010,7 +1002,7 @@ class SomaticCnvInstance(AbstractCnvInstance):
         
     def display_in_domain_two(self):
         variant_genes = self.cnv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         indication_genes = all_genes_and_panels["somatic_cnv_domain_two"]["genes"]
         if any(gene in variant_genes for gene in indication_genes):
             return True
@@ -1030,7 +1022,7 @@ class AbstractSvInstance(AbstractVariantInstance):
 
     def display_in_panel_genes(self, tier_or_domain):
         sv_genes = self.sv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         genes_of_interest = all_genes_and_panels[tier_or_domain]["genes"]
         genes_in_panel = [gene for gene in sv_genes if gene in genes_of_interest]
         return list(set(genes_in_panel))
@@ -1043,7 +1035,7 @@ class GermlineSvInstance(AbstractSvInstance):
 
     def display_in_tier_zero(self):
         variant_genes = self.sv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         indication_genes = all_genes_and_panels["germline_cnv_tier_zero"]["genes"]
         if any(gene in variant_genes for gene in indication_genes):
             return True
@@ -1055,7 +1047,7 @@ class GermlineSvInstance(AbstractSvInstance):
         Returns a Boolean for if a panel should be displayed in Tier 1
         """
         variant_genes = self.sv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         indication_genes = all_genes_and_panels["germline_cnv_tier_one"]["genes"]
         if any(gene in variant_genes for gene in indication_genes):
             return True
@@ -1064,7 +1056,7 @@ class GermlineSvInstance(AbstractSvInstance):
         
     def display_in_tier_three(self):
         variant_genes = self.sv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         indication_genes = all_genes_and_panels["germline_cnv_tier_three"]["genes"]
         if any(gene in variant_genes for gene in indication_genes):
             return True
@@ -1079,7 +1071,7 @@ class SomaticSvInstance(AbstractSvInstance):
 
     def display_in_domain_zero(self):
         variant_genes = self.sv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         indication_genes = all_genes_and_panels["somatic_cnv_domain_zero"]["genes"]
         if any(gene in variant_genes for gene in indication_genes):
             return True
@@ -1091,7 +1083,7 @@ class SomaticSvInstance(AbstractSvInstance):
         Returns a Boolean for if a panel should be displayed in Tier 1
         """
         variant_genes = self.sv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         indication_genes = all_genes_and_panels["somatic_cnv_domain_one"]["genes"]
         if any(gene in variant_genes for gene in indication_genes):
             return True
@@ -1100,7 +1092,7 @@ class SomaticSvInstance(AbstractSvInstance):
         
     def display_in_domain_two(self):
         variant_genes = self.sv.get_all_genes()
-        all_genes_and_panels = self.patient_analysis.indication.get_all_genes_and_panels()
+        all_genes_and_panels, _ = self.patient_analysis.indication.get_all_genes_and_panels()
         indication_genes = all_genes_and_panels["somatic_cnv_domain_two"]["genes"]
         if any(gene in variant_genes for gene in indication_genes):
             return True
@@ -1134,6 +1126,31 @@ class Fusion(models.Model):
 
     class Meta:
         unique_together = ["breakpoint1", "breakpoint2"]
+
+################
+### Coverage ###
+################
+
+class GeneCoverageInstance(models.Model):
+    """
+    Coverage information for a given gene
+    """
+    id = models.AutoField(primary_key=True)
+    gene = models.ForeignKey("Gene", on_delete=models.CASCADE)
+    patient_analysis = models.ForeignKey("PatientAnalysis", on_delete=models.CASCADE)
+    germline_average_depth = models.DecimalField(max_digits=7, decimal_places=2)
+    germline_threshold = models.IntegerField()
+    germline_gene_coverage = models.DecimalField(max_digits=5, decimal_places=2)
+    somatic_average_depth = models.DecimalField(max_digits=7, decimal_places=2)
+    somatic_threshold = models.IntegerField()
+    somatic_gene_coverage = models.DecimalField(max_digits=5, decimal_places=2)
+
+    class Meta:
+        unique_together = ["patient_analysis", "gene"]
+
+    def __str__(self):
+        return f"Coverage_{self.gene.gene}_{self.patient_analysis.germline_sample.sample_id}{self.patient_analysis.tumour_sample.sample_id}"
+
 
 
 ##############

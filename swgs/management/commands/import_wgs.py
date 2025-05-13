@@ -30,6 +30,7 @@ class Command(BaseCommand):
         
         patient_json = self.find_file(f"{directory}/*_patient_info.json")
         qc_json = self.find_file(f"{directory}/*_overall_qc.json")
+        coverage_json = self.find_file(f"{directory}*_coverage.json")
         germline_snv_json = self.find_file(f"{directory}/*_germline_snv.json")
         somatic_snv_json = self.find_file(f"{directory}/*_somatic_snv.json")
         germline_cnv_json = self.find_file(f"{directory}/*_germline_cnv.json")
@@ -37,7 +38,7 @@ class Command(BaseCommand):
         germline_sv_json = self.find_file(f"{directory}/*_germline_sv.json")
         somatic_sv_json = self.find_file(f"{directory}/*_somatic_sv.json")
         somatic_fusion_json = self.find_file(f"{directory}/*_somatic_fusion.json")
-        return patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json, somatic_fusion_json
+        return patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json, somatic_fusion_json, coverage_json
 
     def update_vep_annotations(self, vep_annotations_model, vep_dictionary, transcript):
         """
@@ -159,29 +160,35 @@ class Command(BaseCommand):
 
         for fusion in all_fusions:
             breakpoint_obj_1 = SomaticSvInstance.objects.get(sv__variant=fusion["sv"], patient_analysis=patient_analysis_obj)
-            # if len(breakpoint_obj_1.sv.get_all_genes()) > 1:
-            #     gene_1 = "|".join(breakpoint_obj_1.sv.get_all_genes())
-            # else:
-            #     gene_1 = breakpoint_obj_1.sv.get_all_genes()[0]
             breakpoint_obj_2 = SomaticSvInstance.objects.get(sv__variant=fusion["mate"], patient_analysis=patient_analysis_obj)
-            # if len(breakpoint_obj_2.sv.get_all_genes()) > 1:
-            #     gene_2 = "|".join(breakpoint_obj_2.sv.get_all_genes())
-            # else:
-            #     gene_2 = breakpoint_obj_2.sv.get_all_genes()[0]
 
             # create new fusion object
             #TODO make naming be good
             fusion_name = f"{breakpoint_obj_1.get_pick_gene()}::{breakpoint_obj_2.get_pick_gene()}"
             Fusion.objects.create(fusion_name=fusion_name, breakpoint1=breakpoint_obj_1, breakpoint2=breakpoint_obj_2, fusion_type=fusion["fusion_type"])
 
+    def update_coverage_obj(self, coverage_json, patient_analysis_obj):
+        """
+        Creates the models for coverage instances
+        """
+
+        with open(coverage_json) as f:
+            coverage = json.load(f)
         
+        for gene in coverage:
+            gene_obj, _ = Gene.objects.get_or_create(gene=gene)
+            coverage_info = coverage[gene]
+            coverage_info["gene"] = gene_obj
+            coverage_info["patient_analysis"] = patient_analysis_obj
+            GeneCoverageInstance.objects.create(**coverage_info)
+
     @transaction.atomic
     def handle(self, *args, **options):
 
         print(f"Importing WGS data {datetime.datetime.today()}")
 
         # get arguments from options
-        patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json, somatic_fusion_json = self.find_all_files(options["directory"])
+        patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json, somatic_fusion_json, coverage_json = self.find_all_files(options["directory"])
 
         # load in the patient info json
         with open(patient_json, "r") as f:
@@ -249,6 +256,10 @@ class Command(BaseCommand):
 
         # fetch the genome build - SWGS is only build 38
         genome_build_obj, created = GenomeBuild.objects.get_or_create(genome_build="GRCh38")
+        
+        # update coverage
+        print("Updating coverage")
+        self.update_coverage_obj(coverage_json, patient_analysis_obj)
 
         # update germline snvs
         print("Updating germline SNVs")

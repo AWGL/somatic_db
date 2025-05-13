@@ -232,4 +232,9 @@ class SomaticVEPAnnotationsAdmin(admin.ModelAdmin):
 
 admin.site.register(SomaticVEPAnnotations, SomaticVEPAnnotationsAdmin)
 
+class GeneCoverageInstanceAdmin(admin.ModelAdmin):
+    list_display = ["gene", "patient_analysis"]
+    search_fields = ["gene__gene", "patient_analysis__germline_sample__sample_id", "patient_analysis__tumour_sample__sample_id"]
+
+admin.site.register(GeneCoverageInstance, GeneCoverageInstanceAdmin)
 #TODO add the rest of the models and neaten up all the displays etc.

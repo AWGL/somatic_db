@@ -305,18 +305,14 @@ def germline_sv_tiering(germline_svs_query):
         # Put in tier list
         if v.display_in_tier_zero():
             variant_dict["tier"] = "0"
-            print("0")
             germline_svs_tier_one.append(variant_dict)
         elif v.display_in_tier_one():
             variant_dict["tier"] = "1"
-            print("1")
             germline_svs_tier_one.append(variant_dict)
         elif v.display_in_tier_three():
             variant_dict["tier"] = "3"
-            print("3")
             germline_svs_tier_three.append(variant_dict)
         else:
-            print("pass")
             pass
 
     return germline_svs_tier_one, germline_svs_tier_three
@@ -539,3 +535,26 @@ def fusion_tiering(somatic_fusions_query):
             fusions_domain_two.append(variant_dict)
     
     return fusions_domain_one, fusions_domain_two
+
+
+def display_coverage(coverage_query, indication_obj):
+    """
+    Get the information for displaying coverage
+    """
+    gene_coverage = []
+    #TODO handle threshold data better so it's flexible
+    germline_threshold = 20
+    somatic_threshold = 100
+    #TODO filter this so it's in panel genes only
+    _, all_genes = indication_obj.get_all_genes_and_panels()
+    for coverage in coverage_query:
+        coverage_dict = {
+            "gene": coverage.gene.gene,
+            "germline_average_depth": coverage.germline_average_depth,
+            "germline_gene_coverage": coverage.germline_gene_coverage,
+            "somatic_average_depth": coverage.somatic_average_depth,
+            "somatic_gene_coverage": coverage.somatic_gene_coverage
+        }
+        if coverage_dict["gene"] in all_genes:
+            gene_coverage.append(coverage_dict)
+    return gene_coverage, germline_threshold, somatic_threshold

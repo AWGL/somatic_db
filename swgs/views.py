@@ -129,7 +129,7 @@ def view_indication(request, indication_id):
     """
     indication = Indication.objects.get(id=indication_id)
     
-    genes_and_panels = indication.get_all_genes_and_panels()
+    genes_and_panels, all_genes = indication.get_all_genes_and_panels()
 
     indication_dict = {
         "indication_name": indication.indication,
@@ -163,6 +163,11 @@ def view_patient_analysis(request, patient_analysis_id):
     check_options = AbstractVariantInstance.OUTCOME_CHOICES
     #TODO most of this can be moved to the models
 
+    # Coverage
+    indication_obj = patient_analysis_obj.indication
+    coverage_query = GeneCoverageInstance.objects.filter(patient_analysis=patient_analysis_obj)
+    coverage_dict, germline_coverage_threshold, somatic_coverage_threshold = display_coverage(coverage_query, indication_obj)
+
     # Germline SNV tiering
     germline_snvs_query = GermlineVariantInstance.objects.filter(patient_analysis=patient_analysis_obj)
     germline_snvs_tier_one, germline_snvs_tier_three = germline_snv_tiering(germline_snvs_query)
@@ -179,6 +184,7 @@ def view_patient_analysis(request, patient_analysis_id):
     germline_svs_tier_one, germline_svs_tier_three = germline_sv_tiering(germline_svs_query)
     germline_cnvs_tier_one += germline_svs_tier_one
     germline_cnvs_tier_three += germline_svs_tier_three
+    
     # Somatic SV/CNV Tiering
     # Somatic Fusion Tiering
     somatic_cnvs_query = SomaticCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
@@ -197,6 +203,9 @@ def view_patient_analysis(request, patient_analysis_id):
         "patient_analysis": patient_analysis_obj,
         "patient_analysis_info_dict": patient_analysis_info_dict,
         "patient_analysis_qc_dict": patient_analysis_qc_dict,
+        "coverage": coverage_dict,
+        "germline_coverage_threshold": germline_coverage_threshold,
+        "somatic_coverage_threshold": somatic_coverage_threshold,
         "somatic_snvs_tier_one": somatic_snvs_tier_one,
         "somatic_snvs_tier_two": somatic_snvs_tier_two,
         "somatic_cnvs_domain_one": somatic_cnvs_domain_one,
