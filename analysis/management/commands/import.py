@@ -264,15 +264,24 @@ class Command(BaseCommand):
         )
         new_check.save()
         
-        # Specifies the cancer hotspots file for annotation
-        if genome_build == "GRCh37":
-            cancer_hotspots_file = "/roi/20220125_hotspots_all_37.bed"
-        elif genome_build == "GRCh38":
-            cancer_hotspots_file = "/roi/20220125_hotspots_all_38.bed"
+        cancer_hotspots_file = None
         
+        print(genome_build)
+        # Specifies the cancer hotspots file for annotation
+        if genome_build == 37:
+            cancer_hotspots_file = "roi/20220125_hotspots_all_37.bed"
+        if genome_build == 38:
+            cancer_hotspots_file = "roi/20220125_hotspots_all_38.bed"
+        # Check if the variable was assigned correctly before using it
+        if cancer_hotspots_file is None:
+            raise ValueError(f"Invalid genome_build: {genome_build}")
+
         if not os.path.isfile(cancer_hotspots_file):
                 print(f'ERROR\t{datetime.now()}\timport.py\t{cancer_hotspots_file} file does not exist')
                 raise IOError(f'{cancer_hotspots_file} file does not exist')
+        
+        # open bed file object
+        hotspots_bed = pybedtools.BedTool(cancer_hotspots_file)
         
         # ---------------------------------------------------------------------------------------------------------
         # SNVs and indels
@@ -316,6 +325,14 @@ class Command(BaseCommand):
                     # format pos, chr, ref etc as genomic coords
                     genomic_coords = f"{v['chr'].strip('chr')}:{v['pos']}{v['ref']}>{v['alt']}"
 
+                    ## check if variant is within a cancer hotspot
+                    # format variant as a line of bed file, accounting for deletions being larger.
+                    full_variant_as_bed=f"{v['chr'].strip('chr')}\t{int(v['pos']) -1}\t{v['pos']}"
+                    variant_bed_region = pybedtools.BedTool(variant_as_bed, from_string=True)
+                    
+                    # boolean if variant overlaps with panel
+                    overlaps_panel = len(panel_bed.intersect(variant_bed_region)) > 0
+
                     # determine whether or not VAF is above threshold
                     vaf = float(v['vaf']) * 100
                     above_vaf_threshold = (vaf >= vaf_threshold)
@@ -330,9 +347,6 @@ class Command(BaseCommand):
                     # format variant pos as a line of bed file 
                     variant_as_bed=f"{v['chr'].strip('chr')}\t{int(v['pos']) -1}\t{v['pos']}"
                     variant_bed_region = pybedtools.BedTool(variant_as_bed, from_string=True)
-
-                    # boolean if variant overlaps with panel
-                    overlaps_panel = len(panel_bed.intersect(variant_bed_region)) > 0
 
                     # if both booleans true, enter loop
                     if overlaps_panel and above_vaf_threshold:

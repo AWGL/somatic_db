@@ -271,6 +271,7 @@ class VariantInstance(models.Model):
     total_count_ntc = models.IntegerField(blank=True, null=True)
     alt_count_ntc = models.IntegerField(blank=True, null=True)
     gnomad_popmax = models.DecimalField(decimal_places=5, max_digits=10, blank=True, null=True)
+    is_hotspot = models.BooleanField(default=True)
     manual_upload = models.BooleanField(default=False)
     final_decision = models.CharField(max_length=1, default='-', choices=DECISION_CHOICES)
 

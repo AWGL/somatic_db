@@ -52,6 +52,9 @@
         {% if v.manual_upload %}
         <span class="badge badge-warning badge-pill">Manual</span>
         {% endif %}
+        {% if v.hotspot %}
+        <span class="badge badge-info badge-pill">Hotspot</span>
+        {% endif %}
         <p style="display:none" id="igv-{{ v.pk }}">{{ v.igv_coords }}</p>
         <button class="btn btn-sm btn-secondary" onclick="copyToClipboard('#igv-{{ v.pk }}')"><span class="fa fa-copy"></span></button>
 

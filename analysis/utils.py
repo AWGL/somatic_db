@@ -471,6 +471,7 @@ def get_variant_info(sample_data, sample_obj):
                 'total_count': sample_variant.variant_instance.total_count,
                 'alt_count': sample_variant.variant_instance.alt_count,
             },
+            'hotspot': sample_variant.variant_instance.is_hotspot,
             'checks': variant_checks_list,
             'latest_check': latest_check,
             'latest_checks_agree': last_two_checks_agree,
