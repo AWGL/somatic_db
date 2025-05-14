@@ -19,6 +19,8 @@ urlpatterns = [
     path('worksheets/<str:worksheet_id>', views.view_samples, name='view_ws_samples'),
     path('analysis/<str:sample_id>', views.analysis_sheet, name='analysis_sheet'),
     path('ajax/submit_variant_selections/', views.ajax, name='ajax'),
+    path('tso500_DNA_plot/', views.dna_plot, name='tso500_DNA_plot'),
+    path('tso500_RNA_plot/', views.rna_plot, name='tso500_RNA_plot'),
 
     path('samples/user/<str:user_pk>', views.view_samples, name='view_user_samples'),
     path('ajax/get_num_assigned/<str:user_pk>', views.ajax_num_assigned_user, name='ajax-num-assigned'),
