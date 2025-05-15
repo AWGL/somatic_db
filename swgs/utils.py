@@ -183,6 +183,7 @@ def germline_cnv_tiering(germline_cnvs_query):
         all_hgvsp = []
         all_gene = []
         all_consequences = []
+        all_cytoband = []
         for vep_annotation in all_vep_annotations:
             all_hgvsc.append(vep_annotation.hgvsc)
             all_hgvsp.append(vep_annotation.hgvsp)
@@ -190,12 +191,17 @@ def germline_cnv_tiering(germline_cnvs_query):
             consequences = vep_annotation.consequence.all()
             for consequence in consequences:
                 all_consequences.append(consequence)
-        impacts = list(set(consequence.impact.impact for consequence in all_consequences))
+            cytobands = vep_annotation.cytoband.all()
+            for cytoband in cytobands:
+                all_cytoband.append(cytoband)
+        
         consequences = [c.consequence for c in all_consequences]
         consequences_formatted = [c.replace("_", " ") for c in consequences]
         consequences_formatted = " | ".join(list(set(consequences)))
         hgvsc_formatted = " | ".join(all_hgvsc)
         hgvsp_formatted = " | ".join(all_hgvsp)
+        cytobands = [c.cytoband for c in all_cytoband]
+        cytobands_formatted = " | ".join(list(set(cytobands)))
         status = v.get_status_display()
         id = v.id
         var_type = "germline"
@@ -218,7 +224,8 @@ def germline_cnv_tiering(germline_cnvs_query):
                 #"checks": checks,
                 "cnv_or_sv": "cnv",
                 "caller": caller,
-                "svlen": svlen        
+                "svlen": svlen,
+                "cytobands": cytobands_formatted        
             }
 
         # Put in tier list
@@ -262,6 +269,7 @@ def germline_sv_tiering(germline_svs_query):
         all_hgvsp = []
         all_gene = []
         all_consequences = []
+        all_cytoband = []
         for vep_annotation in all_vep_annotations:
             all_hgvsc.append(vep_annotation.hgvsc)
             all_hgvsp.append(vep_annotation.hgvsp)
@@ -269,12 +277,17 @@ def germline_sv_tiering(germline_svs_query):
             consequences = vep_annotation.consequence.all()
             for consequence in consequences:
                 all_consequences.append(consequence)
-        impacts = list(set(consequence.impact.impact for consequence in all_consequences))
+            cytobands = vep_annotation.cytoband.all()
+            for cytoband in cytobands:
+                all_cytoband.append(cytoband)
+        
         consequences = [c.consequence for c in all_consequences]
         consequences_formatted = [c.replace("_", " ") for c in consequences]
         consequences_formatted = " | ".join(list(set(consequences)))
         hgvsc_formatted = " | ".join(all_hgvsc)
         hgvsp_formatted = " | ".join(all_hgvsp)
+        cytobands = [c.cytoband for c in all_cytoband]
+        cytobands_formatted = " | ".join(list(set(cytobands)))
         status = v.get_status_display()
         id = v.id
         var_type = "germline"
@@ -299,7 +312,8 @@ def germline_sv_tiering(germline_svs_query):
                 #"checks": checks,
                 "cnv_or_sv": "sv",
                 "caller": caller,
-                "svlen": svlen
+                "svlen": svlen,
+                "cytobands": cytobands_formatted
             }
 
         # Put in tier list
@@ -344,6 +358,7 @@ def somatic_cnv_tiering(somatic_cnvs_query):
         all_hgvsp = []
         all_gene = []
         all_consequences = []
+        all_cytoband = []
         for vep_annotation in all_vep_annotations:
             all_hgvsc.append(vep_annotation.hgvsc)
             all_hgvsp.append(vep_annotation.hgvsp)
@@ -351,17 +366,21 @@ def somatic_cnv_tiering(somatic_cnvs_query):
             consequences = vep_annotation.consequence.all()
             for consequence in consequences:
                 all_consequences.append(consequence)
-        impacts = list(set(consequence.impact.impact for consequence in all_consequences))
+            cytobands = vep_annotation.cytoband.all()
+            for cytoband in cytobands:
+                all_cytoband.append(cytoband)
+        
         consequences = [c.consequence for c in all_consequences]
         consequences_formatted = [c.replace("_", " ") for c in consequences]
         consequences_formatted = " | ".join(list(set(consequences)))
         hgvsc_formatted = " | ".join(all_hgvsc)
         hgvsp_formatted = " | ".join(all_hgvsp)
+        cytobands = [c.cytoband for c in all_cytoband]
+        cytobands_formatted = " | ".join(list(set(cytobands)))
         status = v.get_status_display()
         id = v.id
         var_type = "somatic"
         #checks = v.get_all_checks()
-
         # make variant dict
         variant_dict = {
                 "pk": variant,
@@ -379,7 +398,8 @@ def somatic_cnv_tiering(somatic_cnvs_query):
                 #"checks": checks,
                 "cnv_or_sv": "cnv",
                 "caller": caller,
-                "svlen": svlen
+                "svlen": svlen,
+                "cytobands": cytobands_formatted
             }
 
         # Put in tier list
@@ -424,6 +444,7 @@ def somatic_sv_tiering(somatic_svs_query):
         all_hgvsp = []
         all_gene = []
         all_consequences = []
+        all_cytoband = []
         for vep_annotation in all_vep_annotations:
             all_hgvsc.append(vep_annotation.hgvsc)
             all_hgvsp.append(vep_annotation.hgvsp)
@@ -431,12 +452,17 @@ def somatic_sv_tiering(somatic_svs_query):
             consequences = vep_annotation.consequence.all()
             for consequence in consequences:
                 all_consequences.append(consequence)
-        impacts = list(set(consequence.impact.impact for consequence in all_consequences))
+            cytobands = vep_annotation.cytoband.all()
+            for cytoband in cytobands:
+                all_cytoband.append(cytoband)
+        
         consequences = [c.consequence for c in all_consequences]
         consequences_formatted = [c.replace("_", " ") for c in consequences]
         consequences_formatted = " | ".join(list(set(consequences)))
         hgvsc_formatted = " | ".join(all_hgvsc)
         hgvsp_formatted = " | ".join(all_hgvsp)
+        cytobands = [c.cytoband for c in all_cytoband]
+        cytobands_formatted = " | ".join(list(set(cytobands)))
         status = v.get_status_display()
         id = v.id
         var_type = "somatic"
@@ -461,7 +487,8 @@ def somatic_sv_tiering(somatic_svs_query):
                 #"checks": checks,
                 "cnv_or_sv": "sv",
                 "caller": caller,
-                "svlen": svlen
+                "svlen": svlen,
+                "cytobands": cytobands_formatted
             }
 
         # Put in tier list
@@ -558,3 +585,21 @@ def display_coverage(coverage_query, indication_obj):
         if coverage_dict["gene"] in all_genes:
             gene_coverage.append(coverage_dict)
     return gene_coverage, germline_threshold, somatic_threshold
+
+
+def display_mdt_notes(mdt_query):
+    """
+    Gets the information for the MDT notes page
+    - previous mdt notes
+    - variants table with classified variants
+    """
+    mdt_notes = []
+    for mdt in mdt_query:
+        mdt_dict = {
+            "mdt_date": mdt.mdt_date,
+            "user": mdt.user.username,
+            "date": mdt.date,
+            "notes": mdt.notes
+        }
+        mdt_notes.append(mdt_dict)
+    return mdt_notes

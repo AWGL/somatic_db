@@ -218,6 +218,12 @@ class VEPAnnotationsClinvarAdmin(admin.ModelAdmin):
 
 admin.site.register(VEPAnnotationsClinvar, VEPAnnotationsClinvarAdmin)
 
+class VEPAnnotationsCytobandAdmin(admin.ModelAdmin):
+    list_display = ["cytoband"]
+    search_fields = ["cytoband"]
+
+admin.site.register(VEPAnnotationsCytoband, VEPAnnotationsCytobandAdmin)
+
 class GermlineVEPAnnotationsAdmin(admin.ModelAdmin):
     filter_horizontal = ["pubmed_id", "existing_variation", "consequence"]
     list_display = ["id", "hgvsc", "hgvsp", "exon", "intron"]
@@ -226,8 +232,8 @@ class GermlineVEPAnnotationsAdmin(admin.ModelAdmin):
 admin.site.register(GermlineVEPAnnotations, GermlineVEPAnnotationsAdmin)
 
 class SomaticVEPAnnotationsAdmin(admin.ModelAdmin):
-    filter_horizontal = ["pubmed_id", "existing_variation", "consequence"]
-    list_display = ["hgvsc", "hgvsp", "exon", "intron"]
+    filter_horizontal = ["pubmed_id", "existing_variation", "consequence", "cytoband"]
+    list_display = ["id", "hgvsc", "hgvsp", "exon", "intron"]
     search_fields = ["id", "hgvsc", "hgvsp"]
 
 admin.site.register(SomaticVEPAnnotations, SomaticVEPAnnotationsAdmin)
@@ -237,4 +243,10 @@ class GeneCoverageInstanceAdmin(admin.ModelAdmin):
     search_fields = ["gene__gene", "patient_analysis__germline_sample__sample_id", "patient_analysis__tumour_sample__sample_id"]
 
 admin.site.register(GeneCoverageInstance, GeneCoverageInstanceAdmin)
+
+class MdtNotesAdmin(admin.ModelAdmin):
+    list_display = ["user", "mdt_date"]
+    search_fields = ["user", "patient_analysis__germline_sample__sample_id", "patient_analysis__tumour_sample__sample_id"]
+
+admin.site.register(MDTNotes, MdtNotesAdmin)
 #TODO add the rest of the models and neaten up all the displays etc.

@@ -356,13 +356,16 @@ class PatientAnalysis(models.Model):
 
 class MDTNotes(models.Model):
     """
-    Notes on MDTs. Links to a patient so informaiton from multiple analyses is pulled through
+    Notes on MDTs
     """
     id = models.AutoField(primary_key=True)
-    patient = models.ForeignKey('Patient', on_delete=models.CASCADE)
+    patient_analysis = models.ForeignKey('PatientAnalysis', on_delete=models.CASCADE)
     notes = models.TextField()
     date = models.DateField()
+    mdt_date = models.DateField()
+    user = models.ForeignKey('auth.User', on_delete=models.PROTECT, blank=True, null=True)
 
+    #TODO link to patient for other results/tests
 
 #################
 ### QC Models ###
@@ -555,6 +558,13 @@ class VEPAnnotationsCancerHotspots(models.Model):
     def format_cancer_hotspots_link(self):
         # you currently can't go to the website for a specific variant, return the main link
         return "https://www.cancerhotspots.org/#/home"
+    
+class VEPAnnotationsCytoband(models.Model):
+    """
+    Cytobands for CNVs/SVs
+    """
+    id = models.AutoField(primary_key=True)
+    cytoband = models.CharField(max_length=20, unique=True)
 
 class AbstractVEPAnnotations(models.Model):
     """
@@ -575,6 +585,7 @@ class AbstractVEPAnnotations(models.Model):
     is_mane_plus_clinical = models.BooleanField(null=True, blank=True)
     is_pick = models.BooleanField(null=True, blank=True)
     is_additional_transcript = models.BooleanField(null=True, blank=True)
+    cytoband = models.ManyToManyField("VEPAnnotationsCytoband")
 
     class Meta:
         abstract = True

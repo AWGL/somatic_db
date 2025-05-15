@@ -83,7 +83,18 @@ class Command(BaseCommand):
             if k != "":
                 existing_variation_obj, created = VEPAnnotationsExistingVariation.objects.get_or_create(**v)
                 vep_annotations_obj.existing_variation.add(existing_variation_obj)
-    
+
+        # get or create cytoband object(s) and add
+        try:
+            cytoband_annotation = vep_dictionary["cytobands"]
+            for k, v in cytoband_annotation.items():
+                if k != "":
+                    cytoband_obj, created = VEPAnnotationsCytoband.objects.get_or_create(**v)
+                    vep_annotations_obj.cytoband.add(cytoband_obj)
+        except KeyError:
+            # no cytoband annotations for SNV vcf
+            pass
+        
         return vep_annotations_obj
 
         #TODO get or create clinvar object(s) and add

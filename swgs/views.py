@@ -152,6 +152,7 @@ def view_patient_analysis(request, patient_analysis_id):
 
     # Set up forms
     download_csv_form = DownloadCsvForm()
+    mdt_notes_form = UpdateMDTNotesForm()
 
     # Get patient analysis by ID
     patient_analysis_obj = PatientAnalysis.objects.get(id=patient_analysis_id)
@@ -198,8 +199,13 @@ def view_patient_analysis(request, patient_analysis_id):
     somatic_fusions_query = Fusion.objects.filter(breakpoint1__patient_analysis=patient_analysis_obj)
     fusions_domain_one, fusions_domain_two = fusion_tiering(somatic_fusions_query)
 
+    # mdt notes
+    mdt_notes_query = MDTNotes.objects.filter(patient_analysis=patient_analysis_obj)
+    mdt_notes = display_mdt_notes(mdt_notes_query)
+
     context = {
         "form": download_csv_form,
+        "mdt_notes_form": mdt_notes_form,
         "patient_analysis": patient_analysis_obj,
         "patient_analysis_info_dict": patient_analysis_info_dict,
         "patient_analysis_qc_dict": patient_analysis_qc_dict,
@@ -216,31 +222,49 @@ def view_patient_analysis(request, patient_analysis_id):
         "germline_snvs_tier_three": germline_snvs_tier_three,
         "germline_cnvs_tier_one": germline_cnvs_tier_one,
         "germline_cnvs_tier_three": germline_cnvs_tier_three,
-        "check_options": check_options
+        "check_options": check_options,
+        "mdt_notes": mdt_notes
     }
 
     # Download a csv
     if request.POST:
 
-        today = datetime.date.today().strftime("%Y%m%d")
-        filename = f"{patient_analysis_obj.tumour_sample.sample_id}_{patient_analysis_obj.germline_sample.sample_id}_{today}"
-        response = HttpResponse(content_type = "text/csv")
-        response["Content-Disposition"] = f"attachement; filename={filename}"
-        
-        somatic_snvs = somatic_snvs_tier_one + somatic_snvs_tier_two
-        germline_snvs = germline_snvs_tier_one + germline_snvs_tier_three
+        if "download" in request.POST:
 
-        csv_writer = csv.writer(response)
-        header_line = ["Germline_or_Somatic", "Variant", "Gene", "Tier", "Consequence", "HGVSC", "HGVSP", "VAF", "GnomAD"]
-        csv_writer.writerow(header_line)
-        for variant in somatic_snvs:
-            if variant["tier"] != "None":
-                csv_writer.writerow(["somatic", variant["pk"], variant["gene"], variant["tier"], variant["consequence"], variant["hgvsc"], variant["hgvsp"], f"{variant['vaf']}%", variant["gnomad"]])
-        for variant in germline_snvs:
-            if variant["tier"] != "None":
-                csv_writer.writerow(["germline", variant["pk"], variant["gene"], variant["tier"], variant["consequence"], variant["hgvsc"], variant["hgvsp"], f"{variant['vaf']}%", variant["gnomad"]])
+            today = datetime.date.today().strftime("%Y%m%d")
+            filename = f"{patient_analysis_obj.tumour_sample.sample_id}_{patient_analysis_obj.germline_sample.sample_id}_{today}"
+            response = HttpResponse(content_type = "text/csv")
+            response["Content-Disposition"] = f"attachement; filename={filename}"
+            
+            somatic_snvs = somatic_snvs_tier_one + somatic_snvs_tier_two
+            germline_snvs = germline_snvs_tier_one + germline_snvs_tier_three
 
-        return response
+            csv_writer = csv.writer(response)
+            header_line = ["Germline_or_Somatic", "Variant", "Gene", "Tier", "Consequence", "HGVSC", "HGVSP", "VAF", "GnomAD"]
+            csv_writer.writerow(header_line)
+            for variant in somatic_snvs:
+                if variant["tier"] != "None":
+                    csv_writer.writerow(["somatic", variant["pk"], variant["gene"], variant["tier"], variant["consequence"], variant["hgvsc"], variant["hgvsp"], f"{variant['vaf']}%", variant["gnomad"]])
+            for variant in germline_snvs:
+                if variant["tier"] != "None":
+                    csv_writer.writerow(["germline", variant["pk"], variant["gene"], variant["tier"], variant["consequence"], variant["hgvsc"], variant["hgvsp"], f"{variant['vaf']}%", variant["gnomad"]])
+
+            return response
+    
+        if "mdt_notes" in request.POST:
+
+            mdt_form = UpdateMDTNotesForm(request.POST)
+            if mdt_form.is_valid():
+                patient_analysis_obj = PatientAnalysis.objects.get(pk=patient_analysis_id)
+                MDTNotes.objects.create(
+                    patient_analysis=patient_analysis_obj,
+                    notes = mdt_form.cleaned_data["mdt_notes"],
+                    date = datetime.datetime.now(),
+                    mdt_date = mdt_form.cleaned_data["mdt_date"],
+                    user = request.user
+                )
+
+            return redirect('view_patient_analysis', patient_analysis_id)
 
     return render(request, "swgs/view_patient_analysis.html", context)
 

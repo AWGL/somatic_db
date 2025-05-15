@@ -1,1 +1,43 @@
-<h1>MDT</h1>
+{% load crispy_forms_tags %}
+
+<h1>MDT Notes</h1>
+<h3>This page displays: 
+    <ul>
+        <li>Variants from this analysis which have been classified as pathogenic or likely pathogenic</li>
+        <li>MDT notes for this patient including other WGS analyses stored in SVD</a></li>
+    </ul>
+</h3>
+
+</br>
+</br>
+
+<h3>Pathogenic and Likely Pathogenic Variants</h3>
+<p>TABLE GOES HERE</p>
+
+<h3>Add MDT Notes</h3>
+{% crispy mdt_notes_form %}
+
+<h3>Previous MDT Notes</h3>
+{% for mdt in mdt_notes %}
+    <table>
+        <thead>
+            <tr>
+                <td>
+                    MDT date: {{ mdt.mdt_date }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Notes made by {{ mdt.user }} on {{ mdt.date }}
+                </td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    {{ mdt.notes }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+{% endfor %}
