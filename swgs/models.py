@@ -1001,6 +1001,7 @@ class SomaticCnvInstance(AbstractCnvInstance):
     is_domain_zero = models.BooleanField(null=True, blank=True)
     is_domain_one = models.BooleanField(null=True, blank=True)
     is_domain_two = models.BooleanField(null=True, blank=True)
+    suspected_ploidy = models.BooleanField(default=False)
 
     def display_in_domain_zero(self):
         variant_genes = self.cnv.get_all_genes()
@@ -1176,6 +1177,71 @@ class Fusion(models.Model):
             return True
         else:
             return False
+        
+
+class SomaticPloidyInstance(models.Model):
+    """
+    Chromosome-level ploidy predictions for the somatic sample
+    """
+    id = models.AutoField(primary_key=True)
+    patient_analysis = models.ForeignKey("PatientAnalysis", on_delete=models.CASCADE, related_name="ploidy")
+    chromosome = models.CharField(max_length=5)
+    cnv_prop = models.DecimalField(max_digits=5, decimal_places=2)
+    gain_prop = models.DecimalField(max_digits=5, decimal_places=2)
+    gainloh_prop = models.DecimalField(max_digits=5, decimal_places=2)
+    totalgain_prop = models.DecimalField(max_digits=5, decimal_places=2)
+    cnloh_prop = models.DecimalField(max_digits=5, decimal_places=2)
+    loss_prop = models.DecimalField(max_digits=5, decimal_places=2)
+    cnvs = models.ManyToManyField("SomaticCnvInstance", related_name="ploidy_cnvs")
+
+
+    def ploidy_warning(self):
+        #TODO adjust these thresholds for ploidy warning if required
+        if self.cnv_prop > 70:
+            if self.gain_prop / self.cnv_prop > 0.7:
+                return True, "GAIN"
+            elif self.gainloh_prop / self.cnv_prop > 0.7:
+                return True, "GAINLOH"
+            elif self.cnloh_prop / self.cnv_prop > 0.7:
+                return True, "CNLOH"
+            elif self.loss_prop / self.cnv_prop > 0.7:
+                return True, "LOSS"
+            else:
+                return False, ""
+        else:
+            return False, ""
+    
+    def cnv_proportion_message(self):
+        return f"CNVs called on {self.cnv_prop:.2f}% of the chromosome"
+        
+    def cnv_distribution_message(self):
+        return f"CNV distribution: {self.gain_prop:.2f}% GAIN, {self.gainloh_prop:.2f}% GAINLOH, {self.cnloh_prop:.2f}% CNLOH, {self.loss_prop:.2f}% LOSS"
+
+    def whole_chromosome_message(self):
+        if self.cnv_prop > 70:
+            if self.totalgain_prop > 70:
+                return f"GAIN or GAINLOH CNVs are {self.totalgain_prop:.2f}% of chromosomal CNVs - whole chromosome gain suspected."
+            elif self.cnloh_prop > 70:
+                return f"CNLOH CNVs are {self.cnloh_prop:.2f}% of chromosomal CNVs - whole chromosome CNLOH suspected"
+            elif self.loss_prop > 70:
+                return f"CNLOH CNVs are {self.loss_prop:.2f}% of chromosomal CNVs - whole chromosome loss suspected."
+        else:
+            return ""
+        
+    def tier_in_panel_genes(self):
+        domain_one_genes = []
+        domain_two_genes = []
+        for cnv in self.cnvs.all():
+            genes_domain_zero = cnv.display_in_panel_genes("somatic_cnv_domain_zero")
+            genes_domain_one = cnv.display_in_panel_genes("somatic_cnv_domain_one")
+            domain_one_genes += genes_domain_zero
+            domain_one_genes += genes_domain_one
+            genes_domain_two = cnv.display_in_panel_genes("somatic_cnv_domain_two")
+            domain_two_genes += genes_domain_two
+        domain_one_genes = sorted(list(set(domain_one_genes)))
+        domain_two_genes = sorted(list(set(domain_two_genes)))
+        return domain_one_genes, domain_two_genes
+
 
 ################
 ### Coverage ###

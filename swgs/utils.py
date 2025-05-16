@@ -331,6 +331,30 @@ def germline_sv_tiering(germline_svs_query):
 
     return germline_svs_tier_one, germline_svs_tier_three
 
+def somatic_ploidy_display(somatic_ploidy_query):
+    """
+    Display the ploidy estimates for the somatic sample
+    """
+    ploidy_estimates = []
+
+    for chrom in somatic_ploidy_query:
+        ploidy_warning, ploidy_type = chrom.ploidy_warning()
+        if ploidy_warning:
+            domain_one_genes, domain_two_genes = chrom.tier_in_panel_genes()
+            chrom_dict = {
+                "chrom": chrom.chromosome,
+                "ploidy_warning": ploidy_warning,
+                "ploidy_type": ploidy_type,
+                "chrom_message": chrom.whole_chromosome_message(),
+                "distribution_message": chrom.cnv_distribution_message(),
+                "proportion_message": chrom.cnv_proportion_message(),
+                "domain_one_genes": domain_one_genes,
+                "domain_two_genes": domain_two_genes
+            }
+            ploidy_estimates.append(chrom_dict)
+
+    return ploidy_estimates
+
 def somatic_cnv_tiering(somatic_cnvs_query):
     """
     Tiering for somatic CNVs
@@ -339,6 +363,11 @@ def somatic_cnv_tiering(somatic_cnvs_query):
     somatic_cnvs_domain_two = []
 
     for v in somatic_cnvs_query:
+        ploidy_objects = v.patient_analysis.ploidy.all()
+        for ploidy_obj in ploidy_objects:
+            if v in ploidy_obj.cnvs.all():
+                continue
+
         variant = v.cnv.variant
         try:
             svlen = abs(v.cnv.svlen)
@@ -376,7 +405,7 @@ def somatic_cnv_tiering(somatic_cnvs_query):
         hgvsc_formatted = " | ".join(all_hgvsc)
         hgvsp_formatted = " | ".join(all_hgvsp)
         cytobands = [c.cytoband for c in all_cytoband]
-        cytobands_formatted = " | ".join(list(set(cytobands)))
+        cytobands_formatted = " | ".join(sorted(list(set(cytobands))))
         status = v.get_status_display()
         id = v.id
         var_type = "somatic"

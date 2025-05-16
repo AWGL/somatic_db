@@ -38,7 +38,9 @@ class Command(BaseCommand):
         germline_sv_json = self.find_file(f"{directory}/*_germline_sv.json")
         somatic_sv_json = self.find_file(f"{directory}/*_somatic_sv.json")
         somatic_fusion_json = self.find_file(f"{directory}/*_somatic_fusion.json")
-        return patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json, somatic_fusion_json, coverage_json
+        ploidy_estimate_json = self.find_file(f"{directory}/*_somatic_ploidy_estimate.json")
+        return patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, \
+            germline_sv_json, somatic_sv_json, somatic_fusion_json, coverage_json, ploidy_estimate_json
 
     def update_vep_annotations(self, vep_annotations_model, vep_dictionary, transcript):
         """
@@ -186,7 +188,7 @@ class Command(BaseCommand):
         if somatic_or_germline == "somatic":
             for variant_instance in variant_instance_query:
                 variant_instance.is_domain_zero = variant_instance.display_in_domain_zero()
-                variant_instance.is_domain_zero = variant_instance.display_in_domain_one()
+                variant_instance.is_domain_one = variant_instance.display_in_domain_one()
                 variant_instance.is_domain_two = variant_instance.display_in_domain_two()
                 variant_instance.save()
         elif somatic_or_germline == "germline":
@@ -211,13 +213,36 @@ class Command(BaseCommand):
             coverage_info["patient_analysis"] = patient_analysis_obj
             GeneCoverageInstance.objects.create(**coverage_info)
 
+
+    def update_ploidy_instance_obj(self, ploidy_estimate_json, patient_analysis_obj):
+        """
+        Creates the models for the ploidy estimates
+        """
+
+        with open(ploidy_estimate_json) as f:
+            ploidy_estimates = json.load(f)
+        
+        for chrom, ploidy_estimate_data in ploidy_estimates.items():
+            ploidy_estimate_data["patient_analysis"] = patient_analysis_obj
+            ploidy_obj = SomaticPloidyInstance.objects.create(**ploidy_estimate_data)
+            ploidy_warning, ploidy_type = ploidy_obj.ploidy_warning()
+            print(chrom, ploidy_warning, ploidy_type)
+            if ploidy_warning:
+                cnv_query = SomaticCnvInstance.objects.filter(cnv__type__type=ploidy_type, cnv__variant__startswith=ploidy_obj.chromosome)
+                for cnv_obj in cnv_query:
+                    print(cnv_obj)
+                    cnv_obj.suspected_ploidy=True
+                    cnv_obj.save()
+                    ploidy_obj.cnvs.add(cnv_obj)
+
     @transaction.atomic
     def handle(self, *args, **options):
 
         print(f"Importing WGS data {datetime.datetime.today()}")
 
         # get arguments from options
-        patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json, somatic_fusion_json, coverage_json = self.find_all_files(options["directory"])
+        patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json, \
+            somatic_fusion_json, coverage_json, ploidy_estimate_json = self.find_all_files(options["directory"])
 
         # load in the patient info json
         with open(patient_json, "r") as f:
@@ -311,6 +336,9 @@ class Command(BaseCommand):
         # update somatic cnvs
         print("Updating somatic CNVs")
         self.update_variant_obj(somatic_cnv_json, "cnv", CnvSv, SomaticCnvInstance, SomaticVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        # update ploidy estimations
+        print("Updating ploidy estimations")
+        self.update_ploidy_instance_obj(ploidy_estimate_json, patient_analysis_obj)
         print("Tiering somatic CNVs")
         somatic_cnv_instances = SomaticCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
         self.tier_variant_instances(somatic_cnv_instances, "somatic")

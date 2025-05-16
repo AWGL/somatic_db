@@ -249,4 +249,11 @@ class MdtNotesAdmin(admin.ModelAdmin):
     search_fields = ["user", "patient_analysis__germline_sample__sample_id", "patient_analysis__tumour_sample__sample_id"]
 
 admin.site.register(MDTNotes, MdtNotesAdmin)
+
+class SomaticPloidyInstanceAdmin(admin.ModelAdmin):
+    filter_horizontal = ["cnvs"]
+    list_display = ["patient_analysis", "chromosome"]
+    search_fields = ["patient_analysis__tumour_sample__sample_id", "chromosome"]
+
+admin.site.register(SomaticPloidyInstance, SomaticPloidyInstanceAdmin)
 #TODO add the rest of the models and neaten up all the displays etc.

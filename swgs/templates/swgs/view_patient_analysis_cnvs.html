@@ -13,6 +13,70 @@
   </div> -->
   <br>
   <br>
+  <h4>Ploidy Estimates</h4>
+  <h5>
+    The following chromosomes are majority covered by the same kind of CNV, indicative of whole chromosome ploidy.
+    Check in IGV
+  </h5>
+  {% for p in somatic_ploidy_estimates %}
+  <div id="accordion">
+    <div class="card">
+      <div class="card-header" id="heading-{{ p.chrom }}">
+        <h5 class="mb-0">
+          <button class="btn btn-link" data-toggle="collapse" data-target="#{{ p.chrom }}" aria-expanded="true" aria-controls="{{ p.chrom }}">
+            {{ p.chrom }}
+          </button>
+        </h5>
+      </div>
+    </div>
+    <div id="{{ p.chrom }}" class="collapse" aria-labelledby="heading-{{ p.chrom }}" data-parent="#accordion">
+      <table class="table">
+        <thead>
+          <tr>
+            <th class="col-md-1">Chromosome</th>
+            <th class="col-md-5">Messages</th>
+            <th class="col-md-5">Clinically Relevant Genes</th>
+            <th class="col-md-4">Checks</th>
+            <th class="col-md-2">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ p.chrom }}</td>
+            <td>
+              {{ p.proportion_message }}
+              <br>
+              {{ p.chrom_message }}<a class="badge badge-warning"> Check IGV</a>
+              <br>
+              {{ p.distribution_message }}
+            </td>
+            <td>
+              Domain one genes:
+              <br>
+              {% for gene in p.domain_one_genes %}
+                <a class="badge badge-info">
+                  {{ gene }}
+                </a>
+              {% endfor %}
+              <br>
+              Domain two genes:
+              <br>
+              {% for gene in p.domain_two_genes %}
+                <a class="badge badge-info">
+                  {{ gene }}
+                </a>
+              {% endfor %}
+            </td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+  <br>
+  <br>
   <h4>Somatic CNVs</h4>
   <h5>Domain 1</h5>
   <table class="table">
@@ -41,6 +105,7 @@
             </a>
             {% endfor %}
           {% endif %}
+          <br>
           {{ v.cytobands }}
         </td>
         <td>
@@ -120,6 +185,7 @@
                 </a>
                 {% endfor %}
             {% endif %}
+            <br>
             {{ v.cytobands }}
             </td>
             <td>
@@ -210,6 +276,7 @@
             </a>
             {% endfor %}
           {% endif %}
+          <br>
           {{ v.cytobands }}
         </td>
         <td>
@@ -289,6 +356,7 @@
             </a>
             {% endfor %}
           {% endif %}
+          <br>
           {{ v.cytobands }}
         </td>
         <td>

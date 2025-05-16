@@ -188,7 +188,12 @@ def view_patient_analysis(request, patient_analysis_id):
     
     # Somatic SV/CNV Tiering
     # Somatic Fusion Tiering
-    somatic_cnvs_query = SomaticCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+    # Somatic Ploidy display
+    # ploidy estimates
+    ploidy_query = SomaticPloidyInstance.objects.filter(patient_analysis=patient_analysis_obj)
+    ploidy_estimates = somatic_ploidy_display(ploidy_query)
+    # CNVs, excluding those covered in the suspected ploidy
+    somatic_cnvs_query = SomaticCnvInstance.objects.filter(patient_analysis=patient_analysis_obj,suspected_ploidy=False)
     somatic_cnvs_domain_one, somatic_cnvs_domain_two = somatic_cnv_tiering(somatic_cnvs_query)
     # all SVs except BND - not looking for fusions
     somatic_svs_query = SomaticSvInstance.objects.filter(patient_analysis=patient_analysis_obj, sv__type__type__in=["INS", "DEL", "DUP"])
@@ -214,6 +219,7 @@ def view_patient_analysis(request, patient_analysis_id):
         "somatic_coverage_threshold": somatic_coverage_threshold,
         "somatic_snvs_tier_one": somatic_snvs_tier_one,
         "somatic_snvs_tier_two": somatic_snvs_tier_two,
+        "somatic_ploidy_estimates": ploidy_estimates,
         "somatic_cnvs_domain_one": somatic_cnvs_domain_one,
         "somatic_cnvs_domain_two": somatic_cnvs_domain_two,
         "fusions_domain_one": fusions_domain_one,
