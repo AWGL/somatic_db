@@ -1,3 +1,8 @@
+chromosome_sort_order = [
+    "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13",
+    "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"
+    ]
+
 def somatic_snv_tiering(somatic_snvs_query):
     """
     Tiering for somatic SNVs
@@ -335,7 +340,7 @@ def somatic_ploidy_display(somatic_ploidy_query):
     """
     Display the ploidy estimates for the somatic sample
     """
-    ploidy_estimates = []
+    ploidy_estimate_data = []
 
     for chrom in somatic_ploidy_query:
         ploidy_warning, ploidy_type = chrom.ploidy_warning()
@@ -351,7 +356,14 @@ def somatic_ploidy_display(somatic_ploidy_query):
                 "domain_one_genes": domain_one_genes,
                 "domain_two_genes": domain_two_genes
             }
-            ploidy_estimates.append(chrom_dict)
+            ploidy_estimate_data.append(chrom_dict)
+    
+    ploidy_estimates = []
+
+    for chrom in chromosome_sort_order:
+        for ploidy_estimate in ploidy_estimate_data:
+            if chrom == ploidy_estimate["chrom"]:
+                ploidy_estimates.append(ploidy_estimate)
 
     return ploidy_estimates
 
@@ -601,7 +613,6 @@ def display_coverage(coverage_query, indication_obj):
     #TODO handle threshold data better so it's flexible
     germline_threshold = 20
     somatic_threshold = 70
-    #TODO filter this so it's in panel genes only
     _, all_genes = indication_obj.get_all_genes_and_panels()
     for coverage in coverage_query:
         coverage_dict = {

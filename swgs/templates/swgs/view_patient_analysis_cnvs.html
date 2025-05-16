@@ -4,8 +4,16 @@
 
 <div class="container">
   <h3>CNVs for tumour sample {{ patient_analysis.tumour_sample.sample_id }} and germline sample {{ patient_analysis.germline_sample.sample_id }}</h3>
-  <h5>CNVs have been filtered to panels only. Only in-panel genes are displayed, but large CNVs contain multiple genes.</h5>
-  <h5>This page includes both large CNVs called by the Dragen and small CNVs/SVs called by Manta</h5>
+  <h5>CNVs and SVs have been filtered and displayed in the following way:</h5>
+  <ul>
+    <li>This page contains both large CNVs called by the Dragen and smaller SVs called by Manta.</li>
+    <li>If a CNV overlaps with at least one in-panel gene, it is displayed</li>
+    <li>Only the gene names for the in-panel genes are displayed, but large CNVs contain many genes.</li>
+    <li>
+      Where whole chromosome changes are suspected (e.g. 70% or more of the high confidence region is covered by the same kind of CNV), 
+      that chromosome is displayed in the 'ploidy' section. CNVs of other types for that chromosome will be displayed as normal in the tiered tables.
+    </li>
+  </ul>
   <!-- <br>
   <br>
   <div class="float-right">
@@ -15,8 +23,8 @@
   <br>
   <h4>Ploidy Estimates</h4>
   <h5>
-    The following chromosomes are majority covered by the same kind of CNV, indicative of whole chromosome ploidy.
-    Check in IGV
+    The following chromosomes are majority covered by the same kind of CNV, indicative of whole chromosome ploidy or whole chromosome CNLOH.
+    <br><a class="badge badge-warning">Check in IGV</a>
   </h5>
   {% for p in somatic_ploidy_estimates %}
   <div id="accordion">
