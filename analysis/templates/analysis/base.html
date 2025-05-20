@@ -54,6 +54,10 @@
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
               <a class="dropdown-item" href="{% url 'user_settings' %}">Manage user</a>
               <div class="dropdown-divider"></div>
+              {% if user.is_superuser %}
+              <a class="dropdown-item" href="{% url 'admin:index' %}" target="_blank">Admin Page</a>
+              <div class="dropdown-divider"></div>
+              {% endif %}
               <a class="dropdown-item" href="{% url 'logout' %}">Log out</a>
             </div>
           </li>
