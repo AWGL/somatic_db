@@ -2745,23 +2745,23 @@ class TestPolyArtefactPeriodicSaving(TestCase):
         print(f"fusions in list before script run = {fusions}")
 
 
-        # run import management command - wrap in contextlib to prevent output printing to screen
+        # run save_polys_artefacts.py script as a management command - wrap in contextlib to prevent output printing to screen
         with contextlib.redirect_stdout(None):
             call_command('save_polys_artefacts')
 
     def test_variants(self):
         '''
-        test polys_artefacts
+        test if script behaved as expected for variants using the objects in setUp
         '''
-        # test genome build
 
-        # filter these:
         variants_dict = {
-            '1:2345C>G': True,
-            '1:1111C>G': False,
-            '2:2222C>G': False,
+            # 'variant_name': expected test result boolean,
+            '1:2345C>G': True, # variant that should be added to poly list
+            '1:1111C>G': False, # variant that shouldn't be added as it has less than 2 "Poly" checks
+            '2:2222C>G': False, # variant that shouldn't be added as the sign-off time of the first check is more than 28 days ago
         }
-
+        
+        # loop through variants_dict and test if variant is added to poly list if expected to, and not if not
         for variant, test_result in variants_dict.items():
             try:
                 v2vl = VariantToVariantList.objects.get(variant__variant=variant)
@@ -2778,15 +2778,17 @@ class TestPolyArtefactPeriodicSaving(TestCase):
 
     def test_fusions(self):
         '''
-        test polys_artefacts
+        test if script behaved as expected for fusions using the objects in setUp
         '''        
         
         fusions_dict = {
-            'fusion1': True,
-            'fusion2': False,
-            'fusion3': False,
+            # 'fusion_name': expected test result boolean,
+            'fusion1': True, # fusion that should be added to poly list
+            'fusion2': False, # fusion that shouldn't be added as it has less than 2 "Artefact" checks
+            'fusion3': False, # fusion that shouldn't be added as the sign-off time of the first check is more than 28 days ago
         }
 
+        # loop through fusions_dict and test if fusion is added to poly list if expected to, and not if not
         for fusion_name, test_result in fusions_dict.items():
             try:
                 v2vl = VariantToVariantList.objects.get(fusion__fusion_genes=fusion_name)
