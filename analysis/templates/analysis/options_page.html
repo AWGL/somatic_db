@@ -26,34 +26,34 @@
     <!-- loop through each list and make card -->
     {% for list in variant_lists %}
 
-    <tr>
-      {% if list.list_type == 'P' %}
-      <td class="col-11">
-        <b>{{ list.header | safe }}</b>
-        <p>View and edit the known poly list for <b>build {{ list.genome_build }}</b>. These will be classed as polys in <b>all assays</b>.</p>
-      </td>
-      <td class="col-1"><a class="btn btn-info w-100" href="{% url 'view_polys' list.name %}">View</a></td>
+      <tr>
+        {% if list.list_type == 'P' %}
+        <td class="col-11">
+          <b>{{ list.header | safe }}</b>
+          <p>View and edit the known poly list for <b>build {{ list.genome_build }}</b>. These will be classed as polys in <b>all assays</b>.</p>
+        </td>
+        <td class="col-1"><a class="btn btn-info w-100" href="{% url 'view_polys' list.name %}">View</a></td>
 
-      {% elif list.list_type == 'A' %}
-      <td class="col-11">
-        <b>{{ list.header | safe }}</b>
-        <p>View and edit the known artefact list for <b>{{ list.get_assay_display }} build {{ list.genome_build }}</b>. These will be classed as artefacts in all {{ list.get_assay_display }} panels.</p>
-      </td>
-      <td class="col-1"><a class="btn btn-info w-100" href="{% url 'view_artefacts' list.name %}">View</a></td>
+        {% elif list.list_type == 'A' %}
+        <td class="col-11">
+          <b>{{ list.header | safe }}</b>
+          <p>View and edit the known artefact list for <b>{{ list.get_assay_display }} build {{ list.genome_build }}</b>. These will be classed as artefacts in all {{ list.get_assay_display }} panels.</p>
+        </td>
+        <td class="col-1"><a class="btn btn-info w-100" href="{% url 'view_artefacts' list.name %}">View</a></td>
 
-      {% elif list.list_type == 'F' %}
-      <td class="col-11">
-        <b>{{ list.header | safe }}</b>
-        <p>View and edit the known fusion artefact list for <b>{{ list.get_assay_display }} build {{ list.genome_build }}</b>. These will be classed as artefacts in all {{ list.get_assay_display }} panels.</p>
-      </td>
-      <td class="col-1"><a class="btn btn-info w-100" href="{% url 'view_fusion_artefacts' list.name %}">View</a></td>
+        {% elif list.list_type == 'F' %}
+        <td class="col-11">
+          <b>{{ list.header | safe }}</b>
+          <p>View and edit the known fusion artefact list for <b>{{ list.get_assay_display }} build {{ list.genome_build }}</b>. These will be classed as artefacts in all {{ list.get_assay_display }} panels.</p>
+        </td>
+        <td class="col-1"><a class="btn btn-info w-100" href="{% url 'view_fusion_artefacts' list.name %}">View</a></td>
 
-      {% endif %}
-    </tr>
+        {% endif %}
+      </tr>
 
-    {% endfor %}
-  </tbody>
-</table>
+      {% endfor %}
+    </tbody>
+  </table>
 
 
   <!-- system settings section ----------------------------------------------------->
@@ -63,14 +63,18 @@
   <table class="table table-striped table-hover">
     <tbody>
 
-      <!-- go to user settings page, also accessible from navbar -->
-      <td class="col-11">
-        <b>User settings</b>
-        <p>View and edit settings for your personal user account.</p>
-      </td>
-      <td class="col-1"><a class="btn btn-info w-100" href="{% url 'user_settings' %}">View</a></td>
+      <tr>
+        <!-- go to user settings page, also accessible from navbar -->
+        <td class="col-11">
+          <b>User settings</b>
+          <p>View and edit settings for your personal user account.</p>
+        </td>
+        <td class="col-1"><a class="btn btn-info w-100" href="{% url 'user_settings' %}">View</a></td>
+      </tr>
 
     </tbody>
   </table>
+
+</div>
 
 {% endblock %}
