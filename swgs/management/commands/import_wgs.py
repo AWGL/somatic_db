@@ -30,9 +30,9 @@ class Command(BaseCommand):
         
         patient_json = self.find_file(f"{directory}/*_patient_info.json")
         qc_json = self.find_file(f"{directory}/*_overall_qc.json")
-        coverage_json = self.find_file(f"{directory}*_coverage.json")
-        germline_snv_json = self.find_file(f"{directory}/*_germline_snv.json")
-        somatic_snv_json = self.find_file(f"{directory}/*_somatic_snv.json")
+        coverage_json = self.find_file(f"{directory}/*_coverage.json")
+        germline_snv_json = self.find_file(f"{directory}/*_germline_variants.json")
+        somatic_snv_json = self.find_file(f"{directory}/*_somatic_variants.json")
         germline_cnv_json = self.find_file(f"{directory}/*_germline_cnv.json")
         somatic_cnv_json = self.find_file(f"{directory}/*_somatic_cnv.json")
         germline_sv_json = self.find_file(f"{directory}/*_germline_sv.json")
@@ -93,7 +93,7 @@ class Command(BaseCommand):
                 if k != "":
                     cytoband_obj, created = VEPAnnotationsCytoband.objects.get_or_create(**v)
                     vep_annotations_obj.cytoband.add(cytoband_obj)
-        except KeyError:
+        except (KeyError, AttributeError):
             # no cytoband annotations for SNV vcf
             pass
         
@@ -182,7 +182,7 @@ class Command(BaseCommand):
 
     def tier_variant_instances(self, variant_instance_query, somatic_or_germline):
         """
-        Tiers the variants and updates the model for easier page loading
+        Tiers the variants and updates the model for easier page loading. Remove any variants that are not tiered
         """
 
         if somatic_or_germline == "somatic":
@@ -191,12 +191,16 @@ class Command(BaseCommand):
                 variant_instance.is_domain_one = variant_instance.display_in_domain_one()
                 variant_instance.is_domain_two = variant_instance.display_in_domain_two()
                 variant_instance.save()
+                if not any([variant_instance.is_domain_zero, variant_instance.is_domain_one, variant_instance.is_domain_two]):
+                    variant_instance.delete()
         elif somatic_or_germline == "germline":
             for variant_instance in variant_instance_query:
                 variant_instance.is_tier_zero = variant_instance.display_in_tier_zero()
                 variant_instance.is_tier_one = variant_instance.display_in_tier_one()
                 variant_instance.is_tier_three = variant_instance.display_in_tier_three()
                 variant_instance.save()
+                if not any([variant_instance.is_tier_zero, variant_instance.is_tier_one, variant_instance.is_tier_three]):
+                    variant_instance.delete()
 
     def update_coverage_obj(self, coverage_json, patient_analysis_obj):
         """
@@ -226,11 +230,9 @@ class Command(BaseCommand):
             ploidy_estimate_data["patient_analysis"] = patient_analysis_obj
             ploidy_obj = SomaticPloidyInstance.objects.create(**ploidy_estimate_data)
             ploidy_warning, ploidy_type = ploidy_obj.ploidy_warning()
-            print(chrom, ploidy_warning, ploidy_type)
             if ploidy_warning:
                 cnv_query = SomaticCnvInstance.objects.filter(cnv__type__type=ploidy_type, cnv__variant__startswith=ploidy_obj.chromosome)
                 for cnv_obj in cnv_query:
-                    print(cnv_obj)
                     cnv_obj.suspected_ploidy=True
                     cnv_obj.save()
                     ploidy_obj.cnvs.add(cnv_obj)
@@ -288,7 +290,7 @@ class Command(BaseCommand):
         qc_tumour_ntc_contamination_obj, created = QCNTCContamination.objects.get_or_create(**overall_qc_dict["tumour_sample_ntc_contamination"])
         qc_germline_ntc_contamination_obj, created = QCNTCContamination.objects.get_or_create(**overall_qc_dict["sample_ntc_contamination"])
         qc_relatedness_obj, created = QCRelatedness.objects.get_or_create(**overall_qc_dict["somalier_qc"])
-        qc_tumour_purity_obj, created = QCTumourPurity.objects.get_or_create(**overall_qc_dict["tumour_purity"])
+        qc_tumour_purity_obj, created = QCTumourPurity.objects.get_or_create(**overall_qc_dict["tumour_purity_qc"])
 
         # get or create the patient analysis object
         print("Creating patient analysis object")
@@ -352,7 +354,7 @@ class Command(BaseCommand):
         print("Updating somatic SVs")
         self.update_variant_obj(somatic_sv_json, "sv", CnvSv, SomaticSvInstance, SomaticVEPAnnotations, genome_build_obj, patient_analysis_obj)
         print("Tiering somatic SVs")
-        somatic_sv_instances = SomaticSvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+        somatic_sv_instances = SomaticSvInstance.objects.exclude(sv__type__type="BND").filter(patient_analysis=patient_analysis_obj)
         self.tier_variant_instances(somatic_sv_instances, "somatic")
         # update somatic fusions
         print("Updating somatic fusions")

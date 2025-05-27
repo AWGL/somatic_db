@@ -402,10 +402,10 @@ class QCTumourInNormalContamination(AbstractQCCheck):
     """
     QC check for TINC
     """
-    #TODO add fields when we've decided on script use
+    score = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True)
 
     class Meta:
-        unique_together = ["status", "message"]
+        unique_together = ["status", "message", "score"]
 
 class QCGermlineCNVQuality(AbstractQCCheck):
     """
@@ -413,7 +413,7 @@ class QCGermlineCNVQuality(AbstractQCCheck):
     """
     passing_cnv_count = models.IntegerField()
     passing_fraction = models.DecimalField(max_digits=7, decimal_places=6)
-    log_loss_gain = models.DecimalField(max_digits=7, decimal_places=5)
+    log_loss_gain = models.DecimalField(max_digits=7, decimal_places=6)
 
     class Meta:
         unique_together = ["passing_cnv_count", "passing_fraction", "log_loss_gain"]
