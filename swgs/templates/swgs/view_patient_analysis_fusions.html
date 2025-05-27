@@ -1,0 +1,269 @@
+{% load crispy_forms_tags %}
+
+<br>
+
+<div class="container">
+  <h3>Fusions for tumour sample {{ patient_analysis.tumour_sample.sample_id }}</h3>
+  <h5>Fusions have been filtered to panels only. </h5>
+  <!-- <br>
+  <br>
+  <div class="float-right">
+    <button type="button" class="btn btn-success snv-submit" id = "snv-submit">Submit Checks</button>
+  </div> -->
+  <br>
+  <br>
+  <h4>Fusions</h4>
+  <h5>Domain 1</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-2">Fusion</th>
+        <th class="col-md-5">Breakpoint 1</th>
+        <th class="col-md-5">Breakpoint 2</th>
+        <th class="col-md-4">Checks</th>
+        <th class="col-md-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in fusions_domain_one %}
+      <tr>
+        <!-- <td class="variant-id" style="display:none">{{ f.id }}</td>
+        <td class="var-type" style="display:none">{{ f.var_type }}</td> -->
+        <td>
+            {{ f.pk }}<a class="badge badge-success"{{ f.cnv_type }}></a>
+            <br> {{ f.fusion_type }}
+        </td>
+        <td>
+          <table>
+        <tbody>
+            <tr><strong>Breakpoint 1: </strong>{{ f.breakpoint1 }}</tr><br>
+            <tr><strong>Genes: </strong>
+            {% for gene in f.breakpoint1_genes_domain_one %}
+            <a class="badge badge-info">
+            {{ gene }}
+            </a>
+            {% endfor %}
+            {% for gene in f.breakpoint1_genes %}
+            <a class="badge badge-default">
+                {{ gene }}
+            </a>
+            {% endfor %}
+            </tr><br>
+            <tr><strong>Paired Reads: </strong>{{ f.breakpoint1_pr }}</tr><br>
+            <tr><strong>Spanning Reads: </strong>{{ f.breakpoint1_sr }}</tr><br>
+            <tr><strong>Variant Fragments: </strong>{{ f.breakpoint1_vf }}</tr><br>
+            <tr><strong>Imprecise: </strong>{{ f.breakpoint1_imprecise }}</tr><br>
+            <tr><strong>Somatic Score: </strong>{{ f.breakpoint1_somatic_score}}</tr><br>
+          </tbody>
+          </table>
+        </td>
+        <td>
+            <table>
+            <tbody>
+                <tr><strong>Breakpoint 2: </strong>{{ f.breakpoint2 }}</tr><br>
+                <tr><strong>Genes: </strong>
+                    {% for gene in f.breakpoint2_genes_domain_one %}
+                    <a class="badge badge-info">
+                    {{ gene }}
+                    </a>
+                    {% endfor %}
+                    {% for gene in f.breakpoint2_genes %}
+                    <a class="badge badge-default">
+                        {{ gene }}
+                    </a>
+                    {% endfor %}    
+                </tr><br>
+                <tr><strong>Paired Reads: </strong>{{ f.breakpoint2_pr }}</tr><br>
+                <tr><strong>Spanning Reads: </strong>{{ f.breakpoint2_sr }}</tr><br>
+                <tr><strong>Variant Fragments: </strong>{{ f.breakpoint2_vf }}</tr><br>
+                <tr><strong>Imprecise: </strong>{{ f.breakpoint2_imprecise }}</tr><br>
+                <tr><strong>Somatic Score: </strong>{{ f.breakpoint2_somatic_score}}</tr><br>
+            </tbody>
+            </table>
+        </td>
+
+        <!-- {% if f.checks|length > 0 %}
+        <td>
+        {% for check in f.checks %}
+        {{ forloop.counter }}: {{ check.decision }} {{ check.user }}
+        {% endfor %}
+        </td>
+        {% else %}
+        <td>1: Pending</td>
+        {% endif %}
+
+        {% if f.status == 'Complete' %}
+        <td>{{ f.status }}</td>
+        {% else %}
+        <td class=genuine-dropdown>
+          <select name = "variant" id="variant">
+            {% for option in check_options %}
+            <option value="{{ option.0 }}">{{ option.1 }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        {% endif %} -->
+
+      </tr>
+      {% endfor %}
+      {% if fusions_domain_one|length == 0 %}
+        <td>No fusions in somatic domain 1</td>
+      {% endif %}
+    </tbody>
+  </table>
+  <br>
+  <h5>Domain 2</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-2">Fusion</th>
+        <th class="col-md-5">Breakpoint 1</th>
+        <th class="col-md-5">Breakpoint 2</th>
+        <th class="col-md-4">Checks</th>
+        <th class="col-md-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in fusions_domain_two %}
+      <tr>
+        <!-- <td class="variant-id" style="display:none">{{ f.id }}</td>
+        <td class="var-type" style="display:none">{{ f.var_type }}</td> -->
+        <td>
+            {{ f.pk }}<a class="badge badge-success"{{ f.cnv_type }}></a>
+            <br> {{ f.fusion_type }}
+        </td>
+        <td>
+          <table>
+        <tbody>
+            <tr><strong>Breakpoint 1: </strong>{{ f.breakpoint1 }}</tr><br>
+            <tr><strong>Genes: </strong>
+                {% for gene in f.breakpoint1_genes_domain_two %}
+                <a class="badge badge-info">
+                {{ gene }}
+                </a>
+                {% endfor %}
+                {% for gene in f.breakpoint1_genes %}
+                <a class="badge badge-secondary">
+                    {{ gene }}
+                </a>
+                {% endfor %}    
+            </tr><br>
+            <tr><strong>Paired Reads: </strong>{{ f.breakpoint1_pr }}</tr><br>
+            <tr><strong>Spanning Reads: </strong>{{ f.breakpoint1_sr }}</tr><br>
+            <tr><strong>Variant Fragments: </strong>{{ f.breakpoint1_vf }}</tr><br>
+            <tr><strong>Imprecise: </strong>{{ f.breakpoint1_imprecise }}</tr><br>
+            <tr><strong>Somatic Score: </strong>{{ f.breakpoint1_somatic_score}}</tr><br>
+          </tbody>
+          </table>
+        </td>
+        <td>
+            <table>
+            <tbody>
+                <tr><strong>Breakpoint 2: </strong>{{ f.breakpoint2 }}</tr><br>
+                <tr><strong>Genes: </strong>
+                    {% for gene in f.breakpoint2_genes_domain_two %}
+                    <a class="badge badge-info">
+                    {{ gene }}
+                    </a>
+                    {% endfor %}
+                    {% for gene in f.breakpoint1_genes %}
+                    <a class="badge badge-secondary">
+                        {{ gene }}
+                    </a>
+                    {% endfor %}    
+                </tr><br>
+                <tr><strong>Paired Reads: </strong>{{ f.breakpoint2_pr }}</tr><br>
+                <tr><strong>Spanning Reads: </strong>{{ f.breakpoint2_sr }}</tr><br>
+                <tr><strong>Variant Fragments: </strong>{{ f.breakpoint2_vf }}</tr><br>
+                <tr><strong>Imprecise: </strong>{{ f.breakpoint2_imprecise }}</tr><br>
+                <tr><strong>Somatic Score: </strong>{{ f.breakpoint2_somatic_score}}</tr><br>
+            </tbody>
+            </table>
+        </td>
+
+        <!-- {% if f.checks|length > 0 %}
+        <td>
+        {% for check in f.checks %}
+        {{ forloop.counter }}: {{ check.decision }} {{ check.user }}
+        {% endfor %}
+        </td>
+        {% else %}
+        <td>1: Pending</td>
+        {% endif %}
+
+        {% if f.status == 'Complete' %}
+        <td>{{ f.status }}</td>
+        {% else %}
+        <td class=genuine-dropdown>
+          <select name = "variant" id="variant">
+            {% for option in check_options %}
+            <option value="{{ option.0 }}">{{ option.1 }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        {% endif %} -->
+
+      </tr>
+      {% endfor %}
+      {% if fusions_domain_two|length == 0 %}
+        <td>No fusions in somatic domain 2</td>
+      {% endif %}
+    </tbody>
+  </table>
+  <br>
+  <br>
+
+  <!-- <div class="float-right">
+    <button type="button" class="btn btn-success snv-submit" id = "snv-submit">Submit Checks</button>
+  </div>
+  <br>
+  <br> -->
+
+</div>
+
+<!-- <script>
+  // ajax code to gather selections from dropdown
+  $(".snv-submit").click(function(){
+      var rows = $("table").children("tbody").children();
+      var selection_dict = {};
+
+      for (var i=0; i<rows.length; i++){
+        // extract required variables
+        var pk = $(rows[i]).children("td.variant-id").text();
+        var type = $(rows[i]).children("td.var-type").text();
+        var genuine_selection = $(rows[i]).children("td.genuine-dropdown").children().val();
+        // compile into dictionary for individual variant
+        var d = {};
+        if (genuine_selection) {
+          d['genuine_dropdown'] = genuine_selection;
+        }
+        // add to dictionary if it's not empty, allowing for a mixture of complete and incomplete variants
+        if (Object.keys(d).length > 0){
+          selection_dict[pk] = [type,d];
+        }
+      }
+
+      // pass dict to JS form for AJAX POST
+      var formData = new FormData();
+      formData.append('csrfmiddlewaretoken',document.getElementsByName('csrfmiddlewaretoken')[0].value);
+      formData.append('selections', JSON.stringify(selection_dict));
+      formData.append('patient_analysis_pk', "{{ patient_analysis.pk }}");
+      formData.append('variant_type', "snv");
+
+      $.ajax({
+          url: "{% url 'ajax' %}",
+          type: 'POST',
+          data: formData,
+          contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
+          processData: false, // NEEDED, DON'T OMIT THIS
+          success: function(data) {
+              if (data.redirect_url){
+                window.location.href = data.redirect_url;
+              }
+          },
+          failure: function(data) {
+              alert('Got an error');
+          }
+      });
+    })
+  </script> -->

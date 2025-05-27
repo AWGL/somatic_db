@@ -1,0 +1,81 @@
+{% extends 'analysis/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block breadcrumbs %}
+<div class="container-fluid breadcrumbs-custom">
+  <div class="container">
+    <ol class="breadcrumb" style="background-color: transparent;">
+      <li class="breadcrumb-item"><a href="{% url 'home_swgs' %}"><span class="fa fa-home"></span></a></li>
+      <li class="breadcrumb-item active"> Panels and Indications</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+  
+    <div class="jumbotron jumbotron-fluid">
+      <div class="container">
+        <h1 class="display-4"> Panels</h1>
+        <p>This page shows you the indications and panels currently in use for SWGS. Indications are made up of one or more panels 
+            and set in tiers. Panels are lists of genes which may be curated or taken from PanelApp. The latest, active panel versions
+            are in <a class="badge badge-warning">Yellow</a> and older or pending panels in <a class="badge badge-secondary">Grey</a>.
+        </p>
+        <!-- Inidications -->
+        <br>
+        <h3 class="display-4"> Indications</h3>
+        {% for indication in indications %}
+        <a class="btn btn-info" href="{% url 'view_indication'  indication.indication_id %}" role="button">
+            {{ indication.indication }}
+        </a>
+        {% endfor %}
+        <!-- Somatic Panels -->
+        <br>
+        <h3 class="display-4"> Somatic Panels</h3>
+        {% for panel in somatic_panels %}
+        {% if panel.is_active %}
+        <a class="btn btn-warning padding-2" href="{% url 'view_panel'  panel.panel_id %}" role="button">
+            {{ panel.panel_name }}
+        </a>
+        {% else %}
+        <a class="btn btn-secondary padding-2" href="{% url 'view_panel'  panel.panel_id %}" role="button">
+            {{ panel.panel_name }}
+        </a>
+        {% endif %}
+        {% endfor %}
+        <!-- Germline Panels -->
+        <br>
+        <br>
+        <h3 class="display-4"> Germline Panels</h3>
+        {% for panel in germline_panels %}
+        {% if panel.is_active %}
+        <a class="btn btn-warning" href="{% url 'view_panel'  panel.panel_id %}" role="button">
+            {{ panel.panel_name }}
+        </a>
+        {% else %}
+        <a class="btn btn-secondary" href="{% url 'view_panel'  panel.panel_id %}" role="button">
+            {{ panel.panel_name }}
+        </a>
+        {% endif %}
+        {% endfor %}
+        <!-- Other Panels -->
+        <br>
+        <br>
+        <h3 class="display-4"> Other Panels</h3>
+        {% for panel in other_panels %}
+        {% if panel.is_active %}
+        <a class="btn btn-warning" href="{% url 'view_panel'  panel.panel_id %}" role="button">
+            {{ panel.panel_name }}
+        </a>
+        {% else %}
+        <a class="btn btn-secondary" href="{% url 'view_panel'  panel.panel_id %}" role="button">
+            {{ panel.panel_name }}
+        </a>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

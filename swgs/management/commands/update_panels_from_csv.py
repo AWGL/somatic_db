@@ -112,7 +112,7 @@ class Command(BaseCommand):
 
             else:
                 panel_version = previous_panel.panel_version + 1
-                old_panel_genes = [gene.gene for gene in previous_panel.genes]
+                old_panel_genes = [gene.gene for gene in previous_panel.genes.all()]
 
             # create a new panel
             panel_obj = create_panel(panel_name, panel_version)
@@ -133,7 +133,7 @@ class Command(BaseCommand):
             genes_removed = [gene for gene in old_panel_genes if gene not in new_panel_genes]
 
             # if there are no genes added or removed we don't want to update the panel
-            if len(genes_added) == 0 and len(genes_removed == 0):
+            if len(genes_added) == 0 and len(genes_removed) == 0:
                 print(f"New panel for {panel_name} identical to previous version, skipping update")
                 panel_obj.delete()
 
