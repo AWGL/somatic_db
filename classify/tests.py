@@ -439,43 +439,50 @@ class TestModels(TestCase):
 
     def test_classify_variant_instance_get_classification_info_full_classification(self):
         #TODO make this test work
-        pass
-        # # ensure validation passes
-        # self.check_one.info_check = True
-        # self.check_one.previous_classifications_check = True
-        # self.check_one.classification_check = True
-        # check, message = self.check_one.complete_check()
+        # ensure validation passes
+        # delete code answers from the setup, will test making them from scratch
+        self.check_one.delete_code_answers()
+        self.check_one.info_check = True
+        self.check_one.previous_classifications_check = True
+        self.check_one.classification_check = True
+        self.check_one.create_code_answers()
+        check, message = self.check_one.complete_check()
+        self.check_one.save()
 
-        # self.check_two.info_check = True
-        # self.check_two.previous_classifications_check = True
-        # self.check_two.create_code_answers()
-        # self.new_var_obj.full_classification = True
-        # expected_info = {
-        #     "classification_obj": self.new_var_obj,
-        #     "current_check": self.check_two,
-        #     "guidelines": "svig_2024",
-        #     "somatic_or_germline": "S",
-        #     "reused": False,
-        #     "current_score": 0,
-        #     "final_class_overriden": False,
-        #     "current_class": "VUS"
-        # }
-        # info = self.new_var_obj.get_classification_info()
-        # # remove the querysets from the comparison - we know this function works from earlier tests
-        # del info["all_checks"]
-        # #del info["codes_by_category"]
-        # self.assertEqual(info, expected_info)
+        self.check_two.info_check = True
+        self.check_two.previous_classifications_check = True
+        self.check_two.create_code_answers()
+        self.check_two.save()
 
-        # # check with manual override
-        # self.check_two.final_class_overridden = True
-        # self.check_two.final_class = 1
-        # expected_info["final_class_overriden"] = True
-        # expected_info["current_class"] = "Benign"
-        # info = self.new_var_obj.get_classification_info()
-        # # remove the querysets from the comparison - we know this function works from earlier tests
-        # del info["all_checks"]
-        # #del info["codes_by_category"]
-        # self.assertEqual(info, expected_info)
+        self.new_var_obj.full_classification = True
+
+        expected_info = {
+            "classification_obj": self.new_var_obj,
+            "current_check": self.check_two,
+            "guidelines": "svig_2024",
+            "somatic_or_germline": "S",
+            "reused": False,
+            "current_score": 0,
+            "final_class_overridden": False,
+            "current_class": "VUS"
+        }
+        info = self.new_var_obj.get_classification_info()
+        # remove the querysets from the comparison - we know this function works from earlier tests
+        del info["all_checks"]
+        del info["codes_by_category"]
+        self.assertEqual(info, expected_info)
+
+        # check with manual override
+        self.check_two.final_class_overridden = True
+        self.check_two.final_class = FinalClassification.objects.get(pk=1)
+        self.check_two.save()
+        expected_info["final_class_overridden"] = True
+        expected_info["current_class"] = FinalClassification.objects.get(pk=1)
+        info = self.new_var_obj.get_classification_info()
+        # remove the querysets from the comparison - we know this function works from earlier tests
+        del info["all_checks"]
+        del info["codes_by_category"]
+        self.assertEqual(info, expected_info)
 
     def test_classify_variant_instance_get_dropdown_options(self):
 
@@ -661,14 +668,15 @@ class TestModels(TestCase):
         self.assertEqual(message, "Cannot complete analysis, overall classification from last two checkers dont agree")
         
         # complete analysis, last two scores don't agree
-        #TODO fix this
         self.check_two.final_class = self.classification_one_obj
+        self.check_two.save()
         status, message = self.new_var_obj.signoff_check(self.check_two, "complete")
         self.assertFalse(status)
         self.assertEqual(message, "Cannot complete analysis, scores from last two checkers dont agree")
 
         # all checks pass, update object
         self.check_two.final_score = 10
+        self.check_two.save()
         status, message = self.new_var_obj.signoff_check(self.check_two, "complete")
         self.assertTrue(status)
         self.assertIsNone(message)
@@ -691,7 +699,6 @@ class TestModels(TestCase):
             "specific_tumour_type": "Lung"
         }
         self.assertEqual(self.new_var_obj.get_sample_info(), expected_sample_info)
-
 
     def test_swgs_germline_variant_instance_get_sample_info(self):
         #TODO write this code first
