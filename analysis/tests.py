@@ -2438,3 +2438,44 @@ class TestPolyArtefactValidation(TestCase):
             self.skipTest("Error contacting external API")
         else:
             self.assertEqual(result, expected_warning)
+
+class TestAddBracketsToHgvsP(TestCase):
+    def test_working_as_expected(self):
+        # Check function is working as expected
+        hgvs_p = "NP_715640.2:p.Arg446Gly"
+        result = add_brackets_to_hgvs_p(hgvs_p)
+        expected = "NP_715640.2:p.(Arg446Gly)"
+        if result.startswith("HTTP Request failed"):
+            self.skipTest("Error contacting external API")
+        else:
+            self.assertEqual(result, expected)
+    
+    def test_failing_if_p_dot_missing(self):
+        # Check function is working as expected
+        hgvs_p = "NP_715640.2:Arg446Gly"
+        result = add_brackets_to_hgvs_p(hgvs_p)
+        expected = ""
+        if result.startswith("HTTP Request failed"):
+            self.skipTest("Error contacting external API")
+        else:
+            self.assertEqual(result, expected)
+
+    def test_working_if_transcript_missing(self):
+        # Check function is working as expected
+        hgvs_p = "p.Arg446Gly"
+        result = add_brackets_to_hgvs_p(hgvs_p)
+        expected = "p.(Arg446Gly)"
+        if result.startswith("HTTP Request failed"):
+            self.skipTest("Error contacting external API")
+        else:
+            self.assertEqual(result, expected)
+
+    def test_failing_if_empty_string_input(self):
+        # Check function is working as expected
+        hgvs_p = ""
+        result = add_brackets_to_hgvs_p(hgvs_p)
+        expected = ""
+        if result.startswith("HTTP Request failed"):
+            self.skipTest("Error contacting external API")
+        else:
+            self.assertEqual(result, expected)
