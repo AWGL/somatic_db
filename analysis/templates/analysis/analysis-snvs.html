@@ -57,12 +57,7 @@
 
       </td>
       <td>{{ v.gene }}<br>{{ v.exon }}</td>
-      <td>
-        <p style="display:inline">{{ v.hgvs_c }}</p><br>
-        <p style="display:inline">{{ v.hgvs_p }}</p>
-        <p style="display:none" id="hgvs_c-{{ v.pk }}">{{ v.hgvs_c_short }} {{ v.hgvs_p_short }}</p>
-        <button class="btn btn-sm btn-secondary" onclick="copyToClipboard('#hgvs_c-{{ v.pk }}')"><span class="fa fa-copy"></span></button>
-      </td>
+      <td>{{ v.hgvs_c }}<br>{{ v.hgvs_p }}</td>
       <td>{{ v.vaf.vaf }}%<br>{{ v.vaf.alt_count }} of {{ v.vaf.total_count }} reads</td>
       <td>
         <!--{{ v.this_run.count }} of {{ v.this_run.total }} samples<br>-->
