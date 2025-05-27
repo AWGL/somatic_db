@@ -438,7 +438,6 @@ class TestModels(TestCase):
         self.assertEqual(info, expected_info)
 
     def test_classify_variant_instance_get_classification_info_full_classification(self):
-        #TODO make this test work
         # ensure validation passes
         # delete code answers from the setup, will test making them from scratch
         self.check_one.delete_code_answers()
@@ -510,12 +509,15 @@ class TestModels(TestCase):
         self.assertEqual(self.new_var_obj.get_dropdown_value(code_list), expected_dropdown_value)
         
     def test_classify_variant_instance_get_codes_by_category(self):
-        #TODO Erik this is doing ajax things
-        pass
+        # reset code answers before running
+        self.check_one.delete_code_answers()
+        self.check_one.create_code_answers()
+        self.check_two.delete_code_answers()
+        self.check_two.create_code_answers()
+        self.assertEqual(self.new_var_obj.get_codes_by_category(), expected_results.expected_codes_by_category)
 
     def test_classify_variant_instance_get_order_info(self):
-        #TODO Erik this is doing ajax things
-        pass
+        self.assertEqual(self.new_var_obj.get_order_info(), expected_results.expected_codes_order)
 
     def test_classify_variant_instance_get_code_info(self):
         # Expected code info based on SVIG 2024
