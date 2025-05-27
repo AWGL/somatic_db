@@ -137,6 +137,7 @@
     <thead>
       <tr>
         <th>Gene</th>
+        <th>Average coverage</th>
         {% if '135' in coverage_data.depth_cutoffs %}
         <th>Percent 135X</th>
         {% endif %}
@@ -149,6 +150,8 @@
         {% if '1000' in coverage_data.depth_cutoffs %}
         <th>Percent 1000X</th>
         {% endif %}
+        <th>Average NTC depth</th>
+        <th>% NTC</th>
       </tr>
     </thead>
 
@@ -156,6 +159,7 @@
       {% for gene, values in coverage_data.regions.items %}
       <tr>
         <td>{{ gene }}</td>
+        <td>{{ values.av_coverage }}</td>
         {% if '135' in coverage_data.depth_cutoffs %}
         <td>{{ values.percent_135x }}%</td>
         {% endif %}
@@ -168,6 +172,8 @@
         {% if '1000' in coverage_data.depth_cutoffs %}
         <td>{{ values.percent_1000x }}%</td>
         {% endif %}
+        <td>{{ values.av_ntc_coverage }}</td>
+        <td>{{ values.percent_ntc }}</td>
       </tr>
       {% endfor %}
     </tbody>
