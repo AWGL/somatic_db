@@ -122,7 +122,8 @@ class TestModels(TestCase):
         )
 
         # reuse classification object
-        tumour_subtype_obj = TumourSubtype.objects.create(name="Lung")
+        self.tumour_subtype_obj = TumourSubtype.objects.create(name="Lung")
+        self.tumour_subtype_obj2 = TumourSubtype.objects.create(name="Melanoma")
         final_classification_obj, _ = FinalClassification.objects.get_or_create(
             final_classification = "Oncogenic",
             minimum_score = 10,
@@ -131,7 +132,7 @@ class TestModels(TestCase):
         self.reuse_classification_obj = AnalysisVariantInstance.objects.create(
             variant = self.var,
             guideline = self.guideline_obj,
-            tumour_subtype = tumour_subtype_obj,
+            tumour_subtype = self.tumour_subtype_obj,
             final_class = final_classification_obj,
             final_score = 12,
             variant_instance=self.analysis_inst
@@ -523,33 +524,69 @@ class TestModels(TestCase):
         # Expected code info based on SVIG 2024
         self.assertEqual(self.new_var_obj.get_code_info(), expected_results.expected_codes_dict)
 
-    # mock timezone now for time difference
-    # @mock.patch(
-    #         "timezone.now", 
-    #         return_value=datetime(2025, 6, 30, tzinfo=timezone.utc),
-    #         autospec=True
-    #         )
     def test_classify_variant_instance_get_most_recent_full_classification(self):
-        pass
-        #TODO
-        # test no previous completed classifications
+        # test this is the only full classification
+        self.new_var_obj.tumour_subtype = self.tumour_subtype_obj
+        self.assertEqual(self.new_var_obj.get_most_recent_full_classification(), (None, False))
 
-        # test only response is current object
+        # test previous classification but review is needed (>2 years)
+        self.new_var_obj2 = AnalysisVariantInstance.objects.create(
+            variant=self.var,
+            variant_instance=self.analysis_inst,
+            guideline=self.guideline_obj,
+            tumour_subtype=self.tumour_subtype_obj,
+            final_class=self.classification_one_obj,
+            final_score=10,
+            complete_date=timezone.now() - timezone.timedelta(days=730),
+            full_classification=True
+        )
+        self.assertEqual(self.new_var_obj.get_most_recent_full_classification(), (self.new_var_obj2, True))
 
-        # test previous classification but review is needed
+        # test previous classification and review is not needed (< 2 years)
+        self.new_var_obj2.complete_date = timezone.now() - timezone.timedelta(days=365)
+        self.new_var_obj2.save()
+        self.assertEqual(self.new_var_obj.get_most_recent_full_classification(), (self.new_var_obj2, False))
 
-        # test previous classification and review is not needed
+        # test there is a full classification in different tumour type
+        self.new_var_obj2.tumour_subtype = self.tumour_subtype_obj2
+        self.new_var_obj2.save()
+        self.assertEqual(self.new_var_obj.get_most_recent_full_classification(), (None, False))
 
     def test_classify_variant_instance_get_previous_classification_choices(self):
-        pass
-        #TODO
-        # test within-classification full classification
+        # test second check with previous classifications
+        self.assertEqual(self.new_var_obj.get_previous_classification_choices(), (("previous", "Use previous classification"),))
 
-        # test within-classification previous classification
+        # test second check with full classification
+        self.new_var_obj.full_classification = True
+        self.new_var_obj.save()
+        self.assertEqual(self.new_var_obj.get_previous_classification_choices(), (("new", "Perform full classification"),))
 
-        # test between classifications both options
+        # test first check with no previous classifications
+        self.check_two.delete()
+        self.assertEqual(self.new_var_obj.get_previous_classification_choices(), (("new", "Perform full classification"),))
 
-        # test between classifications full classification only
+        # test first check with previous classification that doest need review (ie both options)
+        self.new_var_obj.tumour_subtype = self.tumour_subtype_obj
+        self.new_var_obj.save()
+        self.new_var_obj2 = AnalysisVariantInstance.objects.create(
+            variant=self.var,
+            variant_instance=self.analysis_inst,
+            guideline=self.guideline_obj,
+            tumour_subtype=self.tumour_subtype_obj,
+            final_class=self.classification_one_obj,
+            final_score=10,
+            complete_date=timezone.now() - timezone.timedelta(days=1),
+            full_classification=True
+        )
+        self.assertEqual(self.new_var_obj.get_previous_classification_choices(), (
+            ("previous", "Use previous classification"),
+            ("new", "Perform full classification")
+        ))
+
+        # test first check with previous classification that needs review (ie only new option)
+        self.new_var_obj2.complete_date = timezone.now() - timezone.timedelta(days=730)
+        self.new_var_obj2.save()
+        self.assertEqual(self.new_var_obj.get_previous_classification_choices(), (("new", "Perform full classification"),))
 
     def test_classify_variant_instance_update_tumour_type(self):
         self.assertIsNone(self.new_var_obj.tumour_subtype)
