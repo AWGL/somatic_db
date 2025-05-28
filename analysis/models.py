@@ -580,10 +580,12 @@ class CNVs(models.Model):
     A CNV
     """
     region_genes = models.CharField(max_length=50)
+    genome_build = models.IntegerField(default=38)
     start_coordinate = models.CharField(max_length=50)
     end_coordinate = models.CharField(max_length=50)
-    genome_build = models.IntegerField(default=38)
     copy_number = models.IntegerField(default=2)
+    log2_number = models.IntegerField()
+    p_value = models.IntegerField()
 
 class CNVAnalysis(models.Model):
     """

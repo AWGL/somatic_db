@@ -5,14 +5,12 @@
 <table id="CNV-table" class="table table-striped table-hover">
   <thead>
     <tr>
-      <th scope="col">CNVs</th>
+      <th scope="col">Genes</th>
       <th scope="col">Copy Number</th>
-      <th scope="col">CNV supporting reads</th>
-      {% if sample_data.panel_obj.show_cnv_vaf %}<th scope="col">VAF</th>{% endif %}
-      <!--<th scope="col">Reference reads<br>(Gene 1 | Gene 2)</th>-->
       <th scope="col">Start Coordinate</th>
       <th scope="col">End Coordinate</th>
-      <th scope="col">NTC</th>
+      <th scope="col">Log2 Value</th>
+      <th scope="col">P-Value</th>
       <th scope="col">IGV</th>
       {% if 'IGV' in sample_data.checks.current_status %}
       <th scope="col">Action</th>
@@ -157,16 +155,18 @@
           <thead>
             <tr>
               <th class="col-3">CNV</th>
-              <th class="col-3">Left Breakpoint</th>
-              <th class="col-3">Right Breakpoint</th>
-              <th class="col-3">CNV Supporting Reads</th>
+              <th class="col-3">Chr</th>
+              <th class="col-3">Start Coordinate</th>
+              <th class="col-3">End Coordinate</th>
+              <th class="col-3">Copy Number</th>
+              <th class="col-3">Log2 Value</th>
             </tr>
           </thead>
           <tbody>
             {% for cnv, cnv_type in cnv_data.filtered_calls %}
             <tr>
               <td>
-                {{ cnv.cnv_genes }}<br>
+                {{ cnv.region_genes }}<br>
                 {% if cnv.genome_build == 37 %}
                 <span class="badge badge-info badge-pill">GRCh{{ cnv.genome_build }}</span>
                 {% elif cnv.genome_build == 38 %}
@@ -174,9 +174,11 @@
                 {% endif %}
                 <span class="badge badge-secondary badge-pill">Artefacts</span>
               </td>
-              <td>{{ cnv.left_breakpoint }}</td>
-              <td>{{ cnv.right_breakpoint }}</td>
-              <td>{{ cnv.cnv_supporting_reads }}</td>
+              <td>{{ cnv.start_coordinate }}</td>
+              <td>{{ cnv.end_coordinate }}</td>
+              <td>{{ cnv.copy_number }}</td>
+              <td>{{ cnv.log2_number }}</td>
+              <td>{{ cnv.p_value }}</td>
             </tr>
             {% endfor %}
           </tbody>

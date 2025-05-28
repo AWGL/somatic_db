@@ -153,6 +153,8 @@ class Command(BaseCommand):
         parser.add_argument('--fusions', nargs=1, type=str, required=False, help='Path to fusions CSV file')
         parser.add_argument('--fusion_coverage', nargs=1, type=str, required=False, help='sample and NTC coverage, seperated by commas')
 
+        # cnv only
+        parser.add_argument('--cnvs', nargs=1, type=str, required=False, help='Path to cnv CSV file')
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -599,6 +601,93 @@ class Command(BaseCommand):
 
                 # logging
                 print(f'INFO\t{datetime.now()}\timport.py\tFinished uploading successfully - added {fusion_counter} fusions(s)')
+        
+        # ---------------------------------------------------------------------------------------------------------
+        # cnvs
+        # ---------------------------------------------------------------------------------------------------------
+        
+        if panel_obj.show_cnvs:
+            cnv_file = options['cnvs'][0]
+
+            # check that inputs are valid
+            if not os.path.isfile(cnv_file):
+                print(f'ERROR\t{datetime.now()}\timport.py\t{cnv_file} file does not exist')
+                raise IOError(f'{cnv_file} file does not exist')
+                
+            # logging
+            cnv_counter = 0
+            print(f'INFO\t{datetime.now()}\timport.py\tUploading cnvs...')
+
+            # load in CNV calls
+            with open(cnv_file) as c:
+
+                # make dictionary of calls and loop through
+                reader = csv.DictReader(c, delimiter=',')
+                for c in reader:
+
+                    # sanitise the CNV input to prevent multiple CNVs with the same coordinates but different names
+                    # we want to remove GENE1/GENE2 and GENE1--GENE2 and just have GENE1-GENE2
+                    cnv_name = c['cnv']
+                    sanitised_cnv_name = cnv_name.replace("/","-").replace("--","-")
+
+                    # format fusion field and filter panel
+                    in_panel = False
+
+                    # gene fusions
+                    if c['type'] == 'cnv':
+                        # use pipeline output directly (will be GENE_A--GENE_B)
+                        cnv = sanitised_cnv_name
+
+                        # check fusion gene list and set variable if matches
+                        for g in virtual_panel['cnvs']:
+                            if g in cnv:
+                                in_panel = True
+
+                    # add record for fusion (regardless of whether it's in the panel or not)
+                    new_cnv, created = CNVs.objects.get_or_create(
+                        region_genes = cnv,
+                        start_coordinate = c['start_coordinate'],
+                        end_coordinate = c['end_coordinate'],
+                        genome_build = genome_build
+                    )
+
+                    # if the cnv was in the panel, make a cnv instance
+                    if in_panel:
+                        # logging
+                        if debug:
+                            print(f'DEBUG\t{datetime.now()}\timport.py\tAdding CNV: {c}')
+
+                        # add fusion instance object
+                        new_cnv_instance = CNVAnalysis(
+                            sample = new_sample_analysis,
+                            cnv_genes = new_cnv,
+                            cnv_supporting_reads = c['cnv_supporting_reads'],
+                            ref_reads_1 = c['reference_reads_1'],
+                            cnv_caller = c['type'],
+                            in_ntc = c['in_ntc'],
+                        )
+
+                        # set up virtual panel
+                        new_cnv_analysis = CNVPanelAnalysis(
+                            sample_analysis = new_sample_analysis,
+                            cnv_instance = new_cnv_instance,
+                        )
+                        new_cnv_analysis.save()
+
+                        # set up check object
+                        new_cnv_check = CNVCheck(
+                            cnv_analysis = new_cnv_analysis,
+                            check_object = new_check,
+                        )
+                        new_cnv_check.save()
+
+                        # logging
+                        cnv_counter += 1
+                        if debug:
+                            print(f'DEBUG\t{datetime.now()}\timport.py\tCNV added successfully')
+
+                # logging
+                print(f'INFO\t{datetime.now()}\timport.py\tFinished uploading successfully - added {cnv_counter} CNV(s)')
 
         # close
         print(f'INFO\t{datetime.now()}\timport.py\tFinished import.py script successfully')
