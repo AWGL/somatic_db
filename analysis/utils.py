@@ -1073,7 +1073,7 @@ def variant_format_check(chrm, position, ref, alt, panel_bed_path, total_reads, 
     if overlaps_panel == 0:
 
         #Check to see if the coordinate is an overlapping/intronic variant within a maximum acceptable distance. absolute_distance returns a generator object
-        max_acceptable_distance = 20
+        max_acceptable_distance = 100
         minimum_distance = max_acceptable_distance + 1 # outside of panel - will fail unless the varaint is close to the bed file
         for region in panel_bed:
             if variant_bed_region[0].chrom == region.chrom:
