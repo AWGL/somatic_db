@@ -152,7 +152,7 @@ def self_audit(request):
                             'Checker': username,
                             'Sample': c.analysis.sample.sample_id,
                             'Overall_Comments': c.overall_comment,
-                            'SVD_Link': f'/analysis/{c.analysis.id}#report'
+                            'SVD_Link': f'{request.get_host()}/analysis/{c.analysis.id}#report'
                         }
 
                         all_check_data.append(check_data)
