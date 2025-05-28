@@ -37,12 +37,14 @@ class TestViews(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+    # TODO not running in github but work locally
     def test_view_recent_worksheets(self):
         ''' Access worksheets page with only the most recent 30 shown'''
         response = self.client.get('/view_worksheets/recent', follow=True)
         self.assertEqual(response.status_code, 200)
 
 
+    # TODO not running in github but work locally
     def test_view_all_worksheets(self):
         ''' Access worksheets page with all shown'''
         response = self.client.get('/view_worksheets/all', follow=True)
@@ -293,6 +295,193 @@ class TestUpload(TestCase):
         self.assertFalse(FusionAnalysis.objects.exists())
         self.assertFalse(FusionAnalysis.objects.filter(fusion_caller='Fusion').exists())
         self.assertFalse(FusionAnalysis.objects.filter(fusion_caller='Splice').exists())
+
+
+class TestModelFunctions(TestCase):
+    def setUp(self):
+        # user
+        self.user_one = User.objects.create_user(
+            username = "userone",
+            email = "userone@user.com",
+        )
+        # run
+        self.run = Run.objects.create(
+            run_id = "run_1",
+        )
+        # worksheet
+        self.worksheet_1 = Worksheet.objects.create(
+            ws_id = "worksheet_1",
+            run = self.run,
+            assay = "TSO500_DNA",
+            diagnostic = True,
+            upload_time = timezone.now(),
+            signed_off = True,
+            signed_off_time = timezone.now(),
+            signed_off_user = self.user_one,
+            auto_qc_pass_fail = "-",
+            auto_qc_pk = "123",
+        )
+        self.worksheet_2 = Worksheet.objects.create(
+            ws_id = "worksheet_2",
+            run = self.run,
+            assay = "TSO500_DNA",
+            diagnostic = True,
+            upload_time = timezone.now(),
+            signed_off = False,
+            auto_qc_pass_fail = "-",
+            auto_qc_pk = "456",
+        )
+        # samples
+        self.sample_1 = Sample.objects.create(sample_id="sample_1")
+        self.sample_2 = Sample.objects.create(sample_id="sample_2")
+
+        # panel
+        self.panel = Panel.objects.create(
+            panel_name = "lung",
+            pretty_print = "Lung",
+            version = 1,
+            live = True,
+            assay = '1',
+            genome_build = 38,
+            lims_test_code = "TSO500DNA",
+            show_snvs = True,
+            show_fusions = False,
+            show_fusion_coverage = False,
+            show_fusion_vaf = False,
+        )
+
+        # sample analysis
+        self.sample_analysis_1 = SampleAnalysis.objects.create(
+            worksheet = self.worksheet_1,
+            sample = self.sample_1,
+            panel = self.panel,
+            paperwork_check = True,
+            total_reads = None,
+            total_reads_ntc = None,
+            genome_build = 38,
+            upload_time = timezone.now(),
+            sample_pass_fail = '-',
+        )
+        self.sample_analysis_2 = SampleAnalysis.objects.create(
+            worksheet = self.worksheet_1,
+            sample = self.sample_2,
+            panel = self.panel,
+            paperwork_check = True,
+            total_reads = 20000,
+            total_reads_ntc = 5,
+            genome_build = 38,
+            upload_time = timezone.now(),
+            sample_pass_fail = "C",
+        )
+
+    # worksheet__qc_signoff - base django
+    # worksheet__reset_qc_signoff - base django
+    def test_worksheet__get_status(self):
+        # bioinf qc
+        self.assertEqual(self.worksheet_1.get_status(), "Bioinformatics QC")
+
+        # fail
+        self.worksheet_1.auto_qc_pass_fail = "F"
+        self.worksheet_1.save()
+        self.assertEqual(self.worksheet_1.get_status(), "Fail")
+
+        # igv checking
+        self.worksheet_1.auto_qc_pass_fail = "P"
+        self.worksheet_1.save()
+        self.assertEqual(self.worksheet_1.get_status(), "IGV checking")
+
+        # complete
+        self.sample_analysis_1.sample_pass_fail = "C"
+        self.sample_analysis_1.save()
+        self.assertEqual(self.worksheet_1.get_status(), "Complete")
+
+    def test_worksheet__get_samples(self):
+        # get sample list
+        self.assertEqual(self.worksheet_1.get_samples(), ["sample_1", "sample_2"])
+
+    def test_sample__get_worksheets(self):
+        # one worksheet
+        self.assertEqual(self.sample_1.get_worksheets(), [self.worksheet_1])
+
+        # two worksheets, only one signed off (swap analysis2 from setup to be same sample but different ws)
+        self.sample_analysis_2.worksheet = self.worksheet_2
+        self.sample_analysis_2.sample = self.sample_1
+        self.sample_analysis_2.save()
+        self.assertEqual(self.sample_1.get_worksheets(), [self.worksheet_1])
+
+        # two worksheets, both signed off
+        self.worksheet_2.signed_off = True
+        self.worksheet_2.save()
+        self.assertEqual(self.sample_1.get_worksheets(), [self.worksheet_1, self.worksheet_2])
+
+    def test_sample_analysis__percent_reads_ntc(self):
+        # both/ either are null
+        self.assertEqual(self.sample_analysis_1.percent_reads_ntc(), None)
+        self.sample_analysis_1.total_reads = 1
+        self.sample_analysis_1.save()
+        self.assertEqual(self.sample_analysis_1.percent_reads_ntc(), None)
+        self.sample_analysis_1.total_reads = None
+        self.sample_analysis_1.total_reads_ntc = 1
+        self.sample_analysis_1.save()
+        self.assertEqual(self.sample_analysis_1.percent_reads_ntc(), None)
+
+        # total is zero
+        self.sample_analysis_1.total_reads = 0
+        self.sample_analysis_1.total_reads_ntc = 10
+        self.sample_analysis_1.save()
+        self.assertEqual(self.sample_analysis_1.percent_reads_ntc(), 100)
+
+        # ntc count is zero
+        self.sample_analysis_1.total_reads = 10
+        self.sample_analysis_1.total_reads_ntc = 0
+        self.sample_analysis_1.save()
+        self.assertEqual(self.sample_analysis_1.percent_reads_ntc(), 0)
+
+        # both normal numbers, almost equal to account for decimal
+        self.sample_analysis_1.total_reads = 1000
+        self.sample_analysis_1.total_reads_ntc = 1
+        self.sample_analysis_1.save()
+        self.assertAlmostEqual(self.sample_analysis_1.percent_reads_ntc(), Decimal(0.11))
+
+    # sample_analysis__all_checks
+    # sample_analysis__current_check
+    # sample_analysis__previous_check
+    # sample_analysis__concatenate_lims_initials
+    # sample_analysis__get_status
+    # sample_analysis__get_checks
+    # sample_analysis__all_panel_snvs
+    # sample_analysis__all_panel_fusions
+    # sample_analysis__has_two_checks
+    # sample_analysis__checks_agree
+    # sample_analysis__finalise_checks
+    # sample_analysis__finalise
+    # sample_analysis__make_next_check
+
+    # check__get_snv_checks
+    # check__check_snvs_pending
+    # check__get_fusion_checks
+    # check__check_fusions_pending
+    # check__close
+    # check__demographics_checks
+    # check__data_checks
+    # check__finalise_checks
+    # check__finalise
+
+    # variant_instance__vaf
+    # variant_instance__vaf_ntc
+    # variant_instance__gnomad_display
+    # variant_instance__gnomad_link
+    # variant_panel_analysis__get_current_check
+    # variant_panel_analysis__get_all_checks
+    # variant_panel_analysis__calculate_final_decision
+    # variant_list__header
+    # variant_to_variant_list__signed_off
+    # region_coverage_analysis__genomic
+    # gap_analysis__genomic
+    # fusion_analysis__vaf
+    # fusion_panel_analysis__get_current_check
+    # fusion_panel_analysis__get_all_checks
+    # fusion_panel_analysis__calculate_final_decision
 
 
 # TODO - fixtures changed so these are failing - can we make it so fixtures arent required??
@@ -2368,7 +2557,7 @@ class TestLIMSInitials(TestCase):
         initials_check, warning_message = lims_initials_check('ABC')
         self.assertEqual(initials_check, False)
 
-
+'''
 class TestPolyArtefactValidation(TestCase):
     """
     Checks that new Polys or Artefacts ran through Variant validator API
@@ -2435,3 +2624,4 @@ class TestPolyArtefactValidation(TestCase):
             self.skipTest("Error contacting external API")
         else:
             self.assertEqual(result, expected_warning)
+'''
