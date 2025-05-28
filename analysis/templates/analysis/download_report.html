@@ -181,6 +181,62 @@
   <br>
   <br>
 
+  <!-- SNV section - coverage ------------------------------>
+  <h2>Regions</h2>
+
+  <!-- gene overall coverage table - all panels -->
+  <table>
+    <thead>
+      <tr>
+        <th>HGVS</th>
+        <th>Hotspot/Genescreen</th>
+        <th>Average coverage</th>
+        {% if '135' in coverage_data.depth_cutoffs %}
+        <th>Percent 135X</th>
+        {% endif %}
+        {% if '270' in coverage_data.depth_cutoffs %}
+        <th>Percent 270X</th>
+        {% endif %}
+        {% if '500' in coverage_data.depth_cutoffs %}
+        <th>Percent 500X</th>
+        {% endif %}
+        {% if '1000' in coverage_data.depth_cutoffs %}
+        <th>Percent 1000X</th>
+        {% endif %}
+        <th>Average NTC coverage</th>
+        <th>% NTC</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for gene, value in coverage_data.regions.items %}
+        {% for r in value.regions %}
+        <tr>
+          <td>{{ r.hgvs_c }}</td>
+          <td>{{ r.hotspot_or_genescreen }}</td>
+          <td>{{ r.average_coverage }}</td>
+          {% if '135' in coverage_data.depth_cutoffs %}
+          <td>{{ r.percent_135x }}%</td>
+          {% endif %}
+          {% if '270' in coverage_data.depth_cutoffs %}
+          <td>{{ r.percent_270x }}%</td>
+          {% endif %}
+          {% if '500' in coverage_data.depth_cutoffs %}
+          <td>{{ r.percent_500x }}%</td>
+          {% endif %}
+          {% if '1000' in coverage_data.depth_cutoffs %}
+          <td>{{ r.percent_1000x }}%</td>
+          {% endif %}
+          <td>{{ r.ntc_coverage }}</td>
+          <td>{{ r.percent_ntc }}</td>
+        </tr>
+        {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+  <br>
+  <br>
+
   <!-- gaps summary for myeloid referrals-->
   {% if myeloid_coverage_summary %}
   <h2>Gaps summary</h2>
@@ -212,9 +268,10 @@
   <table>
     <thead>
       <tr>
-        <th style="width: 50%">Hotspot gaps at 135X</th>
-        <th style="width: 25%">Percent COSMIC</th>
-        <th style="width: 25%">Counts COSMIC</th>
+        <th style="width: 35%">Hotspot gaps at 135X</th>
+        <th style="width: 35%">Genomic</th>
+        <th style="width: 15%">Percent COSMIC</th>
+        <th style="width: 15%">Counts COSMIC</th>
       </tr>
     </thead>
 
@@ -224,6 +281,7 @@
         {% for gap in values.gaps_135 %}
         <tr>
           <td>{{ gap.gene }}({{ gap.hgvs_transcript }}):{{ gap.hgvs_c }}</td>
+          <td>{{ gap.genomic }}</td>
           <td>{{ gap.percent_cosmic }}</td>
           <td>{{ gap.counts_cosmic }}</td>
         </tr>
@@ -241,9 +299,10 @@
   <table>
     <thead>
       <tr>
-        <th style="width: 50%">Hotspot gap at 270X</th>
-        <th style="width: 25%">Percent COSMIC</th>
-        <th style="width: 25%">Counts COSMIC</th>
+        <th style="width: 35%">Hotspot gaps at 270X</th>
+        <th style="width: 35%">Genomic</th>
+        <th style="width: 15%">Percent COSMIC</th>
+        <th style="width: 15%">Counts COSMIC</th>
       </tr>
     </thead>
 
@@ -253,6 +312,7 @@
         {% for gap in values.gaps_270 %}
         <tr>
           <td>{{ gap.gene }}({{ gap.hgvs_transcript }}):{{ gap.hgvs_c }}</td>
+          <td>{{ gap.genomic }}</td>
           <td>{{ gap.percent_cosmic }}</td>
           <td>{{ gap.counts_cosmic }}</td>
         </tr>
@@ -270,9 +330,10 @@
   <table>
     <thead>
       <tr>
-        <th style="width: 50%">Hotspot gaps at 500X</th>
-        <th style="width: 25%">Percent COSMIC</th>
-        <th style="width: 25%">Counts COSMIC</th>
+        <th style="width: 35%">Hotspot gaps at 500X</th>
+        <th style="width: 35%">Genomic</th>
+        <th style="width: 15%">Percent COSMIC</th>
+        <th style="width: 15%">Counts COSMIC</th>
       </tr>
     </thead>
 
@@ -282,6 +343,7 @@
         {% for gap in values.gaps_500 %}
         <tr>
           <td>{{ gap.gene }}({{ gap.hgvs_transcript }}):{{ gap.hgvs_c }}</td>
+          <td>{{ gap.genomic }}</td>
           <td>{{ gap.percent_cosmic }}</td>
           <td>{{ gap.counts_cosmic }}</td>
         </tr>
@@ -299,9 +361,10 @@
   <table>
     <thead>
       <tr>
-        <th style="width: 50%">Hotspot gaps at 1000X</th>
-        <th style="width: 25%">Percent COSMIC</th>
-        <th style="width: 25%">Counts COSMIC</th>
+        <th style="width: 35%">Hotspot gaps at 1000X</th>
+        <th style="width: 35%">Genomic</th>
+        <th style="width: 15%">Percent COSMIC</th>
+        <th style="width: 15%">Counts COSMIC</th>
       </tr>
     </thead>
 
@@ -311,6 +374,7 @@
         {% for gap in values.gaps_1000 %}
         <tr>
           <td>{{ gap.gene }}({{ gap.hgvs_transcript }}):{{ gap.hgvs_c }}</td>
+          <td>{{ gap.genomic }}</td>
           <td>{{ gap.percent_cosmic }}</td>
           <td>{{ gap.counts_cosmic }}</td>
         </tr>
