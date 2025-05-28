@@ -89,26 +89,24 @@ def self_audit(request):
     """
     Page where staff can view checks they have previously performed between specified dates with a variety of filters.
     """
-    
     # identify and store current user as a variable
     username = request.user.username
-    
+
     #empty context dict
     context = {
-                'self_audit_form': SelfAuditSubmission(),
-                'check_data': [],
-            }
+        'self_audit_form': SelfAuditSubmission(),
+        'check_data': [],
+        'warning': [],
+    }
     no_checks = 0
     all_check_data = []
-    warnings = []
-    submit_check = "2"
+    submit_check = False
+
     #  when button is pressed
     if request.method == 'POST':
-        
         if 'which_assays' in request.POST:
 
             self_audit_form = SelfAuditSubmission(request.POST)
-            
             if self_audit_form.is_valid():
                 submit_check = self_audit_form.cleaned_data['submit_check']
                 start_date = self_audit_form.cleaned_data['start_date']
@@ -121,7 +119,7 @@ def self_audit(request):
 
                     # include marker
                     include = True
-                        
+
                     # see if within date specified with drop down menus
                     within_date = c.signoff_time
                     within_date = within_date.date()
@@ -141,69 +139,63 @@ def self_audit(request):
                         include = True
                     else:
                         include = False
-                    
+
                     # want to get check data here
                     if include:
                         no_checks += 1
                         check_data = {
-                            'Worksheet': c.analysis.worksheet.ws_id,
-                            'Assay': c.analysis.worksheet.assay,
-                            'Date_Checked': c.signoff_time.strftime('%d-%b-%Y'),
-                            'Checker': username,
-                            'Sample': c.analysis.sample.sample_id,
-                            'Overall_Comments': c.overall_comment,
-                            'SVD_Link': f'{request.get_host()}/analysis/{c.analysis.id}#report'
+                            'worksheet': c.analysis.worksheet.ws_id,
+                            'assay': c.analysis.worksheet.assay,
+                            'date_checked': c.signoff_time.strftime('%d-%b-%Y'),
+                            'checker': username,
+                            'sample': c.analysis.sample.sample_id,
+                            'overall_comments': c.overall_comment,
+                            'svd_link': f'{request.get_host()}/analysis/{c.analysis.id}#report',
+                            'pk': c.pk,
                         }
-
                         all_check_data.append(check_data)
 
                 context['no_checks'] = no_checks
                 context['check_data'] = all_check_data
 
-
         if "download_submit" in request.POST:
             start_date = self_audit_form.cleaned_data['start_date']
             end_date = self_audit_form.cleaned_data['end_date']
             submit_check = self_audit_form.cleaned_data['submit_check']
+            if submit_check != "1":
+                context['warning'].append('Make sure you check the parameters are set and the tickboxes are ticked.')
+                return render(request, 'analysis/self_audit.html', context)
+
             response = HttpResponse(content_type="text/csv")
             response[
                     "Content-Disposition"
             ] = f'attachment; filename={username}_{start_date}-{end_date}_checks.csv'
 
             fieldnames = [
-                'Worksheet',                            
-                'Assay',
-                'Date_Checked',
-                'Checker',
-                'Sample',
-                'Overall_Comments',
-                'SVD_Link',
+                'worksheet',
+                'assay',
+                'date_checked',
+                'checker',
+                'sample',
+                'overall_comments',
+                'svd_link',
             ]
 
             writer = csv.DictWriter(response, fieldnames=fieldnames)
             writer.writeheader()
 
             for checks in all_check_data:
-
+                del checks["pk"]  # remove pk as not needed in csv
                 writer.writerow(checks)
 
-            if submit_check != "1":
-                warnings.append('Make sure you check the parameters are set and the tickboxes are ticked.')
-
-                return render(request, 'analysis/self_audit.html', {'self_audit_form': self_audit_form, 'warning': warnings})
-            
-            else:
-                return response
+            return response
 
         if submit_check != "1":
-            warnings.append('Make sure you check the parameters are set and the tickboxes are ticked.')
-
-            return render(request, 'analysis/self_audit.html', {'self_audit_form': self_audit_form, 'warning': warnings})
-            
-        else:
+            context['warning'].append('Make sure you check the parameters are set and the tickboxes are ticked.')
             return render(request, 'analysis/self_audit.html', context)
 
     return render(request, 'analysis/self_audit.html', context)
+
 
 def ajax_num_assigned_user(request, user_pk):
     """
