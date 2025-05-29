@@ -8,8 +8,23 @@ from unittest import mock
 
 # Create your tests here.
 class TestViews(TestCase):
-    #TODO views unit tests
-    pass
+    """
+    Test ability to navigate through the different pages of the database
+    """
+    
+    # include fixtures from classify and analysis to builld base models
+    fixtures = ["setup_fixtures.json", "user_groups.json", 
+                "analysis/fixtures/dna_test_1.json"]
+    
+    def setUp(self):
+        ''' Runs before each test '''
+        self.client.login(username='test', password='hello123')
+
+    def test_view_classifications(self):
+        '''Access view classifications page'''
+        response = self.client.get('/classify', follow=True)
+        self.assertEqual(response.status_code, 200)
+
 
 class TestModels(TestCase):
     """
