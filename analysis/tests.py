@@ -300,9 +300,21 @@ class TestUpload(TestCase):
 class TestModelFunctions(TestCase):
     def setUp(self):
         # user
-        self.user_one = User.objects.create_user(
+        self.user_1 = User.objects.create_user(
             username = "userone",
             email = "userone@user.com",
+        )
+        UserSettings.objects.create(
+            user = self.user_1,
+            lims_initials = "AB"
+        )
+        self.user_2 = User.objects.create_user(
+            username = "usertwo",
+            email = "userone@user.com",
+        )
+        UserSettings.objects.create(
+            user = self.user_2,
+            lims_initials = "CD"
         )
         # run
         self.run = Run.objects.create(
@@ -317,7 +329,7 @@ class TestModelFunctions(TestCase):
             upload_time = timezone.now(),
             signed_off = True,
             signed_off_time = timezone.now(),
-            signed_off_user = self.user_one,
+            signed_off_user = self.user_1,
             auto_qc_pass_fail = "-",
             auto_qc_pk = "123",
         )
@@ -372,6 +384,18 @@ class TestModelFunctions(TestCase):
             genome_build = 38,
             upload_time = timezone.now(),
             sample_pass_fail = "C",
+        )
+
+        # checks for sample analysis 1
+        self.check_1 = Check.objects.create(
+            analysis = self.sample_analysis_1,
+            status = "C",
+            user = self.user_1,
+        )
+        self.check_2 = Check.objects.create(
+            analysis = self.sample_analysis_1,
+            status = "-",
+            user = self.user_2,
         )
 
     # worksheet__qc_signoff - base django
@@ -443,45 +467,91 @@ class TestModelFunctions(TestCase):
         self.sample_analysis_1.save()
         self.assertAlmostEqual(self.sample_analysis_1.percent_reads_ntc(), Decimal(0.11))
 
-    # sample_analysis__all_checks
-    # sample_analysis__current_check
-    # sample_analysis__previous_check
-    # sample_analysis__concatenate_lims_initials
-    # sample_analysis__get_status
-    # sample_analysis__get_checks
-    # sample_analysis__all_panel_snvs
-    # sample_analysis__all_panel_fusions
-    # sample_analysis__has_two_checks
-    # sample_analysis__checks_agree
-    # sample_analysis__finalise_checks
-    # sample_analysis__finalise
-    # sample_analysis__make_next_check
+    def test_sample_analysis__all_checks(self):
+        # use transform to compare between queryset and list objects
+        self.assertQuerysetEqual(self.sample_analysis_1.all_checks(), [self.check_1, self.check_2], transform=lambda x: x)
 
-    # check__get_snv_checks
-    # check__check_snvs_pending
-    # check__get_fusion_checks
-    # check__check_fusions_pending
-    # check__close
-    # check__demographics_checks
-    # check__data_checks
-    # check__finalise_checks
-    # check__finalise
+    def test_sample_analysis__current_check(self):
+        self.assertEqual(self.sample_analysis_1.current_check(), self.check_2)
 
-    # variant_instance__vaf
-    # variant_instance__vaf_ntc
-    # variant_instance__gnomad_display
-    # variant_instance__gnomad_link
-    # variant_panel_analysis__get_current_check
-    # variant_panel_analysis__get_all_checks
-    # variant_panel_analysis__calculate_final_decision
-    # variant_list__header
-    # variant_to_variant_list__signed_off
-    # region_coverage_analysis__genomic
-    # gap_analysis__genomic
-    # fusion_analysis__vaf
-    # fusion_panel_analysis__get_current_check
-    # fusion_panel_analysis__get_all_checks
-    # fusion_panel_analysis__calculate_final_decision
+    def test_sample_analysis__previous_check(self):
+        self.assertEqual(self.sample_analysis_1.previous_check(), self.check_1)
+        self.check_2.delete()
+        self.assertEqual(self.sample_analysis_1.previous_check(), None)
+
+    def test_sample_analysis__concatenate_lims_initials(self):
+        self.assertEqual(self.sample_analysis_1.concatenate_lims_initials(), "AB,CD")
+        self.check_2.delete()
+        self.assertEqual(self.sample_analysis_1.concatenate_lims_initials(), "AB")
+
+
+    def test_sample_analysis__get_status(self):
+        # bioinf worksheet qc fail
+        self.worksheet_1.auto_qc_pass_fail = "F"
+        self.worksheet_1.save()
+        self.assertEqual(self.sample_analysis_1.get_status(), "Bioinformatics QC fail")
+
+        # worksheet pass, analysis complete/ analysis fail / qc fail
+        self.worksheet_1.auto_qc_pass_fail = "P"
+        self.worksheet_1.save()
+        self.sample_analysis_1.sample_pass_fail = "C"
+        self.sample_analysis_1.save()
+        self.assertEqual(self.sample_analysis_1.get_status(), "Complete")
+        self.sample_analysis_1.sample_pass_fail = "F"
+        self.sample_analysis_1.save()
+        self.assertEqual(self.sample_analysis_1.get_status(), "Analysis fail")
+        self.sample_analysis_1.sample_pass_fail = "Q"
+        self.sample_analysis_1.save()
+        self.assertEqual(self.sample_analysis_1.get_status(), "Bioinformatics QC fail")
+
+        # bioinf qc in progress
+        self.worksheet_1.auto_qc_pass_fail = "-"
+        self.worksheet_1.save()
+        self.sample_analysis_1.sample_pass_fail = "-"
+        self.sample_analysis_1.save()
+        self.assertEqual(self.sample_analysis_1.get_status(), "Bioinformatics QC 2")
+
+        # igv checking in progress
+        self.worksheet_1.auto_qc_pass_fail = "P"
+        self.worksheet_1.save()
+        self.assertEqual(self.sample_analysis_1.get_status(), "IGV check 2")
+        self.check_2.delete()
+        self.assertEqual(self.sample_analysis_1.get_status(), "IGV check 1")
+
+    # sample_analysis__get_checks(self):
+    # sample_analysis__all_panel_snvs(self):
+    # sample_analysis__all_panel_fusions(self):
+    # sample_analysis__has_two_checks(self):
+    # sample_analysis__checks_agree(self):
+    # sample_analysis__finalise_checks(self):
+    # sample_analysis__finalise(self):
+    # sample_analysis__make_next_check(self):
+
+    # check__get_snv_checks(self):
+    # check__check_snvs_pending(self):
+    # check__get_fusion_checks(self):
+    # check__check_fusions_pending(self):
+    # check__close(self):
+    # check__demographics_checks(self):
+    # check__data_checks(self):
+    # check__finalise_checks(self):
+    # check__finalise(self):
+
+    # variant_instance__vaf(self):
+    # variant_instance__vaf_ntc(self):
+    # variant_instance__gnomad_display(self):
+    # variant_instance__gnomad_link(self):
+    # variant_panel_analysis__get_current_check(self):
+    # variant_panel_analysis__get_all_checks(self):
+    # variant_panel_analysis__calculate_final_decision(self):
+    # variant_list__header(self):
+    # variant_to_variant_list__signed_off(self):
+    # region_coverage_analysis__genomic(self):
+    # gap_analysis__genomic(self):
+    # fusion_analysis__vaf(self):
+    # fusion_panel_analysis__get_current_check(self):
+    # fusion_panel_analysis__get_all_checks(self):
+    # fusion_panel_analysis__calculate_final_decision(self):
 
 
 # TODO - fixtures changed so these are failing - can we make it so fixtures arent required??
