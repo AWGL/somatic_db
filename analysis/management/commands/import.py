@@ -322,8 +322,10 @@ class Command(BaseCommand):
                     variant_as_bed=f"{v['chr'].strip('chr')}\t{int(v['pos']) -1}\t{v['pos']}"
                     variant_bed_region = pybedtools.BedTool(variant_as_bed, from_string=True)
 
-                    # boolean if variant overlaps with panel
+                    # boolean if variant overlaps with panel - do not do this check for BRCA
                     overlaps_panel = len(panel_bed.intersect(variant_bed_region)) > 0
+                    if assay == "GeneRead_BRCA" and panel == "brca":
+                        overlaps_panel = True
 
                     # if both booleans true, enter loop
                     if overlaps_panel and above_vaf_threshold:

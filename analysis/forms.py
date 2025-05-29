@@ -235,6 +235,24 @@ class UpdatePatientName(forms.Form):
         )
 
 
+class UpdateTumourContent(forms.Form):
+    """
+    Add/change the sample tumour content
+    """
+    tumour_content = forms.IntegerField(min_value=0, max_value=100)
+
+    def __init__(self, *args, **kwargs):
+        super(UpdateTumourContent, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.fields['tumour_content'].widget.attrs.update({
+            'autocomplete': 'off'
+        })
+        self.helper.form_id = 'update-tumour-content-form'
+        self.helper.form_method = 'POST'
+        self.helper.add_input(
+            Submit('submit', 'Submit', css_class='btn btn-info w-25')
+        )
+
 class CoverageCheckForm(forms.Form):
     """
     Confirm that coverage has been checked and add a comment 
