@@ -1948,5 +1948,31 @@
         "splice_genes": null,
         "show_fusion_vaf": true
     }
+},
+{
+    "model": "analysis.panel",
+    "pk": 70,
+    "fields": {
+        "panel_name": "lung",
+        "pretty_print": "Lung",
+        "version": 4,
+        "live": false,
+        "assay": "1",
+        "genome_build": 38,
+        "lims_test_code": "TSO500DNA",
+        "show_snvs": true,
+        "show_myeloid_gaps_summary": false,
+        "depth_cutoffs": "135,270",
+        "vaf_cutoff": "1.40000",
+        "manual_review_required": false,
+        "manual_review_desc": null,
+        "bed_file": "roi/b38/TSO500_DNA/lung_variants_b38_v4.bed",
+        "report_snv_vaf": false,
+        "show_fusions": false,
+        "show_fusion_coverage": false,
+        "fusion_genes": null,
+        "splice_genes": null,
+        "show_fusion_vaf": false
+    }
 }
 ]
