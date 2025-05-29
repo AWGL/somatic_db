@@ -419,8 +419,7 @@ def get_variant_info(sample_data, sample_obj):
                     # add to brca filter count unless it's already marked as a poly
                     brca_filtered_count += 1
                 filter_call = True
-                #TODO do we want to set these calls as Not Analysed or as Artefacts? I'd lean towards artefacts, then when
-                # we implement an auto add to list the scientists can review them?
+                # Save calls that are filtered as artefacts
                 latest_check.decision = 'A'
                 latest_check.save()
                 if not brca_sufficient_supporting_reads:
