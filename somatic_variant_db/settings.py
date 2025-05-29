@@ -26,8 +26,7 @@ SECRET_KEY = 'm#4qhi$dr8)i$ed1)yfuc68ebtuwfo+5mlyy7rtbf7%l-a%kq)'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '10.59.210.247', '10.69.115.27']
-
+ALLOWED_HOSTS = ['127.0.0.1', '10.69.115.27']
 
 # Application definition
 
@@ -135,13 +134,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-GB'
-
 TIME_ZONE = 'Europe/London'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
 
@@ -159,3 +154,5 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 LOGIN_URL = f'/{URL_PREFIX}login/'
+
+AUTOQC_URL = 'http://10.69.115.27/autoqc/run_analysis'

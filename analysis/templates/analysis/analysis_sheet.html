@@ -22,7 +22,6 @@
     <thead>
       <tr>
         <th scope="col">Sample</th>
-        <th scope="col">Name</th>
         <th scope="col">Referral</th>
         <th scope="col">Worksheet</th>
         <th scope="col">Status</th>
@@ -33,10 +32,9 @@
       
       <tr>
         <td>{{ sample_data.sample_id }}</td>
-        <td>{{ sample_data.sample_name }}</td>
         <td>{{ sample_data.panel_obj }}</td>
         <td>{{ sample_data.worksheet_id }}</td>
-        <td>{{ sample_data.checks.current_status }}</td>
+        <td>{{ sample_data.status }}</td>
         <td>{{ sample_data.checks.assigned_to }}</td>
       </tr>
 
@@ -54,25 +52,29 @@
       <a class="nav-link section-button active" href="#details" data-target="details">Patient details</a>
     </li>
 
-    <!-- SNV specific tabs -->
-    {% if sample_data.panel_obj.show_snvs %}
-    <li class="nav-item">
-      <a class="nav-link section-button" href="#depth" data-target="depth">Depth</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link section-button" href="#snvs" data-target="snvs">SNVs & indels</a>
-    </li>
-    {% endif %}
+    {% if 'QC' not in sample_data.status %}
 
-    <!-- fusion specific tab -->
-    {% if sample_data.panel_obj.show_fusions %}
-    <li class="nav-item">
-      <a class="nav-link section-button" href="#rna" data-target="rna">Fusions</a>
-    </li>
+      <!-- SNV specific tabs -->
+      {% if sample_data.panel_obj.show_snvs %}
+      <li class="nav-item">
+        <a class="nav-link section-button" href="#depth" data-target="depth">Depth</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link section-button" href="#snvs" data-target="snvs">SNVs & indels</a>
+      </li>
+      {% endif %}
+
+      <!-- fusion specific tab -->
+      {% if sample_data.panel_obj.show_fusions %}
+      <li class="nav-item">
+        <a class="nav-link section-button" href="#rna" data-target="rna">Fusions</a>
+      </li>
+      {% endif %}
+
     {% endif %}
 
     <!-- show finalise tab if analysis not yet complete -->
-    {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail' %}
+    {% if 'IGV' in sample_data.status or sample_data.status == 'Bioinformatics QC 1' or sample_data.status == 'Bioinformatics QC 2' %}
     <li class="nav-item">
       <a class="nav-link section-button" href="#finalise" data-target="finalise">Finalise</a>
     </li>
@@ -84,6 +86,8 @@
     </li>
 
     {% endif %}
+
+
   </ul>
 </div>
 <br>
@@ -92,22 +96,27 @@
 <!-- load in each section from template -->
 <div class="container" id="details">{% include 'analysis/analysis-info.html' %}</div>
 
-{% if sample_data.panel_obj.show_snvs %}
-<div class="container-fluid" id="depth">{% include 'analysis/analysis-depth.html' %}</div>
-<div class="container-fluid" id="snvs">{% include 'analysis/analysis-snvs.html' %}</div>
+{% if 'QC' not in sample_data.status %}
+
+  {% if sample_data.panel_obj.show_snvs %}
+  <div class="container-fluid" id="depth">{% include 'analysis/analysis-depth.html' %}</div>
+  <div class="container-fluid" id="snvs">{% include 'analysis/analysis-snvs.html' %}</div>
+  {% endif %}
+
+  {% if sample_data.panel_obj.show_fusions %}
+  <div class="container-fluid" id="rna">{% include 'analysis/analysis-fusions.html' %}</div>
+  {% endif %}
+
 {% endif %}
 
-{% if sample_data.panel_obj.show_fusions %}
-<div class="container-fluid" id="rna">{% include 'analysis/analysis-fusions.html' %}</div>
-{% endif %}
-
-{% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail' %}
+{% if 'IGV' in sample_data.status or sample_data.status == 'Bioinformatics QC 1' or sample_data.status == 'Bioinformatics QC 2' %}
 <div class="container" id="finalise">{% include 'analysis/analysis-finalise.html' %}</div>
 
 {% else %}
 <div class="container-fluid" id="report">{% include 'analysis/analysis-report.html' %}</div>
 
 {% endif %}
+
 
 
 

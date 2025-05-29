@@ -6,7 +6,7 @@
         <referral>{{ sample_data.panel_obj.panel_name }}</referral>
         <awmgs_db_pk>{{ sample_data.sample_pk }}</awmgs_db_pk>
         <test_code>{{ sample_data.test_code }}</test_code>
-        <pass_fail>{% if sample_data.checks.current_status == "Complete" %}Pass{% else %}{{ sample_data.checks.current_status }}{% endif %}</pass_fail>
+        <pass_fail>{% if sample_data.status == "Complete" %}Pass{% else %}{{ sample_data.status }}{% endif %}</pass_fail>
         <checkers>{{ sample_data.checks.lims_checks }}</checkers>
     </sample_info>
 

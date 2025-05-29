@@ -259,8 +259,7 @@ class Command(BaseCommand):
 
         new_check = Check(
             analysis=new_sample_analysis,
-            stage='IGV',
-            status='P',
+            status='-',
         )
         new_check.save()
 

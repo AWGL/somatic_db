@@ -1,7 +1,7 @@
 {% load crispy_forms_tags %}
 
 <!-- box that only appears when manual checks for variants have to be done-->
-{% if sample_data.panel_obj.manual_review_required %}
+{% if sample_data.panel_obj.manual_review_required and 'IGV' in sample_data.status %}
 
   {% if sample_data.checks.current_check_object.manual_review_check %}
     <div class="alert alert-success">
@@ -30,7 +30,7 @@
       <th scope="col">Gnomad PopMax AF</th>
       <!--<th scope="col">Previously seen</th>-->
       <th scope="col">IGV</th>
-      {% if 'IGV' in sample_data.checks.current_status %}
+      {% if 'IGV' in sample_data.status %}
       <th scope="col">Action</th>
       {% endif %}
       <th><span class="fa fa-comment-alt"></span></th>
@@ -86,7 +86,7 @@
         {% endfor %}
       </td>
 
-      {% if 'IGV' in sample_data.checks.current_status %}
+      {% if 'IGV' in sample_data.status %}
       <td class=genuine-dropdown>
         <select name="variant" id="variant">
           {% for option in variant_data.check_options %}
@@ -124,10 +124,10 @@
 {% if variant_data.variant_calls %}
 
   <!-- update button & button to add new variant in case of miscalled indels -->
-  {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail' %}
+  {% if 'IGV' in sample_data.status %}
   <div class="float-right">
     <button type="button" class="btn btn-light" data-toggle="modal" data-target="#add-variant-modal">Add variant</button>
-    <button type="button" class="btn btn-success snv-submit" id="snv-submit">Update selections</button>
+    <button type="button" class="btn btn-warning snv-submit" id="snv-submit">Update selections</button>
   </div>
   <br>
   <br>
@@ -140,7 +140,7 @@
   <div class="alert alert-info">No calls in this sample</div>
 
   <!-- button to add new variant in case of miscalled indels -->
-  {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail' %}
+  {% if 'IGV' in sample_data.status %}
   <div class="float-right">
     <button type="button" class="btn btn-light" data-toggle="modal" data-target="#add-variant-modal">Add variant</button>
   </div>
@@ -259,7 +259,7 @@
         {% endif %}
 
         <!-- comment form here -->
-        {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail' %}
+        {% if 'IGV' in sample_data.status %}
         {% crispy v.comment_form %}
         {% endif %}
 

@@ -1,0 +1,44 @@
+{% load crispy_forms_tags %}
+
+<form method="post" id="finalise_form">
+    {% csrf_token %}
+    <div id="finalise_form_check_1" class="alert alert-warning" role="alert">
+        <h5><div class="spinner-border spinner-border-sm" role="status"></div>&nbsp;Checking demographics completed...</h5>
+    </div>
+
+    <fieldset id="finalise_form_pass_fail">
+        <h5>{{ submit_form.analysis_pass_fail.label }}</h5>
+        <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+        {% for radio in submit_form.analysis_pass_fail %}
+        <label class="btn" for="{{ radio.id_for_label }}">
+            {{ radio.tag }}
+            {{ radio.choice_label }}
+        </label>
+        {% endfor %}
+        </div>
+    </fieldset>
+
+    <br>
+    <div id="finalise_form_check_2" class="alert alert-warning" role="alert">
+        <h5><div class="spinner-border spinner-border-sm" role="status"></div>&nbsp;Checking that this check can be completed...</h5>
+    </div>
+    <div id="finalise_form_check_3" class="alert alert-warning" role="alert">
+        <h5><div class="spinner-border spinner-border-sm" role="status"></div>&nbsp;Checking that this sample can be closed...</h5>
+    </div>
+
+    <fieldset id="finalise_form_next_step">
+        <h5>{{ submit_form.next_step.label }}</h5>
+        <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+        {% for radio in submit_form.next_step %}
+        <label class="btn btn-outline-secondary" for="{{ radio.id_for_label }}">
+            {{ radio.tag }}
+            {{ radio.choice_label }}
+        </label>
+        {% endfor %}
+        </div>
+
+        <br><br>
+        {{ submit_form.confirm|as_crispy_field }}
+        <button type="submit" class="btn btn-info w-100">Submit</button>
+    </fieldset>
+</form>

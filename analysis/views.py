@@ -1,20 +1,23 @@
-from django.shortcuts import render, redirect
-from django.http import Http404, HttpResponse, JsonResponse
-from django.contrib.auth.decorators import login_required
+from django.conf import settings
 from django.contrib.auth import authenticate, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-from django.utils import timezone
-from django.template.loader import get_template
+from django.http import Http404, HttpResponse, JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
 from django.template import Context
-from django.shortcuts import get_object_or_404
+from django.template.loader import get_template, render_to_string
+from django.utils import timezone
 
-from .forms import (NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatientName, 
-    CoverageCheckForm, FusionCommentForm, SampleCommentForm, UnassignForm, PaperworkCheckForm, 
-    ConfirmPolyForm, ConfirmArtefactForm, AddNewPolyForm, AddNewArtefactForm, AddNewFusionArtefactForm, 
-    ManualVariantCheckForm, ReopenForm, ChangeLimsInitials, EditedPasswordChangeForm, EditedUserCreationForm, NewFusionForm,SelfAuditSubmission)
-from .utils import (get_samples, unassign_check, reopen_check, signoff_check, make_next_check, 
-    get_variant_info, get_coverage_data, get_sample_info, get_fusion_info, get_poly_list, get_fusion_list, 
-    create_myeloid_coverage_summary, variant_format_check, breakpoint_format_check, lims_initials_check, validate_variant)
+from .forms import (NewVariantForm, SubmitForm, VariantCommentForm, CoverageCheckForm, FusionCommentForm, 
+    SampleCommentForm, UnassignForm, PaperworkCheckForm, ConfirmPolyForm, ConfirmArtefactForm, AddNewPolyForm, AddNewArtefactForm, 
+    ManualVariantCheckForm, ReopenSampleAnalysisForm, ChangeLimsInitials, EditedPasswordChangeForm, EditedUserCreationForm, 
+    RunQCForm, ReopenRunQCForm, SendCheckBackForm, DetailsCheckForm, AddNewFusionArtefactForm, NewFusionForm, SampleQCForm, 
+    SelfAuditSubmission)
+
+from .utils import (get_samples, unassign_check, reopen_check, get_variant_info, get_coverage_data, get_sample_info, 
+    get_fusion_info, get_poly_list, get_fusion_list, create_myeloid_coverage_summary, variant_format_check, 
+    breakpoint_format_check, lims_initials_check, validate_variant)
+
 from .models import *
 
 import csv
@@ -64,7 +67,6 @@ def signup(request):
                 usersettings.save()
 
                 return redirect('home')
-                #TODO - add some kind of confirmation
 
             # if LIMS initials already exists then throw an error
             else:
@@ -205,7 +207,7 @@ def ajax_num_assigned_user(request, user_pk):
     if request.is_ajax():
         # get user object and work out count of uncompleted checks assigned to user
         user_obj = get_object_or_404(User, pk=user_pk)
-        num_checks = Check.objects.filter(user=user_obj, status='P').count()
+        num_checks = Check.objects.filter(user=user_obj, status='-').count()
 
         # sort out css colouring, green if no checks, yellow if one or more
         if num_checks == 0:
@@ -230,9 +232,33 @@ def ajax_num_pending_worksheets(request):
     """
     if request.is_ajax():
         # get all worksheets then filter for only ones that have a current IGV check in them
-        all_worksheets = Worksheet.objects.filter(diagnostic=True).order_by('-run')
-        pending_worksheets = [w for w in all_worksheets if 'IGV' in w.get_status_and_samples()[0]]
+        all_worksheets = Worksheet.objects.filter(signed_off=True, diagnostic=True).order_by('-run')
+        pending_worksheets = [w for w in all_worksheets if 'IGV' in w.get_status()]
         num_pending = len(pending_worksheets)
+
+        # sort out css colouring, green if no checks, yellow if one or more
+        if num_pending == 0:
+            css_class = 'success'
+        else:
+            css_class = 'warning'
+
+        # return as json object
+        out_dict = {
+            'num_pending': num_pending,
+            'css_class': css_class,
+        }
+
+        return JsonResponse(out_dict)
+
+
+def ajax_num_worksheet_qc(request):
+    """
+    AJAX call for the number of worksheets waiting on bioinformatics QC
+    Loaded in the background when the home page is loaded
+    """
+    if request.is_ajax():
+        # get all worksheets that havent been signed off yet
+        num_pending = Worksheet.objects.filter(signed_off=False).count()
 
         # sort out css colouring, green if no checks, yellow if one or more
         if num_pending == 0:
@@ -263,8 +289,8 @@ def ajax_autocomplete(request):
         max_results = 10
 
         # use to search for worksheets - limit to max results variable as we'd never return more than that
-        ws_queryset = Worksheet.objects.filter(ws_id__icontains=query_string)[:max_results]
-        run_id_query = Worksheet.objects.filter(run__run_id__icontains=query_string)[:max_results]
+        ws_queryset = Worksheet.objects.filter(signed_off=True, ws_id__icontains=query_string)[:max_results]
+        run_id_query = Worksheet.objects.filter(signed_off=True, run__run_id__icontains=query_string)[:max_results]
 
         # process query results from worksheet/ run objects
         for record in ws_queryset | run_id_query:
@@ -286,17 +312,18 @@ def ajax_autocomplete(request):
 
         for record in sample_queryset:
             for ws in record.get_worksheets():
-                results.append({
-                    'ws': ws.ws_id,
-                    'run': ws.run.run_id,
-                    'sample': record.sample_id,
-                })
-                counter += 1
+                if ws.signed_off:
+                    results.append({
+                        'ws': ws.ws_id,
+                        'run': ws.run.run_id,
+                        'sample': record.sample_id,
+                    })
+                    counter += 1
 
-                # return as soon as max length reached to speed up query
-                if counter == max_results:
-                    data = json.dumps(results)
-                    return HttpResponse(data, 'application/json')
+                    # return as soon as max length reached to speed up query
+                    if counter == max_results:
+                        data = json.dumps(results)
+                        return HttpResponse(data, 'application/json')
 
 
         # return to template if total number less than max query size
@@ -309,25 +336,31 @@ def view_worksheets(request, query):
     """
     Displays all worksheets and links to the page to show all samples 
     within the worksheet
+
     """
+    # check if user is in the qc user group
+    in_qc_user_group = request.user.groups.filter(name='qc_signoff').exists()
+
     # based on URL, do a different query
     # 30 most recent worksheets
     if query == 'recent':
-        worksheets = Worksheet.objects.filter(diagnostic=True).order_by('-run')[:30]
+        worksheets = Worksheet.objects.filter(signed_off=True, diagnostic=True).order_by('-run')[:30]
         filtered = True
 
     # all worksheets that arent diagnostic
     elif query == 'training':
-        worksheets = Worksheet.objects.filter(diagnostic=False).order_by('-run')
+        worksheets = Worksheet.objects.filter(signed_off=True, diagnostic=False).order_by('-run')
         filtered = True
 
     # all diagnostic worksheets with an IGV check still open
     elif query == 'pending':
-        # TODO this will load in all worksheets first, is there a quicker way?
-        all_worksheets = Worksheet.objects.filter(diagnostic=True).order_by('-run')
+        all_worksheets = Worksheet.objects.filter(signed_off=True, diagnostic=True).order_by('-run')
+        worksheets = [w for w in all_worksheets if w.get_status() == 'IGV checking']
+        filtered = True
 
-        # only include worksheets that have a current IGV check in them
-        worksheets = [w for w in all_worksheets if 'IGV' in w.get_status_and_samples()[0]]
+    # worksheets waiting on bioinformatics QC
+    elif query == 'qc':
+        worksheets = Worksheet.objects.filter(signed_off=False).order_by('-run')
         filtered = True
 
     # all worksheets
@@ -346,10 +379,13 @@ def view_worksheets(request, query):
 
     for w in worksheets:
         # if first two characters are digits, add to diagnostics list, otherwise add to other list
-        status, samples = w.get_status_and_samples()
+        samples = w.get_samples()
+        status = w.get_status()
         if w.diagnostic:
             diagnostics_ws_list.append({
                 'worksheet_id': w.ws_id,
+                'signed_off': w.signed_off,
+                'diagnostic': True,
                 'run_id': w.run.run_id,
                 'assay': w.assay,
                 'status': status,
@@ -358,6 +394,8 @@ def view_worksheets(request, query):
         else:
             other_ws_list.append({
                 'worksheet_id': w.ws_id,
+                'signed_off': w.signed_off,
+                'diagnostic': False,
                 'run_id': w.run.run_id,
                 'assay': w.assay,
                 'status': status,
@@ -370,6 +408,7 @@ def view_worksheets(request, query):
         'worksheets': ws_list,
         'filtered': filtered,
         'query': query,
+        'in_qc_user_group': in_qc_user_group,
     }
 
     return render(request, 'analysis/view_worksheets.html', context)
@@ -384,12 +423,16 @@ def view_samples(request, worksheet_id=None, user_pk=None):
     Only one of the optional args will ever be passed in, each from different URLs, 
     this will control whether a worksheet or a user is displayed
     """
+    # check if user is in the qc user group
+    in_qc_user_group = request.user.groups.filter(name='qc_signoff').exists()
 
     # start context dictionary
     context = {
         'unassign_form': UnassignForm(),
         'check_form': PaperworkCheckForm(),
-        'reopen_form': ReopenForm(),
+        'reopen_analysis_form': ReopenSampleAnalysisForm(),
+        'reopen_qc_form': ReopenRunQCForm(),
+        'in_qc_user_group': in_qc_user_group,
     }
 
     # error if both variables used, shouldnt be able to do this
@@ -401,7 +444,7 @@ def view_samples(request, worksheet_id=None, user_pk=None):
 
         # get user object to get list of checks, then get the related samples
         user_obj = get_object_or_404(User, pk=user_pk)
-        user_checks = Check.objects.filter(user=user_obj, status='P')
+        user_checks = Check.objects.filter(user=user_obj, status='-')
         samples = [c.analysis for c in user_checks]
 
         # get template specific variables needed for context
@@ -419,9 +462,19 @@ def view_samples(request, worksheet_id=None, user_pk=None):
         ws_obj = Worksheet.objects.get(ws_id = worksheet_id)
         context['template'] = 'worksheet'
         context['worksheet'] = worksheet_id
+        context['diagnostic'] = ws_obj.diagnostic
         context['run_id'] = ws_obj.run
         context['assay'] = ws_obj.assay
+        context['signed_off'] = ws_obj.signed_off
         context['samples'] = get_samples(samples)
+
+        if ws_obj.signed_off:
+            context['signoff_user'] = ws_obj.signed_off_user
+            context['signoff_time'] = ws_obj.signed_off_time
+            context['ws_pass_fail'] = ws_obj.get_auto_qc_pass_fail_display()
+            context['autoqc_link'] = f'{settings.AUTOQC_URL}/{ws_obj.auto_qc_pk}'
+        else:
+            context['qc_form'] = RunQCForm()
 
     # error if neither variables available
     else:
@@ -509,12 +562,12 @@ def view_samples(request, worksheet_id=None, user_pk=None):
                 elif context['template'] == 'user':
                     return redirect('view_user_samples', user_pk)
 
-        # if reopen modal button is pressed
-        if 'reopen' in request.POST:
-            reopen_form = ReopenForm(request.POST)
-            if reopen_form.is_valid():
+        # if reopen analysis modal button is pressed
+        if 'reopen_analysis' in request.POST:
+            reopen_analysis_form = ReopenSampleAnalysisForm(request.POST)
+            if reopen_analysis_form.is_valid():
                 # get sample analysis pk from form
-                sample_pk = reopen_form.cleaned_data['reopen']
+                sample_pk = reopen_analysis_form.cleaned_data['reopen_analysis']
                 sample_analysis_obj = SampleAnalysis.objects.get(pk=sample_pk)
 
                 # reopen the check
@@ -538,6 +591,27 @@ def view_samples(request, worksheet_id=None, user_pk=None):
 
                 return redirect('analysis_sheet', sample_analysis_obj.pk)
 
+        # if QC signoff form submitted
+        if 'qc_result' in request.POST:
+            qc_form = RunQCForm(request.POST)
+            if qc_form.is_valid():
+                # update values
+                cleaned_data = qc_form.cleaned_data
+                ws_obj.qc_signoff(True, timezone.now(), request.user, cleaned_data['qc_result'], cleaned_data['auto_qc_pk'])
+
+                # redirect to force refresh
+                return redirect('view_ws_samples', worksheet_id)
+
+        # if QC reopened
+        if 'reopen_qc' in request.POST:
+            reopen_qc_form = ReopenRunQCForm(request.POST)
+            if reopen_qc_form.is_valid():
+
+                # remove QC values - individual samples aren't reset in case we have to reopen midway through analysis
+                ws_obj.reset_qc_signoff()
+
+                # redirect to force refresh
+                return redirect('view_ws_samples', worksheet_id)
 
     return render(request, 'analysis/view_samples.html', context)
 
@@ -547,18 +621,21 @@ def analysis_sheet(request, sample_id):
     """
     Display coverage and variant metrics to allow checking of data 
     in IGV
+
     """
-    # load sample object, error if the paperwork check hasnt been done
+    # load sample object
     sample_obj = SampleAnalysis.objects.get(pk = sample_id)
-    if sample_obj.paperwork_check == False:
-        raise Http404("Paperwork hasn't been checked")
 
     # load in data that is common to both RNA and DNA workflows
     sample_data = get_sample_info(sample_obj)
     current_step_obj = sample_data['checks']['current_check_object']
 
+    # error if the paperwork check hasnt been done, except from QC step
+    if (sample_obj.paperwork_check == False) and ('QC' not in sample_data['status']):
+        raise Http404("Paperwork hasn't been checked")
+
     # assign to whoever clicked the sample and reload check objects
-    if sample_data['checks']['current_status'] not in ['Complete', 'Fail']:
+    if sample_obj.sample_pass_fail == '-':
         if current_step_obj.user == None:
             current_step_obj.user = request.user
             current_step_obj.save()
@@ -576,17 +653,18 @@ def analysis_sheet(request, sample_id):
         'new_fusion_form': NewFusionForm(),
         'manual_check_form': ManualVariantCheckForm(regions=sample_data['panel_manual_regions']),
         'submit_form': SubmitForm(),
-        'update_name_form': UpdatePatientName(),
         'sample_comment_form': SampleCommentForm(
             comment=current_step_obj.overall_comment,
-            info_check=current_step_obj.patient_info_check,
             pk=current_step_obj.pk, 
         ),
+        'demographics_form': DetailsCheckForm(info_check=current_step_obj.patient_info_check),
         'coverage_check_form': CoverageCheckForm(
             pk=current_step_obj.pk, 
             comment=current_step_obj.coverage_comment,
             ntc_check=current_step_obj.coverage_ntc_check,
         ),
+        'send_back_form': SendCheckBackForm(),
+        'sample_qc_form': SampleQCForm(),
     }
 
     # pull out coverage summary for myeloid, otherwise return false
@@ -658,30 +736,59 @@ def analysis_sheet(request, sample_id):
 
     # submit buttons
     if request.method == 'POST':
-        # patient name input form
-        if 'name' in request.POST:
-            update_name_form = UpdatePatientName(request.POST)
 
-            if update_name_form.is_valid():
-                new_name = update_name_form.cleaned_data['name']
-                Sample.objects.filter(pk=sample_obj.sample.pk).update(sample_name=new_name)
-                sample_obj = SampleAnalysis.objects.get(pk = sample_id)
+        # if patient demographiocs check is completed
+        if 'patient_demographics' in request.POST:
+            demographics_form = DetailsCheckForm(request.POST, info_check=current_step_obj.patient_info_check)
+            if demographics_form.is_valid():
+                # update check
+                Check.objects.filter(pk=current_step_obj.pk).update(
+                    patient_info_check=demographics_form.cleaned_data['patient_demographics'],
+                )
+                # reload sample data
                 context['sample_data'] = get_sample_info(sample_obj)
+                current_step_obj = context['sample_data']['checks']['current_check_object']
+                context['demographics_form'] = DetailsCheckForm(info_check=current_step_obj.patient_info_check)
+
+        # if bioinformatics QC fail form submitted
+        if 'fail_reason' in request.POST:
+            sample_qc_form = SampleQCForm(request.POST)
+            if sample_qc_form.is_valid():
+
+                # work out if this is 1st or 2nd check
+                current_step_obj = context['sample_data']['checks']['current_check_object']
+                if context['sample_data']['checks']['previous_check_object']:
+                    next_step = 'finalise'
+                else:
+                    next_step = 'extra_check'
+
+                # update models
+                current_step_obj.overall_comment = sample_qc_form.cleaned_data['fail_reason']
+                current_step_obj.overall_comment_updated = timezone.now()
+                current_step_obj.save()
+                current_step_obj.finalise('Q', next_step, request.user)
+
+                return redirect('view_ws_samples', sample_data['worksheet_id'])
 
         # comments submit button
         if 'variant_comment' in request.POST:
-            new_comment = request.POST['variant_comment']
-            pk = request.POST['pk']
+            var_comment_form = VariantCommentForm(request.POST, pk=request.POST['pk'], comment=request.POST['variant_comment'])
+            if var_comment_form.is_valid():
 
-            # update comment
-            VariantCheck.objects.filter(pk=request.POST['pk']).update(
-                comment=new_comment,
-                comment_updated=timezone.now(),
-            )
+                new_var_data = var_comment_form.cleaned_data
+                new_comment = new_var_data['variant_comment']
+                pk = new_var_data['pk']
 
-            # reload variant data
-            context['variant_data'] = get_variant_info(sample_data, sample_obj)
+                # update comment
+                VariantCheck.objects.filter(pk=pk).update(
+                    comment=new_comment,
+                    comment_updated=timezone.now(),
+                )
 
+                # reload variant data
+                context['variant_data'] = get_variant_info(sample_data, sample_obj)
+
+        # if button for manaully scrolling in IGV is clicked
         if 'variants_checked' in request.POST:
             manual_check_form = ManualVariantCheckForm(request.POST, regions=sample_data['panel_manual_regions'])
 
@@ -858,18 +965,12 @@ def analysis_sheet(request, sample_id):
         # overall sample comments form
         if 'sample_comment' in request.POST:
             new_comment = request.POST['sample_comment']
-            try:
-                if request.POST['patient_demographics'] == 'on':
-                    info_check = True
-            except:
-                info_check = False
             pk = request.POST['pk']
 
             # update comment
             Check.objects.filter(pk=pk).update(
                 overall_comment=new_comment,
                 overall_comment_updated=timezone.now(),
-                patient_info_check=info_check,
             )
 
             # reload sample data
@@ -877,108 +978,52 @@ def analysis_sheet(request, sample_id):
             current_step_obj = context['sample_data']['checks']['current_check_object']
             context['sample_comment_form'] = SampleCommentForm(
                 comment=current_step_obj.overall_comment,
-                info_check=current_step_obj.patient_info_check,
                 pk=current_step_obj.pk, 
             )
 
+        # if send check back form is clicked
+        if 'send_back_check' in request.POST:
+            send_back_form = SendCheckBackForm(request.POST)
+            if send_back_form.is_valid():
+                # delete current check
+                current_check_obj = context['sample_data']['checks']['current_check_object']
+                current_check_obj.delete()
 
+                # reopen previous check
+                previous_check_obj = context['sample_data']['checks']['previous_check_object']
+                reopen_check(previous_check_obj.user, sample_obj)
+
+                return redirect('view_ws_samples', sample_data['worksheet_id'])
 
         # if finalise check submit form is clicked
         if 'next_step' in request.POST:
             submit_form = SubmitForm(request.POST)
-
             if submit_form.is_valid():
+                pass_fail = submit_form.cleaned_data['analysis_pass_fail']
                 next_step = submit_form.cleaned_data['next_step']
-                current_step = sample_data['checks']['current_status']
-                
-                if sample_data['sample_name'] == None:
-                    context['warning'].append('Did not finalise check - input patient name before continuing')
-
-                if (sample_data['panel_obj'].show_snvs == True) and (current_step_obj.coverage_ntc_check == False) and (next_step != "Fail sample"):
-                    context['warning'].append('Did not finalise check - check NTC before continuing')
-
-                if current_step_obj.patient_info_check == False:
-                    context['warning'].append('Did not finalise check - check patient demographics before continuing')
-
-                if sample_data['panel_obj'].manual_review_required:
-                    if not current_step_obj.manual_review_check:
-                        context['warning'].append('Did not finalise check - manual variant review in IGV required, see top of SNVs & indels tab')
-
-                # only enter this loop if there are no warnings so far, otherwise the warnings above get skipped
-                if len(context['warning']) == 0:
-                    if next_step == 'Complete check':
-
-                        # if 1st IGV, make 2nd IGV
-                        if current_step == 'IGV check 1':
-                            submitted, err = signoff_check(request.user, current_step_obj, sample_obj)
-                            if submitted:
-                                make_next_check(sample_obj, 'IGV')
-                                return redirect('view_ws_samples', sample_data['worksheet_id'])
-                            else:
-                                context['warning'].append(err)
-                            
-                        # if 2nd IGV (or 3rd...)
-                        else:
-                            # Check whether the last two checkers disagree
-                            variants_match = True
-                            non_matching_variants = []
-
-                            # check for variants/fusions with disagreeing checks
-                            if sample_data['panel_obj'].show_snvs == True:
-                                for variant in context['variant_data']['variant_calls']:
-                                    if not variant['latest_checks_agree']:
-                                        variants_match = False
-                                        non_matching_variants.append(variant['genomic'])
-
-                            if sample_data['panel_obj'].show_fusions == True:
-                                for fusion in context['fusion_data']['fusion_calls']:
-                                    if not fusion['latest_checks_agree']:
-                                        variants_match = False
-                                        non_matching_variants.append(fusion['fusion_genes'])
-
-                            if not variants_match:
-                                warning_text = ', '.join(non_matching_variants)
-                                context['warning'].append(f'Did not finalise check - the last two checkers dont agree for the following variants: {warning_text}')
-                            
-                            # final signoff
-                            else:
-                                submitted, err = signoff_check(request.user, current_step_obj, sample_obj, complete=True)
-                                if submitted:
-                                    return redirect('view_ws_samples', sample_data['worksheet_id'])
-
-                                # throw warning if not all variants are checked
-                                else:
-                                    context['warning'].append(err)
-
-                    elif next_step == 'Request extra check':
-
-                        # make extra IGV check
-                        submitted, err = signoff_check(request.user, current_step_obj, sample_obj)
-                        if submitted:
-                            make_next_check(sample_obj, 'IGV')
-                            return redirect('view_ws_samples', sample_data['worksheet_id'])
-                        else:
-                            context['warning'].append(err)
-
-
-                    elif next_step == 'Fail sample':
-
-                        # TODO other checks on fails??? - will only count total fails, not two in a row/ mixture of fails and passes
-
-                        # if failed 1st check, make 2nd check 
-                        if current_step == 'IGV check 1':
-                            signoff_check(request.user, current_step_obj, sample_obj, status='F')
-                            make_next_check(sample_obj, 'IGV')
-                            return redirect('view_ws_samples', sample_data['worksheet_id'])
-
-                        # otherwise sign off and make sample failed
-                        else:
-                            signoff_check(request.user, current_step_obj, sample_obj, status='F')
-                            return redirect('view_ws_samples', sample_data['worksheet_id'])
-
+                current_step_obj.finalise(pass_fail, next_step, request.user)
+                return redirect('view_ws_samples', sample_data['worksheet_id'])
 
     # render the pages
     return render(request, 'analysis/analysis_sheet.html', context)
+
+
+def ajax_finalise_check(request):
+    """
+    AJAX call to check patient demographics are filled in
+    """
+    if request.is_ajax():
+        # load in variables from AJAX
+        pk = request.GET.get('current_check')
+        option_selected = request.GET.get('option_selected')
+
+        # get check object from query
+        current_check_obj = Check.objects.get(id=pk)
+
+        # call finalise check command
+        data = current_check_obj.finalise_checks(option_selected)
+
+        return HttpResponse(data, 'application/json')
 
 
 def ajax(request):

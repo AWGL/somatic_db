@@ -62,6 +62,15 @@ Run the database locally:
 python manage.py runserver
 ```
 
+Setup user groups:
+- Within the admin page, click on Authentication and Authorization > Groups
+- Make a new group called qc_signoff
+- This user group is to allow users to signoff the QC and is intended for the bioinformatics team
+
+Add users to user group:
+- Within the admin page, click on Authentication and Authorization > Users
+- Under the Groups section, add the qc_signoff group for that user and click save
+
 !> You may get a Django error when clicking into a sample analysis that ends with the following:
 `django.contrib.auth.models.User.usersettings.RelatedObjectDoesNotExist: User has no usersettings.`
 In this case, click into the User model within the admin page and make sure there is something in the 'LIMS initials' field at the bottom.

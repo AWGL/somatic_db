@@ -87,7 +87,7 @@ $('#reopen-modal').on('show.bs.modal', function (event) {
     modal.find('.modal-assigned').text(assigned);
 
     // put sample PK into hidden form so that it can be passed to backend
-    document.getElementById ('id_reopen').value = pk;
+    document.getElementById ('id_reopen_analysis').value = pk;
 })
 
 // pull analysis PK into the check modal
