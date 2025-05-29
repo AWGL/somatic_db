@@ -101,13 +101,13 @@
       {% for v in variant_data.variant_calls %}
         {% if v.final_decision == "Genuine" %}
         <tr>
-          <td>{{ v.genomic | truncatechars:20 }}
+          <td style="word-break: break-all; max-width: 150px;">{{ v.genomic }}
           {% if v.manual_upload %}
         	Manual
           {% endif %}
           </td>
           <td>{{ v.gene }} ({{ v.exon }})</td>
-          <td>{{ v.hgvs_c }} ({{ v.hgvs_p }})</td>
+          <td style="word-break: break-all; max-width: 150px;">{{ v.hgvs_c }} ({{ v.hgvs_p }})</td>
           {% if sample_data.panel_obj.assay == '3' %} <!-- 2dp for ctDNA, whole number for the rest-->
           <td>{{ v.vaf.vaf }}%</td>
           {% else %}
