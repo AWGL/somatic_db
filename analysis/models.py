@@ -250,7 +250,7 @@ class SampleAnalysis(models.Model):
         }
 
     def all_panel_snvs(self):
-        return VariantPanelAnalysis.objects.filter(sample_analysis=self)
+        return VariantPanelAnalysis.objects.filter(sample_analysis=self).order_by('pk')
 
     def all_panel_fusions(self):
         return FusionPanelAnalysis.objects.filter(sample_analysis=self)
