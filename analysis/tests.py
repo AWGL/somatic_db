@@ -2389,8 +2389,7 @@ class TestBRCAFiltering(TestCase):
         self.assertTrue(self.variant_instance_obj.is_brca_deep_intronic())
 
     def test_is_brca_deep_intronic_excluded(self):
-        #TODO update this when i get the excluded variant
-        self.variant_instance_obj.hgvs_c = 'known_variant_here'
+        self.variant_instance_obj.hgvs_c = 'NM_007294.4:c.4358-31_4358-27del'
         self.assertFalse(self.variant_instance_obj.is_brca_deep_intronic())
 
     def test_is_brca_poly_none(self):

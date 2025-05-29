@@ -383,13 +383,22 @@ class VariantInstance(models.Model):
             # otherwise, >1% in gnomAD
             return True
     
+    @staticmethod
+    def load_in_brca_known_pathogenics():
+        """
+        Load in the BRCA known pathogenic variants from a file
+        """
+        with open("roi/b37/GeneRead_BRCA/brca_known_pathogenic_variants.txt") as f:
+            contents = f.readlines()
+            contents = [line.rstrip() for line in contents]
+            return contents
+    
     def is_brca_deep_intronic(self):
         """
         We're not interested in any variants more than 20bp in to the introns with the exception of
         a single known pathogenic variant
         """
-        #TODO coordinates for known pathogenic variant
-        known_pathogenics = ["known_variant_here"]
+        known_pathogenics = self.load_in_brca_known_pathogenics()
         if self.hgvs_c in known_pathogenics:
             return False
         intronics = re.findall("[-+]\d+", self.hgvs_c)
@@ -404,9 +413,6 @@ class VariantInstance(models.Model):
                 return True
             else:
                 return False
-
-
-
 
 
 class VariantPanelAnalysis(models.Model):
