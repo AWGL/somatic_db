@@ -403,6 +403,7 @@ class QCTumourInNormalContamination(AbstractQCCheck):
     QC check for TINC
     """
     #TODO add fields when we've decided on script use
+    score = models.DecimalField(max_digits=5, decimal_places=4)
 
     class Meta:
         unique_together = ["status", "message"]
