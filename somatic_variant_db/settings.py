@@ -40,10 +40,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'polymorphic',
-    'analysis',
-    'svig',
     'crispy_forms',
     'auditlog',
+    'analysis',
+    'classify',
     'swgs'
 ]
 
@@ -118,18 +118,10 @@ else:
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
 
 
@@ -137,13 +129,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-GB'
-
 TIME_ZONE = 'Europe/London'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
 
@@ -161,36 +149,3 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 LOGIN_URL = f'/{URL_PREFIX}login/'
-
-## SVIG settings
-
-SVIG_CODE_VERSION = 'v1.0'
-
-BIOLOGICAL_CLASS_CHOICES = (
-    ('B', 'Benign'),
-    ('LB', 'Likely benign'),
-    ('V', 'VUS'),
-    ('LO', 'Likely oncogenic'),
-    ('O', 'Oncogenic'),
-)
-
-CLINICAL_CLASS_CHOICES = (
-    ('1A', 'Tier IA'),
-    ('1B', 'Tier IB'),
-    ('2C', 'Tier IIC'),
-    ('2D', 'Tier IID'),
-    ('3', 'Tier III'),
-    ('4', 'Tier IV'),
-)
-
-CODE_PRETTY_PRINT = {
-    'SA': 'Stand-alone',
-    'VS': 'Very strong',
-    'ST': 'Strong',
-    'MO': 'Moderate',
-    'SU': 'Supporting',
-    'PE': 'Pending',
-    'NA': 'Not applied',
-}
-
-CODE_SCORES = {'SA': 100, 'VS': 8, 'ST': 4, 'MO': 2, 'SU': 1}

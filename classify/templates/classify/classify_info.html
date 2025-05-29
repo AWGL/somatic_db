@@ -1,5 +1,5 @@
 {% load crispy_forms_tags %}
-{% load svig_tags %}
+{% load custom_tags %}
 
 <!-- forms when check is complete-->
 {% if classification_info.classification_obj.get_status != "Complete" %}
@@ -35,7 +35,12 @@
     </tr>
     <tr>
       <th>Specific tumour type</th>
-      <td>{{ sample_info.specific_tumour_type }}</td>
+      <td>
+        {{ classification_info.classification_obj.tumour_subtype }}
+        {% if classification_info.classification_obj.get_status != 'Complete' and not classification_info.current_check.info_check %}
+        <button type="button" style="float: right;" class="btn btn-sm btn-warning w-25" data-toggle="modal" data-target="#update-tumour-type">Update</button>
+        {% endif %}
+      </td>
     </tr>
   </tbody>
 </table>
@@ -53,7 +58,7 @@
     </tr>
     <tr>
       <th>Gene</th>
-      <td>{{ variant_info.gene }} ({{ variant_info.exon }})</td>
+      <td>{{ variant_info.gene }}</td>
       <td></td>
     </tr>
     <tr>
@@ -66,45 +71,29 @@
       <td>{{ variant_info.hgvs_p }}</td>
       <td></td>
     </tr>
-    <tr>
-      <th>Variant consequence</th>
-      <td>{{ variant_info.consequence }}</td>
-      <td>VEP v??????</td>
-    </tr>
   </tbody>
 </table>
 <br>
-
-<h5>Gene info</h5>
 <br>
-
-<table class="table table-hover">
-  <tbody>
-    <tr>
-      <th class="col-4">Mode of action</th>
-      <td class="col-4">{{ variant_info.mode_action }}</td>
-      <td class="col-4">CGC downloaded ??????</td>
-    </tr>
-    <tr>
-      <th>Mutation types</th>
-      <td>{{ variant_info.mutation_types }}</td>
-      <td>CGC downloaded ??????</td>
-    </tr>
-  </tbody>
-</table>
-
-<br><br>
 
 
 <!-- forms to complete check-->
 {% if classification_info.classification_obj.get_status != "Complete" %}
 {% if not classification_info.current_check.info_check %}
+{% if classification_info.classification_obj.tumour_subtype %}
+
 <div class="alert alert-info">
   <h5>Please confirm that this page has been checked</h5>
   <br>
-  {% crispy forms.check_info_form %}
+  {% crispy forms.complete_check_info_form %}
 </div>
 
+{% else %}
+<div class="alert alert-warning">
+  Please complete the "Specific tumour type" field above first
+</div>
+
+{% endif %}
 {% endif %}
 {% endif %}
 
@@ -125,6 +114,32 @@
         </div>
         {% crispy forms.reopen_check_info_form %}
 
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- tumour subtype modal -->
+<div class="modal fade" id="update-tumour-type" tabindex="-1" role="dialog" aria-labelledby="update-tumour-type-label" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="update-tumour-type-label">Update specific tumour type</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {% if classification_info.all_checks|length > 1 %}
+        <div class="alert alert-danger">
+          <p><b>Warning!</b> Cannot change the tumour type after first check, please send back to first checker if this is incorrect</p>
+        </div>
+
+        {% else %}
+        {% crispy forms.select_tumour_subtype_form %}
+
+        {% endif %}
       </div>
     </div>
   </div>

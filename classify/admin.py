@@ -6,7 +6,7 @@ from .models import *
 @admin.register(Guideline)
 class GuidelineAdmin(admin.ModelAdmin):
     search_fields = ["guideline"]
-    filter_horizontal = ["criteria"]
+    filter_horizontal = ["criteria", "final_classifications"]
 
 @admin.register(ClassificationCriteria)
 class ClassificationCriteriaAdmin(admin.ModelAdmin):
@@ -20,19 +20,23 @@ class ClassificationCriteriaCodeAdmin(admin.ModelAdmin):
 @admin.register(ClassificationCriteriaStrength)
 class ClassificationCriteriaStrengthAdmin(admin.ModelAdmin):
     search_fields = ["strength"]
-    list_display = ["strength", "evidence_points"]
+    list_display = ["strength", "shorthand", "evidence_points"]
 
 @admin.register(ClassificationCriteriaCategory)
 class ClassificationCriteriaCategoryAdmin(admin.ModelAdmin):
     search_fields = ["category"]
 
+@admin.register(TumourSubtype)
+class CategorySortOrderAdmin(admin.ModelAdmin):
+    search_fields = ["name"]
+
 @admin.register(CategorySortOrder)
 class CategorySortOrderAdmin(admin.ModelAdmin):
-    search_fileds = ["guideline", "category"]
+    search_fields = ["guideline", "category"]
 
 @admin.register(ClassifyVariant)
 class ClassifyVariantAdmin(admin.ModelAdmin):
-    search_fields = ["hgvs_c", "hgvs_p", "b38_coords", "b37_coords"]
+    search_fields = ["gene", "hgvs_c", "hgvs_p", "genomic_coords", "genome_build"]
 
 @admin.register(ClassifyVariantInstance)
 class ClassifyVariantInstanceAdmin(PolymorphicParentModelAdmin):
@@ -66,3 +70,8 @@ class CheckAdmin(admin.ModelAdmin):
 @admin.register(CodeAnswer)
 class CodeAnswerAdmin(admin.ModelAdmin):
     search_fields = ["code", "check_object"]
+
+@admin.register(FinalClassification)
+class FinalClassificationAdmin(admin.ModelAdmin):
+    search_fields = ["final_classification"]
+    list_display = ["final_classification", "minimum_score", "review_period"]

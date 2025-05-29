@@ -1,7 +1,7 @@
-{% load svig_tags %}
+{% load custom_tags %}
 {% load crispy_forms_tags %}
 
-{% if classification_info.current_check.full_classification %}
+{% if classification_info.current_check.previous_classifications_check and classification_info.classification_obj.full_classification %}
 <div class="row">
 
   <!-- Main area ------------------------------------------------------------------------------->
@@ -34,7 +34,7 @@
               </th>
               <th class="col-4">
                 <select 
-                 {% if classification_info.current_check.svig_check %}disabled{% endif %}
+                 {% if classification_info.current_check.classification_check %}disabled{% endif %}
                  size="1" id="code_{{ code }}"
                  name="code_{{ code }}"
                  class="btn btn-lg btn-block code-dropdown">
@@ -47,10 +47,9 @@
             <!-- TODO make this hideable? -->
             <tr>
               <td colspan="2">
+                <!-- TODO add annotations in here, may be a model way of doing this -->
                 {% if "gnomad" in code_details.annotations %}
-                  {% include 'svig/annotations/gnomad.html' %}
-                {% else %}
-                  <p>TODO - add annotations here</p>
+                  {% include 'classify/annotations/gnomad.html' %}
                 {% endif %}
               </td>
               <td colspan="1">
@@ -89,11 +88,15 @@
 
       <div id="class-box" >
         <button class="btn btn-block btn-lg btn-disabled btn-{{ classification_info.current_class|colour_by_class }}" type="button">
-          Current class:<br><b>{{ classification_info.current_class }} </b><span class="badge badge-light">{{ classification_info.current_score }}</span>
+          Current class:<br><b>{{ classification_info.current_class }}&nbsp;</b>
+          <span class="badge badge-light">
+            {{ classification_info.current_score }}
+            {% if classification_info.final_class_overridden %} - overridden{% endif %}
+        </span>
         </button>
       </div>
       <p></p>
-      {% if not classification_info.current_check.svig_check %}
+      {% if not classification_info.current_check.classification_check %}
       <button class="btn btn-block btn-lg btn-outline-dark calculate-class" type="button">Recalculate classification</button>
       <p></p>
       <p></p>
@@ -127,17 +130,17 @@
       <p></p>
       <p></p>
       {% if classification_info.classification_obj.get_status != "Complete" %}
-      {% if not classification_info.current_check.svig_check %}
+      {% if not classification_info.current_check.classification_check %}
       <div class="alert alert-info">
         <p><b>Complete?</b></p>
-        {% crispy forms.complete_svig_form %}
+        {% crispy forms.complete_classification_form %}
       </div>
       {% else %}
       <div class="alert alert-success">
         <h5>Section complete!</h5>
         <p>
-            You have completed S-VIG classification.<br>
-            <a href="" data-toggle="modal" data-target="#reopen_svig_modal">Click here to reopen</a>
+            You have completed classification.<br>
+            <a href="" data-toggle="modal" data-target="#reopen_classification_modal">Click here to reopen</a>
         </p>
       </div>
 
@@ -146,6 +149,38 @@
       </div>
     </div>
   </div>
+</div>
+
+{% elif classification_info.current_check.classification_check %}
+<div class="container">
+    <div class="alert alert-success">
+      <h5>Section complete!</h5>
+      <p>This step is not required - you have chosen to reuse this classification:</p>
+
+      <table class="table table-hover">
+        <tbody>
+          <tr>
+            <th>Classification</th>
+            <td colspan="2">
+              {{ classification_info.classification_obj.reused_classification.final_class }} 
+              ({{ classification_info.classification_obj.reused_classification.final_score }})
+            </td>
+          </tr>
+          <tr>
+            <th>Date</th>
+            <td colspan="2">{{ classification_info.classification_obj.reused_classification.complete_date }} 
+              {% if previous_classifications.recent_needs_review %}<span class="badge badge-pill badge-warning">Review needed</span>{% endif %}
+          </td>
+          </tr>
+          <tr>
+            <th class="col-4">SVD record</th>
+            <td class="col-4">#{{ classification_info.classification_obj.reused_classification.pk }}</td>
+            <td class="col-4"><a class="btn btn-info w-100" href="{% url 'perform-classification' previous_classifications.recent.pk %}" target="_blank" role="button">View (opens in new tab)</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
 </div>
 
 {% else %}
@@ -187,7 +222,7 @@
   <div class="modal-dialog" style="min-width:90%;" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="guidence-modal-label">S-VIG guidence</h5>
+        <h5 class="modal-title" id="guidence-modal-label">Guidence</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -222,20 +257,20 @@
 </div>
 
 <!-- Reopen modal -->
-<div class="modal fade" id="reopen_svig_modal" tabindex="-1" aria-labelledby="reopen_svig_modal_label" aria-hidden="true">
+<div class="modal fade" id="reopen_classification_modal" tabindex="-1" aria-labelledby="reopen_classification_modal_label" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="reopen_svig_modal_label">Reopen?</h5>
+          <h5 class="modal-title" id="reopen_classification_modal_label">Reopen?</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
           <div class="alert alert-danger">
-            <p><b>Warning!</b> This will reopen the S-VIG tab</p>
+            <p><b>Warning!</b> This will reopen the Classification tab</p>
           </div>
-          {% crispy forms.reopen_svig_form %}
+          {% crispy forms.reopen_classification_form %}
 
         </div>
       </div>
@@ -257,7 +292,7 @@
     row_element.classList.remove('table-info', 'table-secondary', 'table-danger', 'table-warning');
     row_element.classList.add("table-" + css_class);
 
-    // change current scheck button CSS here
+    // change current check button CSS here
     var next_row = row_element.parentNode.rows[ row_element.rowIndex + 1 ].children[1].children[1].children[0];
     var class_box = next_row.children[next_row.childElementCount - 1].children[1].children[0];
     class_box.classList.remove('badge-info', 'badge-secondary', 'badge-danger', 'badge-warning');
@@ -285,10 +320,10 @@
 
   // preset each dropdown
   // get the all codes variable from variable called in main html
-  const initial_codes1 = JSON.parse(document.getElementById('codes_by_category').textContent);
+  const initial_codes = JSON.parse(document.getElementById('codes_by_category').textContent);
 
   // loop through each code, get the dropdown element, preselect and add css classes
-  for (const [key, c] of Object.entries(initial_codes1)) {
+  for (const [key, c] of Object.entries(initial_codes)) {
     for (const [key1, c1] of Object.entries(c.codes)) {
       drop_down = document.getElementById("code_" + key1);
       drop_down.value = c1.value;
@@ -320,7 +355,7 @@
       formData.append('check_pk', "{{ classification_info.current_check.pk }}");
 
       $.ajax({
-          url: "{% url 'ajax-svig' %}",
+          url: "{% url 'ajax-classification' %}",
           type: 'POST',
           data: formData,
           contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
@@ -328,21 +363,25 @@
           success: function(data) {
               $("#class-box").html(data.class_box);
 
-              $("#codes-summary-population-databases").html(data.codes_summary_population_databases);
+              $("#codes-summary-population").html(data.codes_summary_population);
               $("#codes-summary-mode-of-action").html(data.codes_summary_mode_of_action);
               $("#codes-summary-cancer-databases").html(data.codes_summary_cancer_databases);
               $("#codes-summary-effect-on-protein").html(data.codes_summary_effect_on_protein);
-              $("#codes-summary-computational-tools").html(data.codes_summary_computational_tools);
+              $("#codes-summary-computational").html(data.codes_summary_computational);
               $("#codes-summary-functional-studies").html(data.codes_summary_functional_studies);
-              $("#codes-summary-other").html(data.codes_summary_other);
+              $("#codes-summary-allelic").html(data.codes_summary_allelic);
+              $("#codes-summary-phenotype").html(data.codes_summary_phenotype);
+              $("#codes-summary-de-novo").html(data.codes_de_novo);
 
-              $("#complete-population-databases").html(data.complete_population_databases);
+              $("#complete-population").html(data.complete_population);
               $("#complete-mode-of-action").html(data.complete_mode_of_action);
               $("#complete-cancer-databases").html(data.complete_cancer_databases);
               $("#complete-effect-on-protein").html(data.complete_effect_on_protein);
-              $("#complete-computational-tools").html(data.complete_computational_tools);
+              $("#complete-computational").html(data.complete_computational);
               $("#complete-functional-studies").html(data.complete_functional_studies);
-              $("#complete-other").html(data.complete_other);
+              $("#complete-allelic").html(data.complete_allelic);
+              $("#complete-phenotype").html(data.complete_phenotype);
+              $("#complete-de-novo").html(data.complete_de_novo);
               //TODO remove hardcoding?
           },
           failure: function(data) {

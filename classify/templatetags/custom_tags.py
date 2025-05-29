@@ -9,16 +9,19 @@ register = template.Library()
 def colour_by_class(value):
     """
     colour anywhere the current classification is displayed
-    e.g. smmary buttons, dropdowns, table rows
+    e.g. summary buttons, dropdowns, table rows
     """
     value = value.lower()
-    if value == "pending" or value == "vus":
+    if value == "pending" or "vus" in value:
         css_class = "warning"
 
     elif value.startswith("b") or "benign" in value:
         css_class = "primary"
 
     elif value.startswith("o") or "oncogenic" in value:
+        css_class = "danger"
+
+    elif value.startswith("p") or "pathogenic" in value:
         css_class = "danger"
 
     elif value.startswith("tier"):
@@ -45,3 +48,30 @@ def colour_by_build(value):
         return "success"
     else:
         return "info"
+
+
+@register.filter
+@stringfilter
+def colour_by_guideline(value):
+    """
+    colour different guidelines differently, e.g. ACMG/ SVIG
+    """
+    if value=="G":
+        return "primary"
+    if value=="S":
+        return "info"
+    else:
+        return "success"
+
+
+@register.filter
+@stringfilter
+def colour_by_count(value):
+    """
+    colour different guidelines differently, e.g. ACMG/ SVIG
+    """
+    value = int(value)
+    if value > 0:
+        return "warning"
+    else:
+        return "secondary"

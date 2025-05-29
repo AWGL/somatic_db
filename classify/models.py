@@ -4,17 +4,11 @@ from django.utils import timezone
 from django.template.defaultfilters import slugify
 from polymorphic.models import PolymorphicModel
 
-from somatic_variant_db.settings import (
-    BASE_DIR,
-    SVIG_CODE_VERSION,
-    BIOLOGICAL_CLASS_CHOICES,
-    CODE_PRETTY_PRINT,
-    CODE_SCORES,
-)
-
 import yaml
 import os
 from collections import OrderedDict
+import datetime
+import re
 
 from analysis.models import VariantPanelAnalysis
 from swgs.models import GermlineVariantInstance, SomaticVariantInstance
@@ -24,14 +18,57 @@ class Guideline(models.Model):
     """
     Model to store which guidelines are being used
     """
+
+    SOMATIC_OR_GERMLINE_CHOICES = (
+        ("S", "somatic"),
+        ("G", "germline")
+    )
+
     guideline = models.CharField(max_length=200, unique=True)
     criteria = models.ManyToManyField("ClassificationCriteria", related_name="guideline")
     sort_order = models.ManyToManyField("ClassificationCriteriaCategory", through="CategorySortOrder")
-    #TODO sort order and therefore category should probably be a description/choicefield we just need to decide on the categories
+    somatic_or_germline = models.CharField(max_length=1, choices=SOMATIC_OR_GERMLINE_CHOICES)
+    final_classifications = models.ManyToManyField('FinalClassification', related_name="guidelines")
+    signed_off_group = models.ForeignKey("auth.Group", on_delete=models.PROTECT, blank=True, null=True, related_name="guideline")
 
     def __str__(self):
         return self.guideline
     
+    def create_final_classification_ordered_dict(self):
+        """
+        Converts the final classification information in to an ordered dict to work with the check model classification function
+        """
+        final_classification_dict = OrderedDict()
+        for classification in self.final_classifications.all().order_by('minimum_score').values():
+            final_classification_dict[classification["final_classification"]] = classification["minimum_score"]
+        return final_classification_dict
+
+    def create_final_classification_tuple(self):
+        """
+        Creates the final classification information in to a tuple for the html dropdowns
+        """
+        final_classification_list = []
+        for classification in self.final_classifications.all().order_by('minimum_score').values():
+            c = (classification["id"], classification["final_classification"])
+            final_classification_list.append(c)
+        return tuple(final_classification_list)
+
+    
+class FinalClassification(models.Model):
+    """
+    Final classification options. Minimum score set as -9999 for benign options 
+    """
+    final_classification = models.CharField(max_length=200)
+    minimum_score = models.IntegerField(null=True, blank=True)
+    review_period = models.IntegerField()
+
+    class Meta:
+        unique_together = ["final_classification", "minimum_score"]
+
+    def __str__(self):
+        return self.final_classification
+
+
 class CategorySortOrder(models.Model):
     """
     Through model to allow for categories of codes to be sorted for each guideline
@@ -45,10 +82,6 @@ class CategorySortOrder(models.Model):
 
     def __str__(self):
         return f"{self.guideline} {self.category} {self.sort_order}"
-    
-    def get_all_codes_for_category(self):
-
-        all_codes_for_guideline = self.guideline.criteria.all().values("criteria__code__code")
 
 
 class ClassificationCriteria(models.Model):
@@ -58,7 +91,7 @@ class ClassificationCriteria(models.Model):
     id = models.AutoField(primary_key=True)
     code = models.ForeignKey("ClassificationCriteriaCode", on_delete=models.CASCADE, related_name="classification_criteria")
     strength = models.ForeignKey("ClassificationCriteriaStrength", on_delete=models.CASCADE)
-    
+
     class Meta:
         unique_together = ["code", "strength"]
 
@@ -66,30 +99,22 @@ class ClassificationCriteria(models.Model):
         return f"{self.code.code}_{self.strength.strength}"
     
     def classify_shorthand(self):
-        #TODO don't know if we need this but i've tried to plug directly in to how you've formatted things
-        strength_dict = {
-            "standalone": "SA",
-            "very_strong": "VS",
-            "strong": "ST",
-            "moderate": "MO",
-            "supporting": "SU"
-        }
         paired_code = self.code.paired_criteria
         if paired_code is not None:
             paired_criteria = paired_code.code
             if self.code.pathogenic_or_benign == "O" or self.code.pathogenic_or_benign == "P":
-                return f"{self.code}_{strength_dict[self.strength.strength]}|{paired_criteria}_NA"
+                return f"{self.code}_{self.strength.shorthand}|{paired_criteria}_NA"
             elif self.code.pathogenic_or_benign == "B":
-                return f"{paired_criteria}_NA|{self.code}_{strength_dict[self.strength.strength]}"
-        else:  
-            return f"{self.code}_{strength_dict[self.strength.strength]}"
+                return f"{paired_criteria}_NA|{self.code}_{self.strength.shorthand}"
+        else:
+            return f"{self.code}_{self.strength.shorthand}"
     
     def pretty_print(self):
         if self.strength.evidence_points > 0:
             evidence_points = f"+{self.strength.evidence_points}"
         else:
             evidence_points = self.strength.evidence_points
-        return f"{self.code.code} {self.strength.strength} ({evidence_points})"
+        return f"{self.code.code} {self.strength.pretty_print()} ({evidence_points})"
 
 
 class ClassificationCriteriaCategory(models.Model):
@@ -104,6 +129,7 @@ class ClassificationCriteriaCategory(models.Model):
     def pretty_print(self):
         return self.category.title().replace("_", " ")
 
+
 class ClassificationCriteriaCode(models.Model):
     """
     Codes that can be applied
@@ -112,6 +138,7 @@ class ClassificationCriteriaCode(models.Model):
     pathogenic_or_benign = models.CharField(max_length=1)
     description = models.TextField(null=True, blank=True)
     links = models.TextField(null=True, blank=True)
+    annotations = models.CharField(max_length=50, null=True, blank=True)
     category = models.ForeignKey("ClassificationCriteriaCategory", on_delete=models.CASCADE)
     paired_criteria = models.ForeignKey("self", on_delete=models.CASCADE, null=True, blank=True)
 
@@ -124,6 +151,7 @@ class ClassificationCriteriaStrength(models.Model):
     Strengths at which the criteria can be applied at
     """
     strength = models.CharField(max_length=20)
+    shorthand = models.CharField(max_length=2)
     evidence_points = models.IntegerField()
 
     class Meta:
@@ -132,6 +160,18 @@ class ClassificationCriteriaStrength(models.Model):
     def __str__(self):
         return f"{self.strength} {str(self.evidence_points)}"
 
+    def pretty_print(self):
+        return self.strength.title().replace("_", " ")
+
+
+class TumourSubtype(models.Model):
+    """
+    """
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+
 
 class ClassifyVariant(models.Model):
     """
@@ -139,10 +179,11 @@ class ClassifyVariant(models.Model):
     This is some duplication of information that's stored elsewhere but will make this app easier to work with
     We can populate based on existing models to continue data integrity
     """
+    gene = models.CharField(max_length=200)
     hgvs_c = models.CharField(max_length=200, unique=True)
     hgvs_p = models.CharField(max_length=200, null=True, blank=True)
-    b38_coords = models.CharField(max_length=200)
-    b37_coords = models.CharField(max_length=200) #autopopulate with variantvalidator? otherwise we have to make these both nullable
+    genomic_coords = models.CharField(max_length=200)
+    genome_build = models.IntegerField()
 
     def __str__(self):
         return self.hgvs_c
@@ -150,22 +191,34 @@ class ClassifyVariant(models.Model):
     def get_variant_info(self):
         """ get variant specific variables """
         variant_info = {
-            "genomic": self.b38_coords,
-            "build": "TODO",
+            "genomic": self.genomic_coords,
+            "build": self.genome_build,
             "hgvs_c": self.hgvs_c,
             "hgvs_p": self.hgvs_p,
-            "gene": "TODO",
-            "exon": "TODO",
+            "gene": self.gene,
+            "gnomad": self.create_gnomad_link(),
         }
         return variant_info
 
-    def get_previous_classifications(self):
-        """ get all previous classifications of a variant """
-        # TODO this is hardcoded
-        return {
-            "gene_canonical_list": [],
-            "canonical_match": [],
-        }
+    def create_gnomad_link(self):
+        """ link to the Gnomad webpage """
+        genome_build = self.genome_build
+
+        # stored as chrom:posref>alt, needs to be chrom-pos-ref-alt
+        var = self.genomic_coords
+        var = var.replace(":", "-")
+        var = var.replace(">", "-")
+        var = re.split('(\d+)', var)
+        var.insert(-1, "-")
+        var = "".join(var)
+
+        # format link specific to genome build
+        if genome_build == 37:
+            return f'https://gnomad.broadinstitute.org/variant/{var}?dataset=gnomad_r2_1'
+        elif genome_build == 38:
+            return f'https://gnomad.broadinstitute.org/variant/{var}?dataset=gnomad_r3'
+        else:
+            raise ValueError('Genome build should be either 37 or 38')
 
 
 class ClassifyVariantInstance(PolymorphicModel):
@@ -174,10 +227,25 @@ class ClassifyVariantInstance(PolymorphicModel):
     """
     variant = models.ForeignKey("ClassifyVariant", on_delete=models.CASCADE)
     guideline = models.ForeignKey("Guideline", on_delete=models.CASCADE)
-    # TODO add guideline model here?
+    tumour_subtype = models.ForeignKey("TumourSubtype", on_delete=models.CASCADE, null=True, blank=True)
+    final_class = models.ForeignKey("FinalClassification", on_delete=models.CASCADE, null=True, blank=True)
+    final_score = models.IntegerField(blank=True, null=True)
+    final_class_overridden = models.BooleanField(default=False)
+    complete_date = models.DateTimeField(blank=True, null=True)
+    full_classification = models.BooleanField(default=False)
+    reused_classification = models.ForeignKey('self', on_delete=models.PROTECT, null=True, blank=True, related_name="original_classification")
+
+    class Meta:
+        get_latest_by = ["complete_date"]
 
     def __str__(self):
-        return f"#{self.pk} - {self.variant.hgvs_c}"
+        return f"{self.variant.gene} {self.variant.hgvs_c} (#{self.pk})"
+
+    def is_complete(self):
+        if self.complete_date is None:
+            return False
+        else:
+            return True
 
     def get_all_checks(self):
         return Check.objects.filter(classification=self).order_by("pk")
@@ -189,25 +257,33 @@ class ClassifyVariantInstance(PolymorphicModel):
         return self.get_all_checks().order_by("-pk")[0]
 
     def get_status(self):
-        # TODO make reference to SVIG more general
         if self.get_latest_check().check_complete:
             return "Complete"
         else:
             num_checks = self.get_all_checks().count()
-            return f"S-VIG check {num_checks}"
+            return f"Check {num_checks}"
 
     def get_classification_info(self):
         current_check_obj = self.get_latest_check()
         classification_info = {
             "classification_obj": self,
             "current_check": current_check_obj,
+            "guidelines": self.guideline.guideline,
+            "somatic_or_germline": self.guideline.somatic_or_germline,
             "all_checks": self.get_all_checks(),
+            "reused": self.original_classification.reverse().exists(),
         }
-        if current_check_obj.full_classification:
+
+        # only pull this info if user selected full classification, otherwise code objects wont exist and it'll error
+        if self.full_classification and self.get_latest_check().previous_classifications_check:
             current_score, current_class = current_check_obj.update_classification()
             classification_info["codes_by_category"] = self.get_codes_by_category()
-            classification_info["current_class"] = current_class
             classification_info["current_score"] = current_score
+            classification_info["final_class_overridden"] = current_check_obj.final_class_overridden
+            if current_check_obj.final_class_overridden:
+                classification_info["current_class"] = current_check_obj.final_class
+            else:
+                classification_info["current_class"] = current_class
         return classification_info
 
     def get_dropdown_options(self, code_list):
@@ -234,7 +310,6 @@ class ClassifyVariantInstance(PolymorphicModel):
 
         return dropdown_options
 
-
     def get_dropdown_value(self, code_list):
         latest_code_objects = self.get_latest_check().get_code_answers()
         l = []
@@ -242,21 +317,19 @@ class ClassifyVariantInstance(PolymorphicModel):
             l.append(latest_code_objects.get(code__code=c).get_code())
         return "|".join(l)
 
-
     def get_codes_by_category(self):
         """ordered list of codes for displaying template"""
-        # TODO remove SVIG specifics and simplify
+        # TODO simplify
 
         order_info = self.get_order_info()
         code_info = self.get_code_info()
 
         latest_code_objects = self.get_latest_check().get_code_answers()
-
         all_check_objects = self.get_all_checks()
 
-        svig_codes = {}
+        output_dict = {}
         for section, codes in order_info.items():
-            svig_codes[section] = {
+            output_dict[section] = {
                 "slug": slugify(section),
                 "codes": {},
                 "applied_codes": [],
@@ -279,11 +352,11 @@ class ClassifyVariantInstance(PolymorphicModel):
 
                     # get info on what codes have been applied
                     if code_object.applied:
-                        svig_codes[section]["applied_codes"].append(
-                            f"{c}_{code_object.applied_strength}"
+                        output_dict[section]["applied_codes"].append(
+                            f"{c}_{code_object.applied_strength.shorthand}"
                         )
                     if code_object.pending:
-                        svig_codes[section]["complete"] = False
+                        output_dict[section]["complete"] = False
 
                 all_checks = []
                 if len(code_list) == 1:
@@ -318,7 +391,7 @@ class ClassifyVariantInstance(PolymorphicModel):
                 # remove duplicates (template doesnt like sets so convert back to list)
                 annotations = list(set(annotations))
                 # add all to final dict
-                svig_codes[section]["codes"][code] = {
+                output_dict[section]["codes"][code] = {
                     "list": code_list,
                     "details": code_details,
                     "dropdown": self.get_dropdown_options(code_list),
@@ -326,7 +399,7 @@ class ClassifyVariantInstance(PolymorphicModel):
                     "annotations": annotations,
                     "all_checks": all_checks,
                 }
-        return svig_codes
+        return output_dict
 
     def get_order_info(self):
         """Get the ordered list of codes dictionary for the ajax"""
@@ -373,14 +446,6 @@ class ClassifyVariantInstance(PolymorphicModel):
             "B": "benign"
         }
 
-        strength_dict = {
-            "standalone": "SA",
-            "very_strong": "VS",
-            "strong": "ST",
-            "moderate": "MO",
-            "supporting": "SU"
-        }
-
         codes_dict = {}
         codes = self.guideline.criteria.all()
         for code in codes:
@@ -388,9 +453,9 @@ class ClassifyVariantInstance(PolymorphicModel):
             code_name = code.code.code
             type = type_dict[code.code.pathogenic_or_benign]
             category = code.code.category.category
-            options = strength_dict[code.strength.strength]
+            options = code.strength.shorthand
             description = code.code.description
-            annotations = []
+            annotations = [code.code.annotations]
 
             try:
                 codes_dict[code_name]["options"].append(options)
@@ -402,59 +467,147 @@ class ClassifyVariantInstance(PolymorphicModel):
                     "description": description,
                     "annotations": annotations
                 }
-            
         return codes_dict
 
-    
+    def get_all_previous_classifications(self):
+        return ClassifyVariantInstance.objects.filter(variant=self.variant, guideline=self.guideline).order_by("-pk")
+
+    def get_most_recent_full_classification(self):
+        try:
+            # get the most recent classification where the complete_date is not empty and tumour type matches
+            most_recent = self.get_all_previous_classifications().filter(
+                full_classification=True,
+                tumour_subtype=self.tumour_subtype,
+            ).latest()
+
+            # return none if the only response is the current object
+            if most_recent == self:
+                return None, False
+
+            # check if a review is needed (every 6 months for VUS, 2 years otherwise)
+            if most_recent.final_class:
+                review_period = most_recent.final_class.review_period
+                review_period_diff = datetime.timedelta(days=review_period*365/12)
+            else:
+                #TODO assume we shouldn't get here because a completed full classification should have a final class?
+                return None, False
+
+            # TODO maybe a warning if multiple pending classifications for same variant?
+
+            # work out if date is longer than review period
+            time_diff = timezone.now() - most_recent.complete_date
+            needs_review = time_diff > review_period_diff
+
+            return most_recent, needs_review
+
+        # return none if no previous completed classifications (pending ones wont be included)
+        except ClassifyVariantInstance.DoesNotExist:
+            return None, False
+
     def get_previous_classification_choices(self):
-        canonical_variant = False # TODO these are hardcoded
-        previous_classification = False  # TODO
-        if canonical_variant:
+        """
+        get options for the previous classifiation tab dropdown,
+        will only let you use previous if there is one
+        """
+        previous_classification, needs_review = self.get_most_recent_full_classification()
+        if self.get_all_checks().count() > 1:
+            # ensure same option is used for all checks in a single classification
+            if self.full_classification:
+                return (("new", "Perform full classification"),)
+            else:
+                return (("previous", "Use previous classification"),)
+
+        if previous_classification and needs_review == False:
             return (
-                (
-                    "canonical",
-                    f"Confirm selected canonical variant - {canonical_variant.hgvs_p}",
-                ),
-            )
-        elif previous_classification:
-            return (
-                ("previous", f"Use selected previous classification - ???"),
+                ("previous", "Use previous classification"),
                 ("new", "Perform full classification"),
             )
         else:
             return (("new", "Perform full classification"),)
 
+    @transaction.atomic
+    def update_tumour_type(self, updated_pk):
+        """ update the tumour type based on pk passed in from view """
+        new_object = TumourSubtype.objects.get(pk=updated_pk)
+        self.tumour_subtype = new_object
+        self.save()
+
     def make_new_check(self):
         new_check = Check.objects.create(classification=self)
+
+    def reopen_analysis(self, user):
+        previous_check = self.get_latest_check()
+        if user != previous_check.user:
+            return False, f"Only {previous_check.user} can reopen this case"
+        else:
+            self.final_class = None
+            self.final_score = None
+            self.final_class_overridden = False
+            self.complete_date = None
+            previous_check.reopen_check()
+            self.save()
+            return True, None
 
     @transaction.atomic
     def signoff_check(self, current_check, next_step):
         """complete a whole check"""
-        if next_step == "C":
-            previous_checks = self.get_previous_checks()
-            if not previous_checks.exists():
-                return False, "Cannot complete analysis, two checks required"
+        # extra check - close of current check and make a new one
+        if next_step == "extra_check":
+            updated, err = current_check.complete_check()
+            if not updated:
+                return False, err
+            else:
+                self.make_new_check()
+                return True, None
 
-        elif next_step == "B":
+        # send back - delete current check if its not the first check
+        if next_step == "send_back":
             previous_checks = self.get_previous_checks()
             if previous_checks.exists():
-                previous_check = previous_checks[0]
-                previous_check.reopen_check()
+                previous_checks[0].reopen_check()
                 current_check.delete()
-                return True, previous_check
+                return True, None
             else:
                 return False, "Cannot send back, this is the first check"
 
-        else:
-            current_check.check_complete = True
-            current_check.signoff_time = timezone.now()
-            current_check.save()
+        # complete - close check and analysis if checks pass
+        if next_step == "complete":
+            # check current check is passable 
+            current_check_complete, err = current_check.pre_completion_validation()
+            if not current_check_complete:
+                return False, err
 
-            if next_step == "E":
-                self.make_new_check()
-            # TODO save results to classification obj if final check
+            # whole analysis checks
+            all_checks = self.get_all_checks()
+            last_two = all_checks.order_by("-pk")[0:2]
+            last_two_checkers = set([c.user.username for c in last_two])
+            last_two_results = set([c.final_class.final_classification for c in last_two])
+            last_two_scores = set([c.final_score for c in last_two])
 
-            return True, None
+            # two diagnostic checks
+            if all_checks.count() < 2:
+                return False, "Cannot complete analysis, two checks required"
+            # two diagnostic checks after training cases
+            elif all_checks.filter(diagnostic=True).count() < 2:
+                return False, "Cannot complete analysis, some of the checks are training checks"
+            # last two checkers were same person # TODO remove comments when testing done
+            #elif len(last_two_checkers) == 1:
+            #    return False, "Cannot complete analysis, last two checkers are the same analyst"
+            # two classifications don't agree
+            elif len(last_two_results) > 1:
+                return False, "Cannot complete analysis, overall classification from last two checkers dont agree"
+            # two scores don't agree
+            elif len(last_two_scores) > 1:
+                return False, "Cannot complete analysis, scores from last two checkers dont agree"
+            # save results to classification obj if all checks pass
+            else:
+                current_check.complete_check()
+                self.final_class = current_check.final_class
+                self.final_score = current_check.final_score
+                self.final_class_overridden = current_check.final_class_overridden
+                self.complete_date = timezone.now()
+                self.save()
+                return True, None
 
 
 class AnalysisVariantInstance(ClassifyVariantInstance):
@@ -467,9 +620,12 @@ class AnalysisVariantInstance(ClassifyVariantInstance):
         sample_info = {
             "sample_id": self.variant_instance.sample_analysis.sample.sample_id,
             "worksheet_id": self.variant_instance.sample_analysis.worksheet.ws_id,
-            "svd_panel": self.variant_instance.sample_analysis.panel,
-            "specific_tumour_type": "TODO",
+            "svd_panel": self.variant_instance.sample_analysis.panel.panel_name
         }
+        try:
+            sample_info["specific_tumour_type"] = self.tumour_subtype.name
+        except AttributeError:
+            sample_info["specific_tumour_type"] = None
         return sample_info
 
 
@@ -517,27 +673,18 @@ class ManualVariantInstance(ClassifyVariantInstance):
 class Check(models.Model):
     """
     A check of a classification
-    # TODO choices are linked to SVIG
     """
     classification = models.ForeignKey("ClassifyVariantInstance", on_delete=models.CASCADE)
     info_check = models.BooleanField(default=False)
     previous_classifications_check = models.BooleanField(default=False)
-    svig_check = models.BooleanField(default=False)
-    full_classification = models.BooleanField(default=False)
+    classification_check = models.BooleanField(default=False)
     check_complete = models.BooleanField(default=False)
+    diagnostic = models.BooleanField(null=True)
     signoff_time = models.DateTimeField(blank=True, null=True)
-    user = models.ForeignKey(
-        "auth.User",
-        on_delete=models.PROTECT,
-        blank=True,
-        null=True,
-        related_name="svig_checker",
-    )
-    final_class = models.CharField(
-        max_length=2, choices=BIOLOGICAL_CLASS_CHOICES, blank=True, null=True
-    )
+    user = models.ForeignKey("auth.User", on_delete=models.PROTECT, blank=True, null=True, related_name="classification_checker")
+    final_class = models.ForeignKey("FinalClassification", on_delete=models.CASCADE, null=True, blank=True)
     final_score = models.IntegerField(blank=True, null=True)
-    reporting_comment = models.CharField(max_length=500, blank=True, null=True)
+    final_class_overridden = models.BooleanField(default=False)
 
     def get_code_answers(self):
         """get all classification codes for the current check"""
@@ -545,40 +692,17 @@ class Check(models.Model):
 
     def update_classification(self):
         """calculate the current score and classification"""
-        # TODO SVIG specific
         score_counter = 0
-
         codes = self.get_code_answers()
         for c in codes:
             if c.applied:
                 score_counter += c.applied_strength.evidence_points
 
-        #TODO this needs moving somewhere more modelly
         # work out class from score counter
-        if self.classification.guideline.guideline == "svig_2024":
-            class_list = OrderedDict(
-                {
-                    "Likely benign": -6,
-                    "VUS": 0,
-                    "Likely oncogenic": 6,
-                    "Oncogenic": 10,
-                }
-            )
-        elif self.classification.guideline.guideline == "acgs_2024":
-            class_list = OrderedDict(
-                {
-                    "Likely benign": -6,
-                    "VUS cold": 0,
-                    "VUS warm": 2,
-                    "VUS hot": 4,
-                    "Likely pathogenic": 6,
-                    "Pathogenic": 10
-                }
-            )
-
+        class_dict = self.classification.guideline.create_final_classification_ordered_dict()
         # loop through in order until the score no longer meets the threshold
         classification = "Benign"
-        for c, score in class_list.items():
+        for c, score in class_dict.items():
             if score_counter >= score:
                 classification = c
 
@@ -587,15 +711,6 @@ class Check(models.Model):
     @transaction.atomic
     def update_codes(self, selections):
         """update each code answer and then work out overall score/ class"""
-        # TODO SVIG specific
-
-        strength_dict = {
-            "SA": "standalone",
-            "VS": "very_strong",
-            "ST": "strong",
-            "MO": "moderate",
-            "SP": "supporting"
-        }
 
         # load all code answer objects & loop through each selection
         code_objects = self.get_code_answers()
@@ -621,7 +736,7 @@ class Check(models.Model):
             else:
                 pending = False
                 applied = True
-                criteria_strength_obj = ClassificationCriteria.objects.get(code=code_obj.code, strength__strength=strength_dict[value])
+                criteria_strength_obj = ClassificationCriteria.objects.get(code=code_obj.code, strength__shorthand=value)
                 strength = criteria_strength_obj.strength
 
             # save values to database
@@ -633,39 +748,100 @@ class Check(models.Model):
         return True
 
     @transaction.atomic
-    def reopen_check(self):
-        """reopen a completed check"""
-        self.check_complete = False
-        self.signoff_time = None
+    def complete_info_tab(self):
+        self.info_check = True
         self.save()
 
     @transaction.atomic
+    def complete_previous_class_tab(self, reuse_classification_obj):
+        """ complete step in check obj and load up codes linked to check """
+        self.previous_classifications_check = True
+        if reuse_classification_obj:
+            self.classification_check = True
+            self.classification.reused_classification = reuse_classification_obj
+            self.final_class = reuse_classification_obj.final_class #.final_classification
+            self.final_score = reuse_classification_obj.final_score
+            self.classification.save()
+        else:
+            self.classification.full_classification = True
+            self.classification.save()
+            self.create_code_answers()
+        self.save()
+
+    @transaction.atomic
+    def complete_classification_tab(self, override):
+        """complete classification tab and same final class into to check model"""
+        final_score, final_class = self.update_classification()
+        final_class_obj = self.classification.guideline.final_classifications.filter(final_classification=final_class)[0]
+        # if final classification isnt overridden
+        if override != "No":
+            self.final_class_overridden = True
+            override_final_class_obj = self.classification.guideline.final_classifications.filter(pk=override)[0]
+            self.final_class = override_final_class_obj
+        else:
+            self.final_class = final_class_obj
+        self.classification_check = True
+        self.final_score = final_score
+        self.save()
+
+    def pre_completion_validation(self):
+        if self.info_check == False:
+            return False, "Please complete the Variant details tab"
+        elif self.previous_classifications_check == False:
+            return False, "Please complete the Previous classifications tab"
+        elif self.classification_check == False:
+            return False, "Please complete the Classification tab"
+        else:
+            return True, None
+
+    @transaction.atomic
+    def complete_check(self):
+        passed_checks, err = self.pre_completion_validation()
+        if not passed_checks:
+            return False, err
+        else:
+            self.check_complete = True
+            self.signoff_time = timezone.now()
+            self.save()
+            return True, None
+
+    @transaction.atomic
     def reopen_info_tab(self):
-        """reset variant tab, calls other reset functions to reset other two tabs"""
+        """reset variant tab, also resets other two tabs"""
         self.info_check = False
         self.reopen_previous_class_tab()
 
     @transaction.atomic
     def reopen_previous_class_tab(self):
-        """reset previous classifications tab, calls svig function to reset svig tab"""
+        """reset previous classifications and classify tabs"""
         self.previous_classifications_check = False
-        self.full_classification = False
-        self.reopen_svig_tab()
+        self.classification.reused_classification = None
+        self.classification.full_classification = False
+        self.classification.save()
+        self.final_class_overridden = False # reset to False if needed
+        self.reopen_classification_tab()
         self.delete_code_answers()
 
     @transaction.atomic
-    def reopen_svig_tab(self):
-        """reset the svig tab"""
-        self.svig_check = False
+    def reopen_classification_tab(self):
+        """reset the classifications tab"""
+        self.classification_check = False
         self.final_score = None
         self.final_class = None
+        self.final_class_overridden = False # reset to False if needed
         self.save()
 
+    @transaction.atomic
+    def reopen_check(self):
+        """reopen a completed check"""
+        self.check_complete = False
+        self.diagnostic = None
+        self.signoff_time = None
+        self.save()
 
     @transaction.atomic
     def create_code_answers(self):
         """make a set of code answers against the current check"""
-
         all_codes_query = self.classification.guideline.criteria.all()
         all_codes = [code.code.code for code in all_codes_query]
         all_codes = list(set(all_codes))
@@ -687,28 +863,24 @@ class CodeAnswer(models.Model):
     A check of an individual code
 
     """
-    #TODO change this to models instead of code and strength
     code = models.ForeignKey("ClassificationCriteriaCode", on_delete=models.CASCADE)
     check_object = models.ForeignKey("Check", on_delete=models.CASCADE)
     pending = models.BooleanField(default=True)
     applied = models.BooleanField(default=False)
-    applied_strength = models.CharField(max_length=20, blank=True, null=True)
     applied_strength = models.ForeignKey("ClassificationCriteriaStrength", on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"{self.get_code()}"
 
     def get_code(self):
-        # TODO SVIG specific
         if self.pending:
             return f"{self.code.code}_PE"
         elif self.applied:
-            return f"{self.code.code}_{self.applied_strength}"
+            return f"{self.code.code}_{self.applied_strength.shorthand}"
         else:
             return f"{self.code.code}_NA"
 
     def get_code_type(self):
-        # TODO SVIG specific
         if self.code.pathogenic_or_benign == "B":
             return "Benign"
         elif self.code.pathogenic_or_benign == "O":
@@ -717,51 +889,31 @@ class CodeAnswer(models.Model):
             return "Pathogenic"
 
     def pretty_print_code(self):
-        # TODO models instead of settings
         return self.code.code
 
     def get_score(self):
-        # TODO SVIG specific
-        if self.get_code_type() == "Benign":
-            score = f"{self.applied_strength.evidence_points}"
-        elif self.get_code_type() == "Oncogenic":
-            score = f"+{self.strength.evidence_points}"
+        if self.applied_strength is None:
+            return "Not Applied"
+        elif self.code.pathogenic_or_benign == "B":
+            return f"{self.applied_strength.evidence_points}"
+        elif self.code.pathogenic_or_benign == "O" or "P":
+            return f"+{self.applied_strength.evidence_points}"
 
     def get_string(self):
         if self.pending:
             return "Pending"
         elif self.applied:
-            return f"{self.code} {self.pretty_print_code()} ({self.get_score()})"
+            return f"{self.code} {self.applied_strength.pretty_print()} ({self.get_score()})"
         else:
             return "Not applied"
+        
+    # def get_all_comments(self):
+    #     return CodeAnswer.objects.filter(classification=self).order_by("pk")
 
-
-'''class AbstractComment(models.Model):
-    """general comment model"""
-
-    classification = models.ForeignKey("Classification", on_delete=models.CASCADE)
-    time = models.DateTimeField()
-    comment = models.CharField(max_length=500)
-
-
-class CodeComment(AbstractComment):
-    """comment on a specifc code"""
-
-    check_obj = models.ForeignKey(
-        "Check", on_delete=models.CASCADE, related_name="code_comments"
-    )
-    code = models.ForeignKey("CodeAnswer", on_delete=models.CASCADE)
-
-
-class GeneralComment(AbstractComment):
-    """general comment on a check"""
-
-    check_obj = models.ForeignKey(
-        "Check", on_delete=models.CASCADE, related_name="general_comments"
-    )
-
-
-class SystemComment(AbstractComment):
-    """system comment for audit trail"""
-
-    details = models.CharField(max_length=500)'''
+# class CodeAnswerComment(models.Model):
+#     """
+#     A comment for the application of a code
+#     """
+#     comment = models.CharField(max_length=500, null=True, blank=True)
+#     code_answer = models.ForeignKey("CodeAnswer", on_delete=models.CASCADE)
+#     comment_time = models.DateTimeField(blank=True, null=True)
