@@ -1495,7 +1495,7 @@
         "show_snvs": true,
         "show_myeloid_gaps_summary": false,
         "depth_cutoffs": "500",
-        "vaf_cutoff": "4.50000",
+        "vaf_cutoff": "2.00000",
         "manual_review_required": false,
         "manual_review_desc": null,
         "bed_file": "roi/b37/GeneRead_BRCA/brca_variants_b37_v1.bed",
