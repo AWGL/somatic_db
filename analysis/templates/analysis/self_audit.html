@@ -1,0 +1,97 @@
+{% extends 'analysis/base.html' %}
+{% load crispy_forms_tags %}
+
+
+{% block breadcrumbs %}
+<div class="container-fluid breadcrumbs-custom">
+  <div class="container">
+    <ol class="breadcrumb" style="background-color: transparent;">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}"><span class="fa fa-home"></span></a></li>
+      <li class="breadcrumb-item"><a href="{% url 'user_settings' %}">User Settings</a></li>
+      <li class="breadcrumb-item active">Self Audit Form</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <form method="POST">
+    {% crispy self_audit_form %}
+    <div>
+      <button type="button" id="select-all" class="btn btn-primary">Select All</button>
+      <button type="button" id="deselect-all" class="btn btn-danger">Deselect All</button>
+    </div>
+  </form>
+</div>
+<br>
+<br>
+
+<div class="container">
+  <h5>Checks Performed</h5>
+  <table class="table" id="tally-table">
+    <thead>
+      <tr>
+        <th scope="col">Number of selected Checks:</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ no_checks }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <br>
+
+  <table class="table" id="self-audit-table">
+    <thead>
+      <tr>
+        <th scope="col">Worksheet ID</th>
+        <th scope="col">Assay</th>
+        <th scope="col">Date Checked</th>
+        <th scope="col">Checker</th>
+        <th scope="col">Sample ID</th>
+        <th scope="col">Comments</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for check in check_data %}
+      <tr>
+        <td>{{ check.worksheet }}</td>
+        <td>{{ check.assay }}</td>
+        <td>{{ check.date_checked }}</td>
+        <td>{{ check.checker }}</td>
+        <td><a href="{% url 'analysis_sheet' check.pk %}">{{ check.sample }}</a></td>
+        <td>{{ check.overall_comments }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Script for the select/deselect all buttons -->
+<script>
+  $(document).ready(function() {
+      var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(function(checkbox) {
+          checkbox.checked = true;
+      });
+  });
+  document.getElementById('select-all').addEventListener('click', function() {
+      // Select all checkboxes
+      var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(function(checkbox) {
+          checkbox.checked = true;
+      });
+  });
+
+  document.getElementById('deselect-all').addEventListener('click', function() {
+      // Deselect all checkboxes
+      var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(function(checkbox) {
+          checkbox.checked = false;
+      });
+  });
+</script>
+
+{% endblock %}

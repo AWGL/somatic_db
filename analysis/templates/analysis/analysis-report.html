@@ -84,7 +84,7 @@
         {% if v.final_decision == "Genuine" %}
         <tr>
           <td class="variant-pk" style="display:none">{{ v.pk }}</td>
-          <td><p style="display:inline" id="igv">{{ v.genomic }} 
+          <td style="word-break: break-all; max-width: 150px;"><p style="display:inline" id="igv">{{ v.genomic }} 
             {% if v.genome_build == 37 %}
             <span class = "badge badge-info badge-pill">GRCh{{ v.genome_build }}</span>
             {% elif v.genome_build == 38 %}
@@ -95,7 +95,7 @@
         {% endif %}
           </p></td>
           <td>{{ v.gene }} ({{ v.exon }})</td>
-          <td>{{ v.hgvs_c }}</td>
+          <td style="word-break: break-all; max-width: 150px;">{{ v.hgvs_c }}</td>
           <td>{{ v.hgvs_p }}</td>
           {% if sample_data.panel_obj.assay == '3' %} <!-- 2dp for ctDNA, whole number for the rest-->
           <td>{{ v.vaf.vaf }}%</td>
