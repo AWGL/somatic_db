@@ -1470,13 +1470,14 @@ def change_password(request):
 
 
 def tso500_plot(request):
-
+    """
+    Performs a query
+    """
     # Define constants
     START_DATE = datetime.datetime(2021, 1, 1, tzinfo=pytz.UTC)
-    OUTPUT_DIR = "./"
     TSO_ASSAYS = ["TSO500_DNA", "TSO500_RNA"]
 
-        # Pull data with pre-filtering in the Django query
+    # Pull data with pre-filtering in the Django query
     sample_analyses = SampleAnalysis.objects.filter(
         worksheet__diagnostic=True,
         worksheet__assay__in=TSO_ASSAYS
@@ -1496,8 +1497,6 @@ def tso500_plot(request):
     # Extract dates vectorized instead of row-by-row
     print("Processing dates...")
     data['year_month'] = data['worksheet__run__run_id'].apply(extract_date_from_run_id)
-    pd.set_option('display.max_rows', 500)
-    print(f"dataframe: {data}")
     data.loc[data['year_month'] < START_DATE, "year_month"] = data.loc[data['year_month'] < START_DATE, "worksheet__upload_time"]
     data['formatted_date'] = data['year_month'].dt.strftime('%Y-%m')
     
@@ -1514,10 +1513,6 @@ def tso500_plot(request):
     # Group by month and panel, and count occurrences - vectorized operations
     grouped_DNA = data_DNA.groupby(['formatted_date', 'panel__pretty_print']).size().reset_index(name='Count')
     grouped_RNA = data_RNA.groupby(['formatted_date', 'panel__pretty_print']).size().reset_index(name='Count')
-    
-    # # Save tables
-    # grouped_DNA.to_csv(f"{OUTPUT_DIR}TSO500_DNA_diagnostic_analyses_table.csv", index=False)
-    # grouped_RNA.to_csv(f"{OUTPUT_DIR}TSO500_RNA_diagnostic_analyses_table.csv", index=False)
     
     # Get unique panels
     panels_DNA = data_DNA['panel__pretty_print'].unique()
