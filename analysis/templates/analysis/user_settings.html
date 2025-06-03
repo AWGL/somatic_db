@@ -38,6 +38,19 @@
     </tbody>
   </table>
 
+  {% block self_audit %}
+    <h5>
+      Self Audit
+    </h5>
+    <br>
+      <div>
+        <a class="btn btn-secondary" href="{% url 'self_audit' %}">Get Checks</a>
+      </div>
+  {% endblock %}
+
+
+
+
 
   <br>
   <h5>LIMS settings</h5>
@@ -57,7 +70,6 @@
       </tr>
     </tbody>
   </table>
-
 
 <!-- LIMS initials modal -->
 <div class="modal fade" id="edit-lims-modal" tabindex="-1" role="dialog" aria-labelledby="edit-lims-modal-label" aria-hidden="true">

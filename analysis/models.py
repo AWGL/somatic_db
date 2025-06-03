@@ -47,7 +47,7 @@ class Worksheet(models.Model):
         # get list of all unique statuses and concatenate
         all_status = [ s.get_checks()['current_status'] for s in samples ]
         status = ' | '.join( set(all_status) )
-        
+
         # get all sample IDs
         sample_list = [i.sample.sample_id for i in samples]
 
