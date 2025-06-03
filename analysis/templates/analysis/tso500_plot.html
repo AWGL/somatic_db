@@ -1,0 +1,23 @@
+{% extends 'analysis/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<body>
+    <div class="container">
+        <p></p>
+        <h1>{{ title }}</h1>
+        
+        <div class="plot-container">
+            {{ plot_html|safe }}
+        </div>
+        
+        <div class="info">
+            <h3>About this visualization:</h3>
+            <p>This scatter plot shows the relationship between engine displacement (in cubic inches) and fuel efficiency (miles per gallon) for 32 different car models from the classic MTCars dataset. Generally, we can observe that cars with larger engines tend to have lower fuel efficiency.</p>
+            <p>Hover over the points to see detailed information about each car model.</p>
+        </div>
+    </div>
+</body>
+
+{% endblock %}

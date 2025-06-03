@@ -7,14 +7,17 @@ from django.utils import timezone
 from django.template.loader import get_template
 from django.template import Context
 from django.shortcuts import get_object_or_404
+from django.db.models import Count, Q
 
 from .forms import (NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatientName, 
     CoverageCheckForm, FusionCommentForm, SampleCommentForm, UnassignForm, PaperworkCheckForm, 
     ConfirmPolyForm, ConfirmArtefactForm, AddNewPolyForm, AddNewArtefactForm, AddNewFusionArtefactForm, 
-    ManualVariantCheckForm, ReopenForm, ChangeLimsInitials, EditedPasswordChangeForm, EditedUserCreationForm, NewFusionForm,SelfAuditSubmission)
+    ManualVariantCheckForm, ReopenForm, ChangeLimsInitials, EditedPasswordChangeForm, EditedUserCreationForm,
+    NewFusionForm,SelfAuditSubmission)
 from .utils import (get_samples, unassign_check, reopen_check, signoff_check, make_next_check, 
     get_variant_info, get_coverage_data, get_sample_info, get_fusion_info, get_poly_list, get_fusion_list, 
-    create_myeloid_coverage_summary, variant_format_check, breakpoint_format_check, lims_initials_check, validate_variant)
+    create_myeloid_coverage_summary, variant_format_check, breakpoint_format_check, lims_initials_check, 
+    validate_variant, extract_date_from_run_id, create_diagnostic_dashboard)
 from .models import *
 
 import csv
@@ -22,10 +25,11 @@ import json
 import os
 import pdfkit
 import datetime
-import pandas
-import pytz
+import pandas as pd
+import numpy as np
 import plotly.graph_objects as go
 import plotly.offline as pyo
+import pytz
 
 def signup(request):
     """
@@ -1466,67 +1470,74 @@ def change_password(request):
 
 
 def tso500_plot(request):
-    # MTCars dataset
-    mtcars_data = {
-        'car': ['Mazda RX4', 'Mazda RX4 Wag', 'Datsun 710', 'Hornet 4 Drive', 
-                'Hornet Sportabout', 'Valiant', 'Duster 360', 'Merc 240D', 
-                'Merc 230', 'Merc 280', 'Merc 280C', 'Merc 450SE', 'Merc 450SL', 
-                'Merc 450SLC', 'Cadillac Fleetwood', 'Lincoln Continental', 
-                'Chrysler Imperial', 'Fiat 128', 'Honda Civic', 'Toyota Corolla', 
-                'Toyota Corona', 'Dodge Challenger', 'AMC Javelin', 'Camaro Z28', 
-                'Pontiac Firebird', 'Fiat X1-9', 'Porsche 914-2', 'Lotus Europa', 
-                'Ford Pantera L', 'Ferrari Dino', 'Maserati Bora', 'Volvo 142E'],
-        'mpg': [21.0, 21.0, 22.8, 21.4, 18.7, 18.1, 14.3, 24.4, 22.8, 19.2, 
-                17.8, 16.4, 17.3, 15.2, 10.4, 10.4, 14.7, 32.4, 30.4, 33.9, 
-                21.5, 15.5, 15.2, 13.3, 19.2, 27.3, 26.0, 30.4, 15.8, 19.7, 
-                15.0, 21.4],
-        'disp': [160, 160, 108, 258, 360, 225, 360, 146.7, 140.8, 167.6, 
-                 167.6, 275.8, 275.8, 275.8, 472, 460, 440, 78.7, 75.7, 71.1, 
-                 120.1, 318, 304, 350, 400, 79, 120.3, 95.1, 351, 145, 301, 121]
+
+    # Define constants
+    START_DATE = datetime.datetime(2021, 1, 1, tzinfo=pytz.UTC)
+    OUTPUT_DIR = "./"
+    TSO_ASSAYS = ["TSO500_DNA", "TSO500_RNA"]
+
+        # Pull data with pre-filtering in the Django query
+    sample_analyses = SampleAnalysis.objects.filter(
+        worksheet__diagnostic=True,
+        worksheet__assay__in=TSO_ASSAYS
+    ).values(
+        'panel__pretty_print',
+        'worksheet__upload_time',
+        'worksheet__assay',
+        'worksheet__run__run_id',
+        'sample',
+    )
+    
+    # Convert to DataFrame only once
+    print("Converting query to DataFrame...")
+    data = pd.DataFrame(list(sample_analyses))
+    print(f"Total rows: {len(data)}")
+    
+    # Extract dates vectorized instead of row-by-row
+    print("Processing dates...")
+    data['year_month'] = data['worksheet__run__run_id'].apply(extract_date_from_run_id)
+    pd.set_option('display.max_rows', 500)
+    print(f"dataframe: {data}")
+    data.loc[data['year_month'] < START_DATE, "year_month"] = data.loc[data['year_month'] < START_DATE, "worksheet__upload_time"]
+    data['formatted_date'] = data['year_month'].dt.strftime('%Y-%m')
+    
+    # Filter to runs since Jan 2021
+    data = data.loc[data['year_month'] > START_DATE, :].copy()
+    print(f"dataframe: {data}")
+    print(f"Rows after date filtering: {len(data)}")
+    
+    # Split data for each assay type - no need to filter again as we already filtered in Django query
+    data_DNA = data[data['worksheet__assay'] == 'TSO500_DNA']
+    data_RNA = data[data['worksheet__assay'] == 'TSO500_RNA']
+    print(f"DNA rows: {len(data_DNA)}, RNA rows: {len(data_RNA)}")
+    
+    # Group by month and panel, and count occurrences - vectorized operations
+    grouped_DNA = data_DNA.groupby(['formatted_date', 'panel__pretty_print']).size().reset_index(name='Count')
+    grouped_RNA = data_RNA.groupby(['formatted_date', 'panel__pretty_print']).size().reset_index(name='Count')
+    
+    # # Save tables
+    # grouped_DNA.to_csv(f"{OUTPUT_DIR}TSO500_DNA_diagnostic_analyses_table.csv", index=False)
+    # grouped_RNA.to_csv(f"{OUTPUT_DIR}TSO500_RNA_diagnostic_analyses_table.csv", index=False)
+    
+    # Get unique panels
+    panels_DNA = data_DNA['panel__pretty_print'].unique()
+    panels_RNA = data_RNA['panel__pretty_print'].unique()
+    
+    # Create dictionary of assays
+    assays = {
+        "TSO500 DNA": [data_DNA, panels_DNA],
+        "TSO500 RNA": [data_RNA, panels_RNA],
     }
     
-    # Create Plotly scatter plot
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scatter(
-        x=mtcars_data['disp'],
-        y=mtcars_data['mpg'],
-        mode='markers',
-        marker=dict(
-            size=10,
-            color='blue',
-            opacity=0.7,
-            line=dict(width=1, color='darkblue')
-        ),
-        text=mtcars_data['car'],
-        hovertemplate='<b>%{text}</b><br>' +
-                      'Engine Displacement: %{x} cu.in.<br>' +
-                      'MPG: %{y}<br>' +
-                      '<extra></extra>',
-        name='Cars'
-    ))
-    
-    fig.update_layout(
-        title={
-            'text': 'MPG vs Engine Displacement (MTCars Dataset)',
-            'x': 0.5,
-            'xanchor': 'center',
-            'font': {'size': 20}
-        },
-        xaxis_title='Engine Displacement (cu.in.)',
-        yaxis_title='Miles per Gallon (MPG)',
-        template='plotly_white',
-        hovermode='closest',
-        width=800,
-        height=600
-    )
+    # Create dashboard
+    fig = create_diagnostic_dashboard(assays)
     
     # Convert plot to HTML
     plot_html = pyo.plot(fig, output_type='div', include_plotlyjs=True)
     
     context = {
         'plot_html': plot_html,
-        'title': 'MTCars Scatter Plot'
+        'title': 'TSO500 runs by panel over time'
     }
     
     return render(request, 'analysis/tso500_plot.html', context)
