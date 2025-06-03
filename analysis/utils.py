@@ -306,6 +306,7 @@ def get_sample_info(sample_obj):
         'assay': sample_obj.panel.assay,
         'sample_id': sample_obj.sample.sample_id,
         'sample_name': sample_obj.sample.sample_name,
+        'tumour_content': sample_obj.sample.tumour_content,
         'worksheet_id': sample_obj.worksheet.ws_id,
         'panel': sample_obj.panel.panel_name,
         'panel_obj': sample_obj.panel,
@@ -337,10 +338,13 @@ def get_variant_info(sample_data, sample_obj):
     other_calls_list = []
     poly_count = 0
     artefact_count = 0
-
+    brca_filtered_count = 0
 
     # loop through each sample variant
     for sample_variant in sample_variants:
+
+        # get the assay for any additional assay-specific filtering
+        assay = sample_variant.sample_analysis.panel.assay
 
         # load instance of variant
         variant_obj = sample_variant.variant_instance.variant
@@ -352,7 +356,7 @@ def get_variant_info(sample_data, sample_obj):
 
         # marker to tell whether a variant should be filtered downstream
         filter_call = False
-        filter_reason = ''
+        filter_reason = []
 
         # get VAF and round to nearest whole number - used in artefact list so must be on top
         vaf = sample_variant.variant_instance.vaf()
@@ -374,7 +378,7 @@ def get_variant_info(sample_data, sample_obj):
                     # set variables and update variant check
                     poly_count += 1
                     filter_call = True
-                    filter_reason = 'Poly'
+                    filter_reason.append('Poly')
                     latest_check.decision = 'P'
                     latest_check.save()
 
@@ -391,9 +395,46 @@ def get_variant_info(sample_data, sample_obj):
                         # add VAF cutoff to reason for filtering
                         if vaf < l.vaf_cutoff:
                             vaf_cutoff_rounded = l.vaf_cutoff.quantize(decimal.Decimal('1'), rounding=decimal.ROUND_HALF_UP)
-                            filter_reason = f'Artefact at <{vaf_cutoff_rounded}% VAF'
+                            filter_reason.append(f'Artefact at <{vaf_cutoff_rounded}% VAF')
                         else:
-                            filter_reason = 'Artefact'
+                            filter_reason.append('Artefact')
+
+        # BRCA-specific filtering, ignore any variants already covered on artefact or poly list
+        if assay == '5' and not filter_call:
+
+            # handle BRCA polys
+            # BRCA guidelines classify anything >0.1% in gnomAD as a poly
+            if sample_variant.variant_instance.is_brca_poly():
+                poly_count += 1
+                filter_call = True
+                latest_check.decision = 'P'
+                latest_check.save()
+                filter_reason.append(f'Poly in BRCA: {sample_variant.variant_instance.gnomad_display()} in gnomAD')
+
+            # handle artefact calls
+            brca_sufficient_supporting_reads = sample_variant.variant_instance.brca_sufficient_supporting_reads_count()
+            brca_above_tumour_content_threshold = sample_variant.variant_instance.brca_above_tumour_content_threshold()
+            if not all([brca_sufficient_supporting_reads, brca_above_tumour_content_threshold]):
+                if not filter_call:
+                    # add to brca filter count unless it's already marked as a poly
+                    brca_filtered_count += 1
+                filter_call = True
+                # Save calls that are filtered as artefacts
+                latest_check.decision = 'A'
+                latest_check.save()
+                if not brca_sufficient_supporting_reads:
+                    filter_reason.append('BRCA: not enough supporting reads')
+                if not brca_above_tumour_content_threshold:
+                    filter_reason.append('BRCA: VAF below 10% of tumour content')
+            
+            # handle intronic varaints
+            brca_intronic_variant = sample_variant.variant_instance.is_brca_deep_intronic()
+            if brca_intronic_variant:
+                brca_filtered_count += 1
+                filter_call = True
+                latest_check.decision = 'N'
+                latest_check.save()
+                filter_reason.append(f'Intronic variant > 20bp from exon')
 
         # remove Not analysed from checks list
         variant_checks_analysed = []
@@ -498,12 +539,13 @@ def get_variant_info(sample_data, sample_obj):
     else:
         other_calls_text = ', '.join(other_calls_list)
 
-    # return as variantr data dictionary
+    # return as variant data dictionary
     variant_data = {
         'variant_calls': variant_calls, 
         'filtered_calls': filtered_list,
         'poly_count': poly_count,
         'artefact_count': artefact_count,
+        'brca_filtered_count': brca_filtered_count,
         'no_calls': no_calls,
         'other_calls_text': other_calls_text,
         'check_options': VariantCheck.DECISION_CHOICES,
@@ -657,6 +699,7 @@ def get_coverage_data(sample_obj, depth_cutoffs):
     target_depths = depth_cutoffs.split(',')
 
     # will set to true in loop below when it hits a gap
+    gaps_present_100 = False
     gaps_present_135 = False
     gaps_present_270 = False
     gaps_present_500 = False
@@ -678,6 +721,7 @@ def get_coverage_data(sample_obj, depth_cutoffs):
                 'hgvs_c': region.hgvs_c,
                 'average_coverage': region.average_coverage,
                 'hotspot_or_genescreen': region.get_hotspot_display(),
+                'percent_100x': region.percent_100x,
                 'percent_135x': region.percent_135x,
                 'percent_270x': region.percent_270x,
                 'percent_500x': region.percent_500x,
@@ -689,7 +733,7 @@ def get_coverage_data(sample_obj, depth_cutoffs):
 
         # create a dictionary of gaps in the sample for the given gene, split by depths
         # TODO - not a great long term fix, need to update models to handle different depths
-        gaps_135, gaps_270, gaps_500, gaps_1000 = [], [], [], []
+        gaps_100, gaps_135, gaps_270, gaps_500, gaps_1000 = [], [], [], [], []
 
         gaps_analysis_obj = GapsAnalysis.objects.filter(gene=gene_coverage_obj)
         for gap in gaps_analysis_obj:
@@ -716,6 +760,11 @@ def get_coverage_data(sample_obj, depth_cutoffs):
             }
 
             # add the dict to the list for the correct coverage cutoff
+            # gaps at 100x
+            if gap.coverage_cutoff == 100:
+                gaps_present_100 = True
+                gaps_100.append(gaps_dict)
+
             # gaps at 135x
             if gap.coverage_cutoff == 135:
                 gaps_present_135 = True
@@ -739,6 +788,7 @@ def get_coverage_data(sample_obj, depth_cutoffs):
         # combine gaps and regions dictionaries
         gene_dict = {
             'av_coverage': gene_coverage_obj.av_coverage,
+            'percent_100x': gene_coverage_obj.percent_100x,
             'percent_135x': gene_coverage_obj.percent_135x,
             'percent_270x': gene_coverage_obj.percent_270x,
             'percent_500x': gene_coverage_obj.percent_500x,
@@ -746,6 +796,7 @@ def get_coverage_data(sample_obj, depth_cutoffs):
             'av_ntc_coverage': gene_coverage_obj.av_ntc_coverage,
             'percent_ntc': gene_coverage_obj.percent_ntc,
             'regions': regions,
+            'gaps_100': gaps_100,
             'gaps_135': gaps_135,
             'gaps_270': gaps_270,
             'gaps_500': gaps_500,
@@ -753,6 +804,7 @@ def get_coverage_data(sample_obj, depth_cutoffs):
         }
 
         coverage_data['regions'][gene_coverage_obj.gene.gene] = gene_dict
+        coverage_data['gaps_present_100'] = gaps_present_100
         coverage_data['gaps_present_135'] = gaps_present_135
         coverage_data['gaps_present_270'] = gaps_present_270
         coverage_data['gaps_present_500'] = gaps_present_500

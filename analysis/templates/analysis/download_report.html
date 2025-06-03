@@ -137,6 +137,9 @@
     <thead>
       <tr>
         <th>Gene</th>
+        {% if '100' in coverage_data.depth_cutoffs %}
+        <th>Percent 100X</th>
+        {% endif %}
         <th>Average coverage</th>
         {% if '135' in coverage_data.depth_cutoffs %}
         <th>Percent 135X</th>
@@ -159,6 +162,9 @@
       {% for gene, values in coverage_data.regions.items %}
       <tr>
         <td>{{ gene }}</td>
+        {% if '100' in coverage_data.depth_cutoffs %}
+        <td>{{ values.percent_100x }}%</td>
+        {% endif %}
         <td>{{ values.av_coverage }}</td>
         {% if '135' in coverage_data.depth_cutoffs %}
         <td>{{ values.percent_135x }}%</td>
@@ -263,6 +269,35 @@
   <!-- hotspot gaps for non-myeloid referrals -->
   {% else %}
   <h2>Hotspot gaps</h2>
+
+  {% if '100' in coverage_data.depth_cutoffs %}
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 50%">Hotspot gaps at 100X</th>
+        <th style="width: 25%">Percent COSMIC</th>
+        <th style="width: 25%">Counts COSMIC</th>
+      </tr>
+    </thead>
+
+    <tbody>
+    {% if coverage_data.gaps_present_100 %}
+      {% for gene, values in coverage_data.regions.items %}
+        {% for gap in values.gaps_100 %}
+        <tr>
+          <td>{{ gap.gene }}({{ gap.hgvs_transcript }}):{{ gap.hgvs_c }}</td>
+          <td>{{ gap.percent_cosmic }}</td>
+          <td>{{ gap.counts_cosmic }}</td>
+        </tr>
+        {% endfor %}
+      {% endfor %}
+    {% else %}
+      <tr><td colspan="3">No hotspot gaps</td></tr>
+    {% endif %}
+    </tbody>
+  </table>
+  <br>
+  {% endif %}
 
   {% if '135' in coverage_data.depth_cutoffs %}
   <table>

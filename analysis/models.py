@@ -62,6 +62,7 @@ class Sample(models.Model):
     sample_id = models.CharField(max_length=50, primary_key=True)
     sample_name = models.CharField(max_length=200, blank=True, null=True)
     sample_name_check = models.BooleanField(default=False)
+    tumour_content = models.IntegerField(null=True, blank=True)
 
     def get_worksheets(self):
         # get all worksheets that the sample appears on
@@ -112,6 +113,7 @@ class Panel(models.Model):
     show_myeloid_gaps_summary = models.BooleanField(default=False)
     depth_cutoffs = models.CharField(max_length=50, blank=True, null=True) # either 135,270, 500 or 1000, comma seperated, no spaces
     vaf_cutoff = models.DecimalField(decimal_places=5, max_digits=10, blank=True, null=True) # formatted as e.g. 1.4%, not 0.014
+    minimum_supporting_reads = models.IntegerField(default=1, blank=True, null=True) # minimum number of reads required to call a variant genuine (GeneRead)
     manual_review_required = models.BooleanField(default=False)
     manual_review_desc = models.CharField(max_length=200, blank=True, null=True) # pipe seperated, no spaces
     bed_file = models.FileField(upload_to=make_bedfile_path, blank=True, null=True)
@@ -325,6 +327,91 @@ class VariantInstance(models.Model):
             return f'https://gnomad.broadinstitute.org/variant/{var}?dataset=gnomad_r3'
         else:
             raise ValueError('Genome build should be either 37 or 38')
+        
+    def brca_sufficient_supporting_reads_count(self):
+        """
+        Flags variants with fewer than the minimum supporting reads 
+        BRCA team will not analyse these
+        """
+        # get variant panel analysis
+        variant_panel_analysis_obj = VariantPanelAnalysis.objects.get(variant_instance = self)
+        # get minimum supporting reads
+        minimum_supporting_reads = variant_panel_analysis_obj.sample_analysis.panel.minimum_supporting_reads
+        if self.alt_count >= minimum_supporting_reads:
+            return True
+        else:
+            return False
+        
+    def brca_above_tumour_content_threshold(self):
+        """
+        Flags if the VAF is more than 10% of the tumour content
+        For germline samples, flags if a variant is above 10%
+        """
+        tumour_content = self.sample.tumour_content
+        try:
+            if tumour_content == 0:
+                # for germline samples we're setting this threshold at 10%
+                tumour_content_threshold = 10
+            else:
+                tumour_content_threshold = tumour_content / 10
+        except TypeError:
+            # tumour content not set - don't flag anything
+            return 1
+        
+        vaf = self.vaf()
+
+        if vaf > tumour_content_threshold:
+            return True
+        else:
+            return False
+        
+    def is_brca_poly(self):
+        """
+        The BRCA guidelines state BA1 is applied at >0.1% in gnomad, but we don't want to filter on this
+        These can't be classed as polys in all assays because most other assays use 1%
+        """
+        # gnomad score missing in older runs, so we can't exclude
+        if self.gnomad_popmax == None:
+            return False
+        # -1 means that the variant is missing from gnomad
+        elif self.gnomad_popmax == -1.00000:
+            return False
+        elif self.gnomad_popmax < 0.01:
+            return False
+        else:
+            # otherwise, >1% in gnomAD
+            return True
+    
+    @staticmethod
+    def load_in_brca_known_pathogenics():
+        """
+        Load in the BRCA known pathogenic variants from a file
+        """
+        with open("roi/b37/GeneRead_BRCA/brca_known_pathogenic_variants.txt") as f:
+            contents = f.readlines()
+            contents = [line.rstrip() for line in contents]
+            return contents
+    
+    def is_brca_deep_intronic(self):
+        """
+        We're not interested in any variants more than 20bp in to the introns with the exception of
+        a single known pathogenic variant
+        """
+        known_pathogenics = self.load_in_brca_known_pathogenics()
+        if self.hgvs_c in known_pathogenics:
+            return False
+        intronics = re.findall("[-+]\d+", self.hgvs_c)
+        if len(intronics) > 1:
+            # this shouldn't happen, don't flag to be safe
+            return False
+        elif len(intronics) == 0:
+            return False
+        else:
+            distance = abs(int(intronics[0]))
+            if distance > 20: 
+                return True
+            else:
+                return False
 
 
 class VariantPanelAnalysis(models.Model):
@@ -431,6 +518,7 @@ class GeneCoverageAnalysis(models.Model):
     sample = models.ForeignKey('SampleAnalysis', on_delete=models.CASCADE)
     gene = models.ForeignKey('Gene', on_delete=models.CASCADE)
     av_coverage = models.IntegerField()
+    percent_100x = models.IntegerField(blank=True, null=True)
     percent_135x = models.IntegerField(blank=True, null=True)
     percent_270x = models.IntegerField(blank=True, null=True)
     percent_500x = models.IntegerField(blank=True, null=True)
@@ -456,6 +544,7 @@ class RegionCoverageAnalysis(models.Model):
     pos_end = models.IntegerField()
     hotspot = models.CharField(max_length=1, choices=HOTSPOT_CHOICES)
     average_coverage = models.IntegerField()
+    percent_100x = models.IntegerField(blank=True, null=True)
     percent_135x = models.IntegerField(blank=True, null=True)
     percent_270x = models.IntegerField(blank=True, null=True)
     percent_500x = models.IntegerField(blank=True, null=True)
