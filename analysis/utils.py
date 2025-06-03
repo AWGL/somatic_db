@@ -699,6 +699,7 @@ def get_coverage_data(sample_obj, depth_cutoffs):
     target_depths = depth_cutoffs.split(',')
 
     # will set to true in loop below when it hits a gap
+    gaps_present_100 = False
     gaps_present_135 = False
     gaps_present_270 = False
     gaps_present_500 = False
@@ -720,6 +721,7 @@ def get_coverage_data(sample_obj, depth_cutoffs):
                 'hgvs_c': region.hgvs_c,
                 'average_coverage': region.average_coverage,
                 'hotspot_or_genescreen': region.get_hotspot_display(),
+                'percent_100x': region.percent_100x,
                 'percent_135x': region.percent_135x,
                 'percent_270x': region.percent_270x,
                 'percent_500x': region.percent_500x,
@@ -731,7 +733,7 @@ def get_coverage_data(sample_obj, depth_cutoffs):
 
         # create a dictionary of gaps in the sample for the given gene, split by depths
         # TODO - not a great long term fix, need to update models to handle different depths
-        gaps_135, gaps_270, gaps_500, gaps_1000 = [], [], [], []
+        gaps_100, gaps_135, gaps_270, gaps_500, gaps_1000 = [], [], [], [], []
 
         gaps_analysis_obj = GapsAnalysis.objects.filter(gene=gene_coverage_obj)
         for gap in gaps_analysis_obj:
@@ -758,6 +760,11 @@ def get_coverage_data(sample_obj, depth_cutoffs):
             }
 
             # add the dict to the list for the correct coverage cutoff
+            # gaps at 100x
+            if gap.coverage_cutoff == 100:
+                gaps_present_100 = True
+                gaps_100.append(gaps_dict)
+
             # gaps at 135x
             if gap.coverage_cutoff == 135:
                 gaps_present_135 = True
@@ -781,6 +788,7 @@ def get_coverage_data(sample_obj, depth_cutoffs):
         # combine gaps and regions dictionaries
         gene_dict = {
             'av_coverage': gene_coverage_obj.av_coverage,
+            'percent_100x': gene_coverage_obj.percent_100x,
             'percent_135x': gene_coverage_obj.percent_135x,
             'percent_270x': gene_coverage_obj.percent_270x,
             'percent_500x': gene_coverage_obj.percent_500x,
@@ -788,6 +796,7 @@ def get_coverage_data(sample_obj, depth_cutoffs):
             'av_ntc_coverage': gene_coverage_obj.av_ntc_coverage,
             'percent_ntc': gene_coverage_obj.percent_ntc,
             'regions': regions,
+            'gaps_100': gaps_100,
             'gaps_135': gaps_135,
             'gaps_270': gaps_270,
             'gaps_500': gaps_500,
@@ -795,6 +804,7 @@ def get_coverage_data(sample_obj, depth_cutoffs):
         }
 
         coverage_data['regions'][gene_coverage_obj.gene.gene] = gene_dict
+        coverage_data['gaps_present_100'] = gaps_present_100
         coverage_data['gaps_present_135'] = gaps_present_135
         coverage_data['gaps_present_270'] = gaps_present_270
         coverage_data['gaps_present_500'] = gaps_present_500
