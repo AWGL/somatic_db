@@ -427,19 +427,33 @@ def get_variant_info(sample_data, sample_obj):
         # load comments into variant comment form
         var_comment_form = VariantCommentForm(pk=latest_check.pk, comment=latest_check.comment)
 
+        # get c. and p.
+        hgvs_c = sample_variant.variant_instance.hgvs_c
+        hgvs_p = sample_variant.variant_instance.hgvs_p
+        
         # split out transcript and c./p., wrap in try/except because sometimes its empty
+        
         try:
-            hgvs_c_short = sample_variant.variant_instance.hgvs_c.split(':')[1]
-        except IndexError:
-            hgvs_c_short = ''
+            if "(" not in hgvs_p:
+                hgvs_p = add_brackets_to_hgvs_p(hgvs_p)
+        except TypeError:
+            hgvs_p = ''
 
         try:
-            hgvs_p_short = sample_variant.variant_instance.hgvs_p.split(':')[1]
+            if ":" in hgvs_p:
+                hgvs_p_short = hgvs_p.split(':')[1]
+            else:
+                hgvs_p_short = hgvs_p
         except IndexError:
             hgvs_p_short = ''
 
         try:
-            transcript = sample_variant.variant_instance.hgvs_c.split(':')[0]
+            hgvs_c_short = hgvs_c.split(':')[1]
+        except IndexError:
+            hgvs_c_short = ''
+
+        try:
+            transcript = hgvs_c.split(':')[0]
         except IndexError:
             transcript = ''
 
@@ -452,8 +466,8 @@ def get_variant_info(sample_data, sample_obj):
             'igv_coords': variant_obj.variant.strip('ACGT>'),
             'gene': sample_variant.variant_instance.gene,
             'exon': sample_variant.variant_instance.exon,
-            'hgvs_c': sample_variant.variant_instance.hgvs_c,
-            'hgvs_p': sample_variant.variant_instance.hgvs_p,
+            'hgvs_c': hgvs_c,
+            'hgvs_p': hgvs_p,
             'hgvs_c_short': hgvs_c_short,
             'hgvs_p_short': hgvs_p_short,
             'transcript': transcript,
@@ -1265,3 +1279,23 @@ def validate_variant(chrm, position, ref, alt, build):
     # If json file had some sort of unexpected structure, return this so we can investigate
     else:
         return 'Unexpected Error, contact Bioinformatics'
+
+def add_brackets_to_hgvs_p(hgvs_p_in):
+    """
+    Takes an infividual hgvs_p string and returns the amino acid change inside brackets if they're not present already 
+    """
+    try:
+        # define regex pattern - captures anything before the "p." as group 1, after as group 2
+        regex = r"(\S*)[p]\.(\S*)"
+        
+        # apply pattern to hgvs_p
+        matches = re.match(regex, hgvs_p_in)
+        
+        # rebuild hgvs_p with brackets around amino acid change
+        hgvs_p = f"{matches.groups()[0]}p.({matches.groups()[1]})"
+
+    except AttributeError:
+        
+        hgvs_p = ''
+
+    return hgvs_p
