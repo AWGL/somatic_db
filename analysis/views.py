@@ -7,14 +7,17 @@ from django.utils import timezone
 from django.template.loader import get_template
 from django.template import Context
 from django.shortcuts import get_object_or_404
+from django.db.models import Count, Q
 
 from .forms import (NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatientName, 
     CoverageCheckForm, FusionCommentForm, SampleCommentForm, UnassignForm, PaperworkCheckForm, 
     ConfirmPolyForm, ConfirmArtefactForm, AddNewPolyForm, AddNewArtefactForm, AddNewFusionArtefactForm, 
-    ManualVariantCheckForm, ReopenForm, ChangeLimsInitials, EditedPasswordChangeForm, EditedUserCreationForm, NewFusionForm,SelfAuditSubmission)
+    ManualVariantCheckForm, ReopenForm, ChangeLimsInitials, EditedPasswordChangeForm, EditedUserCreationForm,
+    NewFusionForm,SelfAuditSubmission)
 from .utils import (get_samples, unassign_check, reopen_check, signoff_check, make_next_check, 
     get_variant_info, get_coverage_data, get_sample_info, get_fusion_info, get_poly_list, get_fusion_list, 
-    create_myeloid_coverage_summary, variant_format_check, breakpoint_format_check, lims_initials_check, validate_variant)
+    create_myeloid_coverage_summary, variant_format_check, breakpoint_format_check, lims_initials_check, 
+    validate_variant, extract_date_from_run_id, create_diagnostic_dashboard)
 from .models import *
 
 import csv
@@ -22,7 +25,11 @@ import json
 import os
 import pdfkit
 import datetime
-
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+import plotly.offline as pyo
+import pytz
 
 def signup(request):
     """
@@ -1452,3 +1459,72 @@ def change_password(request):
                 warning.append("Couldn't change password, please fix errors in form below")
 
     return render(request, 'analysis/change_password.html', context)
+
+
+def tso500_plot(request):
+    """
+    Performs a query
+    """
+    # Define constants
+    START_DATE = datetime.datetime(2021, 1, 1, tzinfo=pytz.UTC)
+    TSO_ASSAYS = ["TSO500_DNA", "TSO500_RNA"]
+
+    # Pull data with pre-filtering in the Django query
+    sample_analyses = SampleAnalysis.objects.filter(
+        worksheet__diagnostic=True,
+        worksheet__assay__in=TSO_ASSAYS
+    ).values(
+        'panel__pretty_print',
+        'worksheet__upload_time',
+        'worksheet__assay',
+        'worksheet__run__run_id',
+        'sample',
+    )
+    
+    # Convert to DataFrame only once
+    print("Converting query to DataFrame...")
+    data = pd.DataFrame(list(sample_analyses))
+    print(f"Total rows: {len(data)}")
+    
+    # Extract dates vectorized instead of row-by-row
+    print("Processing dates...")
+    data['year_month'] = data['worksheet__run__run_id'].apply(extract_date_from_run_id)
+    data.loc[data['year_month'] < START_DATE, "year_month"] = data.loc[data['year_month'] < START_DATE, "worksheet__upload_time"]
+    data['formatted_date'] = data['year_month'].dt.strftime('%Y-%m')
+    
+    # Filter to runs since Jan 2021
+    data = data.loc[data['year_month'] > START_DATE, :].copy()
+    print(f"dataframe: {data}")
+    print(f"Rows after date filtering: {len(data)}")
+    
+    # Split data for each assay type - no need to filter again as we already filtered in Django query
+    data_DNA = data[data['worksheet__assay'] == 'TSO500_DNA']
+    data_RNA = data[data['worksheet__assay'] == 'TSO500_RNA']
+    print(f"DNA rows: {len(data_DNA)}, RNA rows: {len(data_RNA)}")
+    
+    # Group by month and panel, and count occurrences - vectorized operations
+    grouped_DNA = data_DNA.groupby(['formatted_date', 'panel__pretty_print']).size().reset_index(name='Count')
+    grouped_RNA = data_RNA.groupby(['formatted_date', 'panel__pretty_print']).size().reset_index(name='Count')
+    
+    # Get unique panels
+    panels_DNA = data_DNA['panel__pretty_print'].unique()
+    panels_RNA = data_RNA['panel__pretty_print'].unique()
+    
+    # Create dictionary of assays
+    assays = {
+        "TSO500 DNA": [data_DNA, panels_DNA],
+        "TSO500 RNA": [data_RNA, panels_RNA],
+    }
+    
+    # Create dashboard
+    fig = create_diagnostic_dashboard(assays)
+    
+    # Convert plot to HTML
+    plot_html = pyo.plot(fig, output_type='div', include_plotlyjs=True)
+    
+    context = {
+        'plot_html': plot_html,
+        'title': 'TSO500 runs by panel over time'
+    }
+    
+    return render(request, 'analysis/tso500_plot.html', context)

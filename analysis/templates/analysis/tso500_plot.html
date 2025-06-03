@@ -1,0 +1,24 @@
+{% extends 'analysis/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<body>
+    <div class="container">
+        <p></p>
+        <h1>{{ title }}</h1>
+        
+        <div class="plot-container">
+            {{ plot_html|safe }}
+        </div>
+        
+        <div class="info">
+            <h3>About this visualization:</h3>
+            <p>This bar chart shows the number of TSO500 samples marked as diagnostic over time, coloured by panel.</p>
+            <p>Hover over the bars to see the sample counts split by panel. Double click the legend to isolate a panel.</p>
+            <p>TSO500 DNA is displayed by default - use the dropdown in the top right of the plot to change between DNA and RNA.</p>
+        </div>
+    </div>
+</body>
+
+{% endblock %}

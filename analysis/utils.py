@@ -3,11 +3,15 @@ from .forms import NewVariantForm, SubmitForm, VariantCommentForm, FusionComment
 
 from django.utils import timezone
 from django.db import transaction
+import datetime
 
 import pybedtools
 import re
 import requests
 import csv
+import pytz
+import plotly.graph_objects as go
+import numpy as np
 
 def get_samples(samples):
     """
@@ -1265,3 +1269,174 @@ def validate_variant(chrm, position, ref, alt, build):
     # If json file had some sort of unexpected structure, return this so we can investigate
     else:
         return 'Unexpected Error, contact Bioinformatics'
+
+
+def extract_date_from_run_id(run_id):
+    """Extract date from run_id format efficiently"""
+    if "2" in run_id[:1]:
+        year = int(f"20{run_id[:2]}")
+        month = int(run_id[2:4])
+        day = int(run_id[4:6])
+    else:
+        year = 2020
+        month = 11
+        day = 11
+    return datetime.datetime(year, month, day, tzinfo=pytz.UTC)
+
+
+
+def create_diagnostic_dashboard(assays):
+    """
+    Creates a single HTML dashboard with dropdown selection for different assays.
+    
+    Args:
+        assays: Dictionary with format {assay_name: [dataframe, panels]}
+    """
+    # Create a figure
+    fig = go.Figure()
+
+    # Counter for visibility arrays
+    trace_count = 0
+    trace_indices = {}
+
+    # First pass: Add all traces to the figure
+    for i, (label, data) in enumerate(assays.items()):
+        df = data[0]
+        panels = data[1]
+
+        # Keep track of where this assay's traces start
+        trace_indices[label] = trace_count
+        assay_trace_count = 0
+
+        # Create histogram traces for each panel
+        for panel in panels:
+            slice = df.loc[df["panel__pretty_print"]==panel, :]
+            array = np.array(slice["formatted_date"])
+
+            trace = go.Histogram(
+                name=panel,
+                x=array,
+                visible=(i == 0)  # Only first assay visible by default
+            )
+            fig.add_trace(trace)
+            trace_count += 1
+            assay_trace_count += 1
+
+        # Calculate monthly run totals
+        month_totals = []
+        months = sorted(df["formatted_date"].unique())
+        for month in months:
+            month_slice = df.loc[df["formatted_date"]==month]
+            month_total = month_slice.shape[0]
+            month_totals.append(month_total)
+
+        # Add monthly totals to figure
+        scatter_trace = go.Scatter(
+            x=months,
+            y=month_totals,
+            text=month_totals,
+            mode='text',
+            textposition='top center',
+            textfont=dict(
+                size=12,
+            ),
+            showlegend=False,
+            visible=(i == 0)  # Only first assay visible by default
+        )
+        fig.add_trace(scatter_trace)
+        trace_count += 1
+        assay_trace_count += 1
+
+        # Store the number of traces for this assay
+        trace_indices[f"{label}_count"] = assay_trace_count
+
+    # Second pass: Create dropdown buttons with correct visibility arrays
+    dropdown_buttons = []
+    total_traces = trace_count  # Now we know the total number of traces
+
+    for label in assays.keys():
+        # Create visibility array for this assay
+        # Start with all traces hidden
+        visibility = [False] * total_traces
+
+        # Make only this assay's traces visible
+        start_idx = trace_indices[label]
+        end_idx = start_idx + trace_indices[f"{label}_count"]
+        for j in range(start_idx, end_idx):
+            visibility[j] = True
+
+        # Add dropdown button for this assay
+        dropdown_buttons.append(
+            dict(
+                method='update',
+                label=label,
+                args=[
+                    {'visible': visibility},
+                    {'title': f"{label} diagnostic runs over time"}
+                ]
+            )
+        )
+
+    # Update layout with dropdown menu
+    fig.update_layout(
+        barmode='stack',  # Ensure histograms are stacked
+        updatemenus=[
+            dict(
+                active=0,
+                buttons=dropdown_buttons,
+                direction="down",
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.8,
+                xanchor="left",
+                y=1.1,
+                yanchor="top"
+            ),
+        ],
+        # Default title is the first assay
+        title_text=f"{list(assays.keys())[0]} diagnostic runs over time",
+        xaxis_title_text="Month",
+        yaxis_title_text="Run count",
+        dragmode="zoom",
+        hovermode="x",
+        template="plotly_white",
+        margin=dict(
+            t=120,  # Increased top margin to accommodate dropdown
+            b=100,
+        ),
+        width=1200,
+        height=800,
+    )
+
+    # Add range slider
+    fig.update_layout(
+        xaxis=go.layout.XAxis(
+            rangeselector=dict(
+                buttons=list([
+                    dict(count=1,
+                         label="1m",
+                         step="month",
+                         stepmode="backward"),
+                    dict(count=6,
+                         label="6m",
+                         step="month",
+                         stepmode="backward"),
+                    dict(count=1,
+                         label="YTD",
+                         step="year",
+                         stepmode="todate"),
+                    dict(count=1,
+                         label="1y",
+                         step="year",
+                         stepmode="backward"),
+                    dict(step="all")
+                ])
+            ),
+            rangeslider=dict(
+                visible=True
+            ),
+            type="date"
+        )
+    )
+    
+    return fig
