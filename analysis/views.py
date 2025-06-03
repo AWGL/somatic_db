@@ -25,6 +25,7 @@ import datetime
 import pandas
 import pytz
 import plotly.graph_objects as go
+import plotly.offline as pyo
 
 def signup(request):
     """
@@ -1463,14 +1464,69 @@ def change_password(request):
 
     return render(request, 'analysis/change_password.html', context)
 
-def dna_plot(request):
-    """
-    Handles the submission of the genuine/ artefact etc dropdown box
-    """
-    return render(request, 'analysis/TSO500_DNA_plot.html')
 
-def rna_plot(request):
-    """
-    Handles the submission of the genuine/ artefact etc dropdown box
-    """
-    return render(request, 'analysis/TSO500_RNA_plot.html')
+def tso500_plot(request):
+    # MTCars dataset
+    mtcars_data = {
+        'car': ['Mazda RX4', 'Mazda RX4 Wag', 'Datsun 710', 'Hornet 4 Drive', 
+                'Hornet Sportabout', 'Valiant', 'Duster 360', 'Merc 240D', 
+                'Merc 230', 'Merc 280', 'Merc 280C', 'Merc 450SE', 'Merc 450SL', 
+                'Merc 450SLC', 'Cadillac Fleetwood', 'Lincoln Continental', 
+                'Chrysler Imperial', 'Fiat 128', 'Honda Civic', 'Toyota Corolla', 
+                'Toyota Corona', 'Dodge Challenger', 'AMC Javelin', 'Camaro Z28', 
+                'Pontiac Firebird', 'Fiat X1-9', 'Porsche 914-2', 'Lotus Europa', 
+                'Ford Pantera L', 'Ferrari Dino', 'Maserati Bora', 'Volvo 142E'],
+        'mpg': [21.0, 21.0, 22.8, 21.4, 18.7, 18.1, 14.3, 24.4, 22.8, 19.2, 
+                17.8, 16.4, 17.3, 15.2, 10.4, 10.4, 14.7, 32.4, 30.4, 33.9, 
+                21.5, 15.5, 15.2, 13.3, 19.2, 27.3, 26.0, 30.4, 15.8, 19.7, 
+                15.0, 21.4],
+        'disp': [160, 160, 108, 258, 360, 225, 360, 146.7, 140.8, 167.6, 
+                 167.6, 275.8, 275.8, 275.8, 472, 460, 440, 78.7, 75.7, 71.1, 
+                 120.1, 318, 304, 350, 400, 79, 120.3, 95.1, 351, 145, 301, 121]
+    }
+    
+    # Create Plotly scatter plot
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatter(
+        x=mtcars_data['disp'],
+        y=mtcars_data['mpg'],
+        mode='markers',
+        marker=dict(
+            size=10,
+            color='blue',
+            opacity=0.7,
+            line=dict(width=1, color='darkblue')
+        ),
+        text=mtcars_data['car'],
+        hovertemplate='<b>%{text}</b><br>' +
+                      'Engine Displacement: %{x} cu.in.<br>' +
+                      'MPG: %{y}<br>' +
+                      '<extra></extra>',
+        name='Cars'
+    ))
+    
+    fig.update_layout(
+        title={
+            'text': 'MPG vs Engine Displacement (MTCars Dataset)',
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 20}
+        },
+        xaxis_title='Engine Displacement (cu.in.)',
+        yaxis_title='Miles per Gallon (MPG)',
+        template='plotly_white',
+        hovermode='closest',
+        width=800,
+        height=600
+    )
+    
+    # Convert plot to HTML
+    plot_html = pyo.plot(fig, output_type='div', include_plotlyjs=True)
+    
+    context = {
+        'plot_html': plot_html,
+        'title': 'MTCars Scatter Plot'
+    }
+    
+    return render(request, 'analysis/tso500_plot.html', context)
