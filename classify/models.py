@@ -709,6 +709,11 @@ class Check(models.Model):
         """get all classification codes for the current check"""
         return CodeAnswer.objects.filter(check_object=self)
 
+    def get_check_number(self):
+        """get the check number for the current check"""
+        all_checks = self.classification.get_all_checks()
+        return all_checks.filter(pk__lte=self.pk).count()
+
     def update_classification(self):
         """calculate the current score and classification"""
         score_counter = 0

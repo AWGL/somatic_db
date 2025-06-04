@@ -91,23 +91,25 @@
                 </button>
             </div>
             <div class="modal-body">
-              <table class="table table-bordered">
+              <table class="table table-bordered" id="comments-table">
                 <thead>
                   <tr>
-                    <th scope="col" class="col-6">Comment</th>
-                    <th scope="col" class="col-2">Code</th>
-                    <th scope="col" class="col-2">User</th>
+                    <th scope="col" class="col-8">Comment</th>
+                    <th scope="col" class="col-2">Check/ User</th>
                     <th scope="col" class="col-2">Time</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for c in comments %}
                   <tr>
-                    <td>{{ c.comment|linebreaks }}</td>
-                    <td><span class="badge badge-pill badge-{{ c.code_answer|colour_by_class }}">{{ c.code_answer|default_if_none:"General comment" }}</span></td>
                     <td>
+                        <span class="badge badge-pill badge-{{ c.code_answer|colour_by_class }}">{{ c.code_answer|default_if_none:"General comment" }}</span><br>
+                        {{ c.comment|linebreaks }}
+                    </td>
+                    <td>
+                        Check {{ c.comment_check.get_check_number }}&nbsp;
+                        {% if c.comment_check == classification_info.current_check %}<span class="badge badge-pill badge-warning">Current</span>{% endif %}<br>
                         {{ c.comment_check.user }}
-                        {% if c.comment_check == classification_info.current_check %}<span class="badge badge-pill badge-warning">Current</span>{% endif %}
                     </td>
                     <td>
                         {{ c.comment_time|date:"Y-m-d H:i" }}
@@ -188,6 +190,30 @@
     $(document).ready(function(){
         $(window).scrollTop(0);
     });
+
+    $(document).ready( function() {
+
+        // Inititialise DataTable
+        $('#comments-table').DataTable({
+            paging: true,
+            columns: [
+                {orderable: false},
+                {orderable: true},
+                {orderable: true},
+            ],
+            info: true,
+            pageLength: 10,
+            searching: true,
+            aaSorting: [],
+            language: {
+                searchPlaceholder: "Search",
+                search: "",
+            },
+            initComplete: function () {
+                $('.dataTables_filter input[type="search"]').css({ 'width': '500px', 'display': 'inline-block' });
+            }
+        });
+    } );
 
 </script>
 
