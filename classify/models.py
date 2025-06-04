@@ -536,6 +536,15 @@ class ClassifyVariantInstance(PolymorphicModel):
         return l
 
     @transaction.atomic
+    def add_comment(self, text):
+        """ add a new comment """
+        Comment.objects.create(
+            comment_check=self.get_latest_check(),
+            comment=text,
+        )
+        return True
+
+    @transaction.atomic
     def update_tumour_type(self, updated_pk):
         """ update the tumour type based on pk passed in from view """
         new_object = TumourSubtype.objects.get(pk=updated_pk)
@@ -925,7 +934,7 @@ class Comment(models.Model):
     """
     A comment, either generic or linked to a code answer
     """
-    comment = models.CharField(max_length=500)
+    comment = models.TextField(max_length=500)
     code_answer = models.ForeignKey("CodeAnswer", on_delete=models.CASCADE, null=True, blank=True)
     comment_check = models.ForeignKey("Check", on_delete=models.CASCADE, related_name="comments")
     comment_time = models.DateTimeField(auto_now_add=True)

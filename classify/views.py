@@ -114,11 +114,20 @@ def classify(request, classification):
         "reopen_previous_class_form": ReopenPreviousClassificationsForm(),
         "reopen_classification_form": ReopenClassificationForm(),
         "reopen_analysis_form": ReopenAnalysisForm(),
+        "comments_form": CommentForm(),
     }
 
     # ------------------------------------------------------------------------
     # when buttons are pressed
     if request.method == "POST":
+
+        # button to add a comment
+        if "comment" in request.POST:
+            comment_form = CommentForm(request.POST)
+            if comment_form.is_valid():
+                comment_text = comment_form.cleaned_data["comment"]
+                classification_obj.add_comment(comment_text)
+                return redirect("perform-classification", classification)
 
         # button to change the specific tumour type
         if "tumour_subtype" in request.POST:

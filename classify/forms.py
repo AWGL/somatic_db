@@ -173,3 +173,21 @@ class ReopenAnalysisForm(GenericReopenForm):
     reopen_analysis_form = forms.BooleanField(
         required=True, label="Confirm that you want to reopen"
     )
+
+class CommentForm(forms.Form):
+    """
+    Form to add a comment to a check
+    """
+    comment = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "placeholder": "Add a comment..."}),
+        label="",
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(CommentForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = "POST"
+        self.helper.add_input(
+            Submit("submit", "Add comment", css_class="btn btn-secondary w-100")
+        )
