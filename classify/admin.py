@@ -70,8 +70,14 @@ class CheckAdmin(admin.ModelAdmin):
 @admin.register(CodeAnswer)
 class CodeAnswerAdmin(admin.ModelAdmin):
     search_fields = ["code", "check_object"]
+    list_display= ["pk", "code", "check_object"]
 
 @admin.register(FinalClassification)
 class FinalClassificationAdmin(admin.ModelAdmin):
     search_fields = ["final_classification"]
     list_display = ["final_classification", "minimum_score", "review_period"]
+
+@admin.register(Comment)
+class Comment(admin.ModelAdmin):
+    search_fields = ["comment_check"]
+    list_display = ["comment_check", "comment_time", "code_answer"]

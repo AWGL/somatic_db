@@ -66,6 +66,7 @@ def classify(request, classification):
         "sample_info": classification_obj.get_sample_info(),
         "variant_info": classification_obj.variant.get_variant_info(),
         "classification_info": classification_obj.get_classification_info(),
+        "comments": classification_obj.get_comments(),
         "previous_classifications": {
             "all": classification_obj.get_all_previous_classifications(),
             "recent": recent_classification,

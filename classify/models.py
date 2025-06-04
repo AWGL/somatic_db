@@ -525,6 +525,16 @@ class ClassifyVariantInstance(PolymorphicModel):
         else:
             return (("new", "Perform full classification"),)
 
+    def get_comments(self):
+        """
+        Get all comments for the current classification
+        """
+        l = []
+        for check in self.get_all_checks():
+            for comment in Comment.objects.filter(comment_check=check).order_by("-comment_time"):
+                l.append(comment)
+        return l
+
     @transaction.atomic
     def update_tumour_type(self, updated_pk):
         """ update the tumour type based on pk passed in from view """
@@ -910,10 +920,12 @@ class CodeAnswer(models.Model):
     # def get_all_comments(self):
     #     return CodeAnswer.objects.filter(classification=self).order_by("pk")
 
-# class CodeAnswerComment(models.Model):
-#     """
-#     A comment for the application of a code
-#     """
-#     comment = models.CharField(max_length=500, null=True, blank=True)
-#     code_answer = models.ForeignKey("CodeAnswer", on_delete=models.CASCADE)
-#     comment_time = models.DateTimeField(blank=True, null=True)
+
+class Comment(models.Model):
+    """
+    A comment, either generic or linked to a code answer
+    """
+    comment = models.CharField(max_length=500)
+    code_answer = models.ForeignKey("CodeAnswer", on_delete=models.CASCADE, null=True, blank=True)
+    comment_check = models.ForeignKey("Check", on_delete=models.CASCADE, related_name="comments")
+    comment_time = models.DateTimeField(auto_now_add=True)

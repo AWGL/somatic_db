@@ -91,37 +91,36 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p>TODO form to add new comment</p>
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th scope="col">Time</th>
-                            <th scope="col">User</th>
-                            <th scope="col">Object</th>
-                            <th scope="col">Comment</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>TODO</td>
-                            <td>TODO</td>
-                            <td>TODO</td>
-                            <td>TODO</td>
-                        </tr>
-                        <tr>
-                            <td>TODO</td>
-                            <td>TODO</td>
-                            <td>TODO</td>
-                            <td>TODO</td>
-                        </tr>
-                        <tr>
-                            <td>TODO</td>
-                            <td>TODO</td>
-                            <td>TODO</td>
-                            <td>TODO</td>
-                        </tr>
-                    </tbody>
-                </table>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th scope="col" class="col-6">Comment</th>
+                    <th scope="col" class="col-2">Code</th>
+                    <th scope="col" class="col-2">User</th>
+                    <th scope="col" class="col-2">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for c in comments %}
+                  <tr>
+                    <td>{{ c.comment }}</td>
+                    <td><span class="badge badge-pill badge-{{ c.code_answer|colour_by_class }}">{{ c.code_answer|default_if_none:"General comment" }}</span></td>
+                    <td>
+                        {{ c.comment_check.user }}
+                        {% if c.comment_check == classification_info.current_check %}<span class="badge badge-pill badge-warning">Current</span>{% endif %}
+                    </td>
+                    <td>
+                        {{ c.comment_time|date:"Y-m-d H:i" }}
+                        {% if c.comment_check == classification_info.current_check and classification_info.classification_obj.get_status != "Complete" %}
+                        <a class="btn btn-light" role="button" style="float: right;"><span class="fa fa-trash"></span></a>
+                        {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+              <p>TODO form to add new comment</p>
 
             </div>
         </div>
