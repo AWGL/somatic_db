@@ -128,6 +128,14 @@ def classify(request, classification):
                 comment_text = comment_form.cleaned_data["comment"]
                 classification_obj.add_comment(comment_text)
                 return redirect("perform-classification", classification)
+            
+        # button to delete a comment
+        if "delete" in request.POST:
+            comment_pk = request.POST.get("delete")
+            comment_obj = Comment.objects.get(pk=comment_pk)
+            if comment_obj.comment_check == current_check_obj:
+                comment_obj.delete()
+                return redirect("perform-classification", classification)
 
         # button to change the specific tumour type
         if "tumour_subtype" in request.POST:

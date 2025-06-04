@@ -531,7 +531,7 @@ class ClassifyVariantInstance(PolymorphicModel):
         """
         l = []
         for check in self.get_all_checks():
-            for comment in Comment.objects.filter(comment_check=check).order_by("-comment_time"):
+            for comment in Comment.objects.filter(comment_check=check).order_by("comment_time"):
                 l.append(comment)
         return l
 
