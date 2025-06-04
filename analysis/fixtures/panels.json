@@ -1922,5 +1922,57 @@
         "splice_genes": null,
         "show_fusion_vaf": false
     }
+},
+{
+    "model": "analysis.panel",
+    "pk": 75,
+    "fields": {
+        "panel_name": "lung",
+        "pretty_print": "Lung",
+        "version": 3,
+        "live": true,
+        "assay": "3",
+        "genome_build": 37,
+        "lims_test_code": "CTDNATSO500",
+        "show_snvs": true,
+        "show_myeloid_gaps_summary": false,
+        "depth_cutoffs": "1000",
+        "vaf_cutoff": "0.00000",
+        "manual_review_required": true,
+        "manual_review_desc": "EGFR codon 747 (position 7:55,242,471)|MET exon 14 splice acceptor (position 7:116,411,887)|MET exon 14 splice donor (position 7:116,412,046)",
+        "bed_file": "roi/b37/TSO500_ctDNA/lung_variants_b37_v3.bed",
+        "report_snv_vaf": true,
+        "show_fusions": true,
+        "show_fusion_coverage": false,
+        "fusion_genes": "ALK,RET,ROS1,NTRK1,NTRK2,NTRK3",
+        "splice_genes": null,
+        "show_fusion_vaf": true
+    }
+},
+{
+    "model": "analysis.panel",
+    "pk": 70,
+    "fields": {
+        "panel_name": "lung",
+        "pretty_print": "Lung",
+        "version": 4,
+        "live": false,
+        "assay": "1",
+        "genome_build": 38,
+        "lims_test_code": "TSO500DNA",
+        "show_snvs": true,
+        "show_myeloid_gaps_summary": false,
+        "depth_cutoffs": "135,270",
+        "vaf_cutoff": "1.40000",
+        "manual_review_required": false,
+        "manual_review_desc": null,
+        "bed_file": "roi/b38/TSO500_DNA/lung_variants_b38_v4.bed",
+        "report_snv_vaf": false,
+        "show_fusions": false,
+        "show_fusion_coverage": false,
+        "fusion_genes": null,
+        "splice_genes": null,
+        "show_fusion_vaf": false
+    }
 }
 ]
