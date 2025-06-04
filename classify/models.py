@@ -359,6 +359,7 @@ class ClassifyVariantInstance(PolymorphicModel):
                         output_dict[section]["complete"] = False
 
                 all_checks = []
+                comments = []
                 if len(code_list) == 1:
                     # all checks for dropdown
                     for c in all_check_objects:
@@ -366,7 +367,10 @@ class ClassifyVariantInstance(PolymorphicModel):
                         all_checks.append(
                             check_code_objects.get(code__code=code_list[0]).get_string()
                         )
-
+                        # get comments specific to the codes
+                        code_comments = check_code_objects.get(code__code=code_list[0]).get_all_comments()
+                        for code_comment in code_comments:
+                            comments.append(code_comment.format_as_dict())
                 else:
                     code_1, code_2 = code_list
                     # all checks
@@ -388,6 +392,14 @@ class ClassifyVariantInstance(PolymorphicModel):
                             elif code_2_display == "Not applied":
                                 all_checks.append(code_1_display)
 
+                        # get comments specific to the codes
+                        code_comments = check_code_objects.get(code__code=code_1).get_all_comments()
+                        for code_comment in code_comments:
+                            comments.append(code_comment.format_as_dict())
+                        code_comments = check_code_objects.get(code__code=code_2).get_all_comments()
+                        for code_comment in code_comments:
+                            comments.append(code_comment.format_as_dict())
+
                 # remove duplicates (template doesnt like sets so convert back to list)
                 annotations = list(set(annotations))
                 # add all to final dict
@@ -398,6 +410,7 @@ class ClassifyVariantInstance(PolymorphicModel):
                     "value": self.get_dropdown_value(code_list),
                     "annotations": annotations,
                     "all_checks": all_checks,
+                    "comments": comments,
                 }
         return output_dict
 
@@ -931,8 +944,8 @@ class CodeAnswer(models.Model):
         else:
             return "Not applied"
         
-    # def get_all_comments(self):
-    #     return CodeAnswer.objects.filter(classification=self).order_by("pk")
+    def get_all_comments(self):
+        return Comment.objects.filter(code_answer=self).order_by("pk")
 
 
 class Comment(models.Model):
@@ -943,3 +956,11 @@ class Comment(models.Model):
     code_answer = models.ForeignKey("CodeAnswer", on_delete=models.CASCADE, null=True, blank=True)
     comment_check = models.ForeignKey("Check", on_delete=models.CASCADE, related_name="comments")
     comment_time = models.DateTimeField(auto_now_add=True)
+
+    def format_as_dict(self):
+        return {
+            "comment": self.comment,
+            "time": self.comment_time,
+            "user": self.comment_check.user.username,
+            "check": self.comment_check.get_check_number(),
+        }

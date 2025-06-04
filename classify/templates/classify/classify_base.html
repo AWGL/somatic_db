@@ -103,7 +103,7 @@
                   {% for c in comments %}
                   <tr>
                     <td>
-                        <span class="badge badge-pill badge-{{ c.code_answer|colour_by_class }}">{{ c.code_answer|default_if_none:"General comment" }}</span><br>
+                        <span class="badge badge-pill badge-{{ c.code_answer.get_code|colour_by_class }}">{{ c.code_answer|default_if_none:"General comment" }}</span><br>
                         {{ c.comment|linebreaks }}
                     </td>
                     <td>
@@ -127,7 +127,8 @@
                 </tbody>
               </table>
 
-              <br>
+              <br><br>
+              <p>Add a general comment:</p>
               {% crispy forms.comments_form %}
 
             </div>

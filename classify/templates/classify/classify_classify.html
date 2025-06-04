@@ -66,7 +66,7 @@
                 </table>
 
                 <a class="btn btn-light w-100" data-toggle="modal" href="#code-comment-{{ code }}-modal" role="button" aria-expanded="false" aria-controls="code-comment-{{ code }}-modal">
-                    Comments&nbsp;<span class="badge badge-secondary">0</span>
+                    Comments&nbsp;<span class="badge badge-{{code_details.comments|length|colour_by_count}}">{{ code_details.comments|length }}</span>
                 </a>
               </td>
             </tr>
@@ -207,8 +207,30 @@
               </button>
             </div>
             <div class="modal-body">
-                {{ code }}
-                {{ code_details }}
+              <p>Note: only comments against {{ code }} are displayed here, to see all comments close this pop up and click 'View all comments' button at the top of the page</p>
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th scope="col" class="col-8">Comment</th>
+                    <th scope="col" class="col-2">Check/ User</th>
+                    <th scope="col" class="col-2">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for c in code_details.comments %}
+                  <tr>
+                    <td>{{ c.comment|linebreaks }}</td>
+                    <td>
+                        Check {{ c.check }}<br>
+                        {{ c.user }}
+                    </td>
+                    <td>{{ c.time|date:"Y-m-d H:i" }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+              TODO - add form to add new comment here
             </div>
           </div>
         </div>
