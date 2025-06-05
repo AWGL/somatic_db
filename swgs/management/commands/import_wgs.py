@@ -3,7 +3,7 @@ import glob
 import json
 
 from django.core.management.base import BaseCommand
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.db import transaction
 
 from swgs.models import *
@@ -284,14 +284,23 @@ class Command(BaseCommand):
         # get or create QC objects for each metric
         print("Creating QC objects")
         qc_somatic_vaf_distribution_obj, created = QCSomaticVAFDistribution.objects.get_or_create(**overall_qc_dict["somatic_vaf_distribution"])
-        qc_tumour_in_normal_contamination_obj, created = QCTumourInNormalContamination.objects.get_or_create(**overall_qc_dict["tinc"])
+        try:
+                qc_tumour_in_normal_contamination_obj, created = QCTumourInNormalContamination.objects.get_or_create(**overall_qc_dict["tinc"])
+        except ValidationError:
+                #if TINC could not be calculated coerce empty string to None for database compatibility
+                overall_qc_dict["tinc"]["score"] = None
+                qc_tumour_in_normal_contamination_obj, created = QCTumourInNormalContamination.objects.get_or_create(**overall_qc_dict["tinc"])
         qc_germline_cnv_quality_obj, created = QCGermlineCNVQuality.objects.get_or_create(**overall_qc_dict["germline_cnv_qc"])
         qc_low_tumour_sample_quality_obj, created = QCLowQualityTumourSample.objects.get_or_create(**overall_qc_dict["low_quality_tumour_sample_qc"])
         qc_tumour_ntc_contamination_obj, created = QCNTCContamination.objects.get_or_create(**overall_qc_dict["tumour_sample_ntc_contamination"])
         qc_germline_ntc_contamination_obj, created = QCNTCContamination.objects.get_or_create(**overall_qc_dict["sample_ntc_contamination"])
         qc_relatedness_obj, created = QCRelatedness.objects.get_or_create(**overall_qc_dict["somalier_qc"])
-        qc_tumour_purity_obj, created = QCTumourPurity.objects.get_or_create(**overall_qc_dict["tumour_purity_qc"])
-
+        try:
+                qc_tumour_purity_obj, created = QCTumourPurity.objects.get_or_create(**overall_qc_dict["tumour_purity_qc"])
+        except ValidationError:
+                #if purity could not be calculated coerce purity to None for database compatibility
+                overall_qc_dict["tumour_purity_qc"]["tumour_purity"] = None
+                qc_tumour_purity_obj, created = QCTumourPurity.objects.get_or_create(**overall_qc_dict["tumour_purity_qc"])
         # get or create the patient analysis object
         print("Creating patient analysis object")
         patient_analysis_obj, created = PatientAnalysis.objects.get_or_create(

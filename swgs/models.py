@@ -446,7 +446,7 @@ class QCRelatedness(AbstractQCCheck):
         unique_together = ["status", "message", "relatedness"]
 
 class QCTumourPurity(AbstractQCCheck):
-    tumour_purity = models.DecimalField(max_digits=5, decimal_places=2)
+    tumour_purity = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
     class Meta:
         unique_together = ["status", "message", "tumour_purity"]
@@ -686,6 +686,16 @@ class GermlineVariantInstance(AbstractSnvInstance):
     is_tier_one = models.BooleanField(null=True, blank=True)
     is_tier_three = models.BooleanField(null=True, blank=True)
     
+    @staticmethod
+    def display_gt(gt):
+        if gt == "1/1":
+            return "Homozygous"
+        elif gt == "0/1" or gt == "1/0":
+            return "Heterozygous"
+        else:
+            #TODOO other genotypes
+            return gt
+
     def display_in_tier_zero(self):
         for annotation in self.vep_annotations.all():
             variant_gene = annotation.transcript.gene
@@ -937,7 +947,7 @@ class AbstractCnvInstance(AbstractVariantInstance):
     """
     cnv = models.ForeignKey("CnvSv", on_delete=models.CASCADE)
     gt = models.CharField(max_length=10)
-    cn = models.IntegerField()
+    cn = models.IntegerField(null=True, blank=True)
     maf = models.DecimalField(max_digits=4, decimal_places=3, null=True, blank=True)
     ncn = models.IntegerField(null=True, blank=True)
 
