@@ -1,7 +1,9 @@
+import datetime
+import glob
 import json
 
 from django.core.management.base import BaseCommand
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.db import transaction
 
 from swgs.models import *
@@ -13,24 +15,243 @@ class Command(BaseCommand):
         """
         Adds arguments for the command, works like argparse
         """
-        parser.add_argument("--patient_json", help="Path to *_patient_info.json", required=True)
-        parser.add_argument("--qc_json", help="Path to *_overall_qc.json", required=True)
-        parser.add_argument("--germline_snv_json", help="Path to *_germline_snvs.json", required=True)
-        parser.add_argument("--somatic_snv_json", help="Path to *_somatic_snvs.json", required=True)
+        parser.add_argument("--directory", help="Directory where all jsons are stored", required=True)
+
+    def find_file(self, filepath):
+        files_found = glob.glob(filepath)
+        if len(files_found) == 0:
+            raise FileNotFoundError(f"Could not find {filepath}")
+        elif len(files_found) > 1:
+            raise FileExistsError(f"Multiple files for this json - please check")
+        else:
+            return files_found[0]
+    
+    def find_all_files(self, directory):
         
+        patient_json = self.find_file(f"{directory}/*_patient_info.json")
+        qc_json = self.find_file(f"{directory}/*_overall_qc.json")
+        coverage_json = self.find_file(f"{directory}/*_coverage.json")
+        germline_snv_json = self.find_file(f"{directory}/*_germline_variants.json")
+        somatic_snv_json = self.find_file(f"{directory}/*_somatic_variants.json")
+        germline_cnv_json = self.find_file(f"{directory}/*_germline_cnv.json")
+        somatic_cnv_json = self.find_file(f"{directory}/*_somatic_cnv.json")
+        germline_sv_json = self.find_file(f"{directory}/*_germline_sv.json")
+        somatic_sv_json = self.find_file(f"{directory}/*_somatic_sv.json")
+        somatic_fusion_json = self.find_file(f"{directory}/*_somatic_fusion.json")
+        ploidy_estimate_json = self.find_file(f"{directory}/*_somatic_ploidy_estimate.json")
+        return patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, \
+            germline_sv_json, somatic_sv_json, somatic_fusion_json, coverage_json, ploidy_estimate_json
+
+    def update_vep_annotations(self, vep_annotations_model, vep_dictionary, transcript):
+        """
+        Updates the VEP annotations
+        vep_annotations_model - either the GermlineVepAnnotations or SomaticVEPAnnotations model instance
+        """
+        # we may have information for one or more transcripts
+        # create the Gene, Transcript and VEPAnnotations models
+        # get the gene/transcript objects then remove the gene field
+        vep_annotations_info = vep_dictionary["vep_annotations"]
+        gene_obj, created = Gene.objects.get_or_create(gene=vep_annotations_info["gene"])
+        transcript_obj, created = Transcript.objects.get_or_create(transcript=transcript, gene=gene_obj)
+        vep_annotations_info["transcript"] = transcript_obj
+        vep_annotations_info.pop("gene")
+        # get the vep consequences for later then remove the field
+        vep_consequences = vep_annotations_info["consequence"].split("&")
+        vep_annotations_info.pop("consequence")
+        vep_annotations_obj = vep_annotations_model.objects.create(**vep_annotations_info)
+
+        # get the annotation consequences and add. these should all be in fixtures as the info is taken from VEP - something has gone very wrong if there's a novel one
+        for vep_consequence in vep_consequences:
+            try:
+                consequence_obj = VEPAnnotationsConsequence.objects.get(consequence=vep_consequence)
+                vep_annotations_obj.consequence.add(consequence_obj)
+            except ObjectDoesNotExist:
+                # there shouldn't be VEP consequences we don't know about
+                raise ObjectDoesNotExist(f"No configured VEP consequence for {vep_consequence}- has VEP been updated?")
+            except MultipleObjectsReturned:
+                # there also shouldn't be more than one
+                raise MultipleObjectsReturned(f"More than one configured VEP consequence for {vep_consequence}")
+
+        # get or create pubmed object(s) and add
+        pubmed_annotations = vep_dictionary["vep_annotations_pubmed"]
+        for k, v in pubmed_annotations.items():
+            if k != "":
+                pubmed_obj, created = VEPAnnotationsPubmed.objects.get_or_create(**v)
+                vep_annotations_obj.pubmed_id.add(pubmed_obj)
+                
+        # get or create existing variations object(s) and add
+        existing_variation_annotation = vep_dictionary["vep_annotations_existing_variation"]
+        for k, v in existing_variation_annotation.items():
+            if k != "":
+                existing_variation_obj, created = VEPAnnotationsExistingVariation.objects.get_or_create(**v)
+                vep_annotations_obj.existing_variation.add(existing_variation_obj)
+
+        # get or create cytoband object(s) and add
+        try:
+            cytoband_annotation = vep_dictionary["cytobands"]
+            for k, v in cytoband_annotation.items():
+                if k != "":
+                    cytoband_obj, created = VEPAnnotationsCytoband.objects.get_or_create(**v)
+                    vep_annotations_obj.cytoband.add(cytoband_obj)
+        except (KeyError, AttributeError):
+            # no cytoband annotations for SNV vcf
+            pass
+        
+        return vep_annotations_obj
+
+        #TODO get or create clinvar object(s) and add
+        #TODO get or create cancer hotspots object(s) and add
+
+
+    def update_variant_obj(self, variant_json, cnv_snv_sv, variant_model, variant_instance_model, vep_annotations_model, genome_build_obj, patient_analysis_obj):
+        """
+        Adds a CNV, SNV or SV
+        variant - relevant file
+        cnv_snv_sv - string: 'cnv', 'snv' or 'sv'
+        variant_instance_model: base model to be updated
+        vep_annotations_model: vep annotations to be updated
+        """
+
+        # change snv formatting to match the json
+        if cnv_snv_sv == "snv":
+            cnv_snv_sv = "variant"
+
+        # Add CNV/SVs
+        # load in the  CNV/SV data from the variant json
+        with open(variant_json) as f:
+            all_variants = json.load(f)
+
+        print(f"Updating {len(all_variants)} variants")
+
+        # loop through the germline CNV/SVs and add to the database
+        for variant_dict in all_variants:
+            
+            # get or create the cnv_sv object
+            variant_info = variant_dict[cnv_snv_sv]
+            variant_info["genome_build"] = genome_build_obj
+
+            if cnv_snv_sv == "cnv" or cnv_snv_sv == "sv":
+                # find all the gene objects in the genes list
+                genes_list = []
+                for gene in variant_dict[f"{cnv_snv_sv}"]["gene"]:
+                    gene_obj, _ = Gene.objects.get_or_create(gene=gene)
+                    genes_list.append(gene_obj)
+                variant_info.pop("gene")
+                # change the key name for model upload
+                variant_info["variant"] = variant_info[cnv_snv_sv]
+                variant_info.pop(cnv_snv_sv)
+                # get the SV/CNV type
+                cnv_sv_type_obj, _ = CnvSvType.objects.get_or_create(type=variant_info["type"])
+                variant_info["type"] = cnv_sv_type_obj
+            
+            variant_obj, created = variant_model.objects.get_or_create(**variant_dict[cnv_snv_sv])
+
+            if cnv_snv_sv == "cnv" or cnv_snv_sv == "sv":
+                for gene in genes_list:
+                    variant_obj.genes.add(gene)
+
+            # get or create cnv instance
+            variant_instance_info = variant_dict[f"abstract_{cnv_snv_sv}_instance"]
+            variant_instance_info[cnv_snv_sv] = variant_obj
+            variant_instance_info["patient_analysis"] = patient_analysis_obj
+            cnv_sv_instance_obj = variant_instance_model.objects.create(**variant_instance_info)
+
+            # we may have information for one or more transcripts
+            # create the Gene, Transcript and VEPAnnotations models
+            for transcript, vep_dictionary in variant_dict["vep_annotations"].items():
+                germline_vep_annotations_obj = self.update_vep_annotations(vep_annotations_model, vep_dictionary, transcript)
+                # Add VEP annotations to germline variant instance
+                cnv_sv_instance_obj.vep_annotations.add(germline_vep_annotations_obj)
+
+    def update_fusion_obj(self, somatic_fusion_json, patient_analysis_obj):
+        """
+        Creates the models for somatic fusions to link two breakends
+        """
+
+        with open(somatic_fusion_json) as f:
+            all_fusions = json.load(f)
+
+        for fusion in all_fusions:
+            breakpoint_obj_1 = SomaticSvInstance.objects.get(sv__variant=fusion["sv"], patient_analysis=patient_analysis_obj)
+            breakpoint_obj_2 = SomaticSvInstance.objects.get(sv__variant=fusion["mate"], patient_analysis=patient_analysis_obj)
+
+            # create new fusion object
+            #TODO make naming be good
+            fusion_name = f"{breakpoint_obj_1.get_pick_gene()}::{breakpoint_obj_2.get_pick_gene()}"
+            Fusion.objects.create(fusion_name=fusion_name, breakpoint1=breakpoint_obj_1, breakpoint2=breakpoint_obj_2, fusion_type=fusion["fusion_type"])
+
+    def tier_variant_instances(self, variant_instance_query, somatic_or_germline):
+        """
+        Tiers the variants and updates the model for easier page loading. Remove any variants that are not tiered
+        """
+
+        if somatic_or_germline == "somatic":
+            for variant_instance in variant_instance_query:
+                variant_instance.is_domain_zero = variant_instance.display_in_domain_zero()
+                variant_instance.is_domain_one = variant_instance.display_in_domain_one()
+                variant_instance.is_domain_two = variant_instance.display_in_domain_two()
+                variant_instance.save()
+                if not any([variant_instance.is_domain_zero, variant_instance.is_domain_one, variant_instance.is_domain_two]):
+                    variant_instance.delete()
+        elif somatic_or_germline == "germline":
+            for variant_instance in variant_instance_query:
+                variant_instance.is_tier_zero = variant_instance.display_in_tier_zero()
+                variant_instance.is_tier_one = variant_instance.display_in_tier_one()
+                variant_instance.is_tier_three = variant_instance.display_in_tier_three()
+                variant_instance.save()
+                if not any([variant_instance.is_tier_zero, variant_instance.is_tier_one, variant_instance.is_tier_three]):
+                    variant_instance.delete()
+
+    def update_coverage_obj(self, coverage_json, patient_analysis_obj):
+        """
+        Creates the models for coverage instances
+        """
+
+        with open(coverage_json) as f:
+            coverage = json.load(f)
+        
+        for gene in coverage:
+            gene_obj, _ = Gene.objects.get_or_create(gene=gene)
+            coverage_info = coverage[gene]
+            coverage_info["gene"] = gene_obj
+            coverage_info["patient_analysis"] = patient_analysis_obj
+            GeneCoverageInstance.objects.create(**coverage_info)
+
+
+    def update_ploidy_instance_obj(self, ploidy_estimate_json, patient_analysis_obj):
+        """
+        Creates the models for the ploidy estimates
+        """
+
+        with open(ploidy_estimate_json) as f:
+            ploidy_estimates = json.load(f)
+        
+        for chrom, ploidy_estimate_data in ploidy_estimates.items():
+            ploidy_estimate_data["patient_analysis"] = patient_analysis_obj
+            ploidy_obj = SomaticPloidyInstance.objects.create(**ploidy_estimate_data)
+            ploidy_warning, ploidy_type = ploidy_obj.ploidy_warning()
+            if ploidy_warning:
+                cnv_query = SomaticCnvInstance.objects.filter(cnv__type__type=ploidy_type, cnv__variant__startswith=ploidy_obj.chromosome)
+                for cnv_obj in cnv_query:
+                    cnv_obj.suspected_ploidy=True
+                    cnv_obj.save()
+                    ploidy_obj.cnvs.add(cnv_obj)
 
     @transaction.atomic
     def handle(self, *args, **options):
 
+        print(f"Importing WGS data {datetime.datetime.today()}")
+
         # get arguments from options
-        patient_json = options["patient_json"]
-        qc_json = options["qc_json"]
-        germline_snv_json = options["germline_snv_json"]
-        somatic_snv_json = options["somatic_snv_json"]
+        patient_json, qc_json, germline_snv_json, somatic_snv_json, germline_cnv_json, somatic_cnv_json, germline_sv_json, somatic_sv_json, \
+            somatic_fusion_json, coverage_json, ploidy_estimate_json = self.find_all_files(options["directory"])
 
         # load in the patient info json
         with open(patient_json, "r") as f:
             patient_info_dict = json.load(f)
+        
+        print(f"Importing data for {patient_info_dict['run_id']}")
+        print("Creating sample objects")
         
         # create a patient object with a standin NHS number - this can be input by the scientists in SVD
         patient_obj = Patient.objects.create()
@@ -61,15 +282,27 @@ class Command(BaseCommand):
                 quality_dict["status"] = "F"
         
         # get or create QC objects for each metric
+        print("Creating QC objects")
         qc_somatic_vaf_distribution_obj, created = QCSomaticVAFDistribution.objects.get_or_create(**overall_qc_dict["somatic_vaf_distribution"])
-        qc_tumour_in_normal_contamination_obj, created = QCTumourInNormalContamination.objects.get_or_create(**overall_qc_dict["tinc"])
+        try:
+                qc_tumour_in_normal_contamination_obj, created = QCTumourInNormalContamination.objects.get_or_create(**overall_qc_dict["tinc"])
+        except ValidationError:
+                #if TINC could not be calculated coerce empty string to None for database compatibility
+                overall_qc_dict["tinc"]["score"] = None
+                qc_tumour_in_normal_contamination_obj, created = QCTumourInNormalContamination.objects.get_or_create(**overall_qc_dict["tinc"])
         qc_germline_cnv_quality_obj, created = QCGermlineCNVQuality.objects.get_or_create(**overall_qc_dict["germline_cnv_qc"])
         qc_low_tumour_sample_quality_obj, created = QCLowQualityTumourSample.objects.get_or_create(**overall_qc_dict["low_quality_tumour_sample_qc"])
         qc_tumour_ntc_contamination_obj, created = QCNTCContamination.objects.get_or_create(**overall_qc_dict["tumour_sample_ntc_contamination"])
         qc_germline_ntc_contamination_obj, created = QCNTCContamination.objects.get_or_create(**overall_qc_dict["sample_ntc_contamination"])
-        qc_relatedness_obj, created = QCRelatedness.objects.get_or_create(**overall_qc_dict["somelier_qc"])
-
-        # get or create the patient analysis objcet
+        qc_relatedness_obj, created = QCRelatedness.objects.get_or_create(**overall_qc_dict["somalier_qc"])
+        try:
+                qc_tumour_purity_obj, created = QCTumourPurity.objects.get_or_create(**overall_qc_dict["tumour_purity_qc"])
+        except ValidationError:
+                #if purity could not be calculated coerce purity to None for database compatibility
+                overall_qc_dict["tumour_purity_qc"]["tumour_purity"] = None
+                qc_tumour_purity_obj, created = QCTumourPurity.objects.get_or_create(**overall_qc_dict["tumour_purity_qc"])
+        # get or create the patient analysis object
+        print("Creating patient analysis object")
         patient_analysis_obj, created = PatientAnalysis.objects.get_or_create(
             patient=patient_obj,
             tumour_sample=tumour_sample_obj,
@@ -82,134 +315,62 @@ class Command(BaseCommand):
             low_quality_tumour_sample=qc_low_tumour_sample_quality_obj,
             tumour_ntc_contamination=qc_tumour_ntc_contamination_obj,
             germline_ntc_contamination=qc_germline_ntc_contamination_obj,
-            relatedness=qc_relatedness_obj
+            relatedness=qc_relatedness_obj,
+            tumour_purity=qc_tumour_purity_obj
         )
 
         # fetch the genome build - SWGS is only build 38
-        genome_build, created = GenomeBuild.objects.get_or_create(genome_build="GRCh38")
-
-        # Add Germline SNVs
-        # load in the germline variant data from the variant json
-        with open(germline_snv_json) as f:
-            germline_variant_dict = json.load(f)
+        genome_build_obj, created = GenomeBuild.objects.get_or_create(genome_build="GRCh38")
         
-        # loop through the germline SNVs and add to database
-        for variant_dict in germline_variant_dict.values():
+        # update coverage
+        print("Updating coverage")
+        self.update_coverage_obj(coverage_json, patient_analysis_obj)
 
-            # get or create the variant object
-            variant_info = variant_dict["variant"]
-            variant_info["genome_build"] = genome_build
-            variant_obj, created = Variant.objects.get_or_create(**variant_info)
+        # update germline snvs
+        print("Updating germline SNVs")
+        self.update_variant_obj(germline_snv_json, "snv", Variant, GermlineVariantInstance, GermlineVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        print("Tiering germline SNVs")
+        germline_variant_instances = GermlineVariantInstance.objects.filter(patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(germline_variant_instances, "germline")
+        # update somatic snvs
+        print("Updating somatic SNVs")
+        self.update_variant_obj(somatic_snv_json, "snv", Variant, SomaticVariantInstance, SomaticVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        print("Tiering somatic SNVs")
+        somatic_variant_instances = SomaticVariantInstance.objects.filter(patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(somatic_variant_instances, "somatic")
+        # update germline cnvs
+        print("Updating germline CNVs")
+        self.update_variant_obj(germline_cnv_json, "cnv", CnvSv, GermlineCnvInstance, GermlineVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        print("Tiering germline CNVs")
+        germline_cnv_instances = GermlineCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(germline_cnv_instances, "germline")
+        # update somatic cnvs
+        print("Updating somatic CNVs")
+        self.update_variant_obj(somatic_cnv_json, "cnv", CnvSv, SomaticCnvInstance, SomaticVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        # update ploidy estimations
+        print("Updating ploidy estimations")
+        self.update_ploidy_instance_obj(ploidy_estimate_json, patient_analysis_obj)
+        print("Tiering somatic CNVs")
+        somatic_cnv_instances = SomaticCnvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(somatic_cnv_instances, "somatic")
+        # update germline svs
+        print("Updating germline SVs")
+        self.update_variant_obj(germline_sv_json, "sv", CnvSv, GermlineSvInstance, GermlineVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        print("Tiering germline SVs")
+        germline_sv_instances = GermlineSvInstance.objects.filter(patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(germline_sv_instances, "germline")
+        # update somatic svs
+        print("Updating somatic SVs")
+        self.update_variant_obj(somatic_sv_json, "sv", CnvSv, SomaticSvInstance, SomaticVEPAnnotations, genome_build_obj, patient_analysis_obj)
+        print("Tiering somatic SVs")
+        somatic_sv_instances = SomaticSvInstance.objects.exclude(sv__type__type="BND").filter(patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(somatic_sv_instances, "somatic")
+        # update somatic fusions
+        print("Updating somatic fusions")
+        self.update_fusion_obj(somatic_fusion_json, patient_analysis_obj)
+        print("Tiering somatic fusions")
+        somatic_fusion_instances = Fusion.objects.filter(breakpoint1__patient_analysis=patient_analysis_obj, breakpoint2__patient_analysis=patient_analysis_obj)
+        self.tier_variant_instances(somatic_fusion_instances, "somatic")
+
+        print("Upload complete")
             
-            # get or create variant instance
-            variant_instance_info = variant_dict["abstract_variant_instance"]
-            variant_instance_info["variant"] = variant_obj
-            variant_instance_info["patient_analysis"] = patient_analysis_obj
-            germline_variant_instance_obj, created = GermlineVariantInstance.objects.get_or_create(**variant_instance_info)
-            
-            # we may have information for one or more transcripts
-            # create the Gene, Transcript and VEPAnnotations models
-            for transcript, vep_dictionary in variant_dict["vep_annotations"].items():
-                vep_annotations_info = vep_dictionary["vep_annotations"]
-                # get the gene/transcript objects then remove the gene field
-                gene_obj, created = Gene.objects.get_or_create(gene=vep_annotations_info["gene"])
-                transcript_obj, created = Transcript.objects.get_or_create(transcript=transcript, gene=gene_obj)
-                vep_annotations_info["transcript"] = transcript_obj
-                vep_annotations_info.pop("gene")
-                # get the vep consequences for later then remove the field
-                vep_consequences = vep_annotations_info["consequence"].split("&")
-                vep_annotations_info.pop("consequence")
-                germline_vep_annotations_obj = GermlineVEPAnnotations.objects.create(**vep_annotations_info)
-
-                # get the annotation consequences and add. these should all be in fixtures as the info is taken from VEP - something has gone very wrong if there's a novel one
-                for vep_consequence in vep_consequences:
-                    try:
-                        consequence_obj = VEPAnnotationsConsequence.objects.get(consequence=vep_consequence)
-                        germline_vep_annotations_obj.consequence.add(consequence_obj)
-                    except ObjectDoesNotExist:
-                        # there shouldn't be VEP consequences we don't know about
-                        raise ObjectDoesNotExist(f"No configured VEP consequence for {vep_consequence}- has VEP been updated?")
-                    except MultipleObjectsReturned:
-                        # there also shouldn't be more than one
-                        raise MultipleObjectsReturned(f"More than one configured VEP consequence for {vep_consequence}")
-
-                # get or create pubmed object(s) and add
-                pubmed_annotations = vep_dictionary["vep_annotations_pubmed"]
-                for k, v in pubmed_annotations.items():
-                    if k != "":
-                        pubmed_obj, created = VEPAnnotationsPubmed.objects.get_or_create(**v)
-                        germline_vep_annotations_obj.pubmed_id.add(pubmed_obj)
-                        
-                # get or create existing variations object(s) and add
-                existing_variation_annotation = vep_dictionary["vep_annotations_existing_variation"]
-                for k, v in existing_variation_annotation.items():
-                    if k != "":
-                        existing_variation_obj, created = VEPAnnotationsExistingVariation.objects.get_or_create(**v)
-                        germline_vep_annotations_obj.existing_variation.add(existing_variation_obj)
-
-                #TODO get or create clinvar object(s) and add
-
-                # Add VEP annotations to germline variant instance
-                germline_variant_instance_obj.vep_annotations.add(germline_vep_annotations_obj)
-
-        # Add Somatic SNVs
-        # load in the somatic snv data from the variant json 
-        with open(somatic_snv_json) as f:
-            somatic_variant_dict = json.load(f)
-        
-        # loop through the somatic SNVs and add to the database
-        for variant_dict in somatic_variant_dict.values():
-            # get or create the variant object
-            variant_info = variant_dict["variant"]
-            variant_info["genome_build"] = genome_build
-            variant_obj, created = Variant.objects.get_or_create(**variant_info)
-            
-            # get or create variant instance
-            variant_instance_info = variant_dict["abstract_variant_instance"]
-            variant_instance_info["variant"] = variant_obj
-            variant_instance_info["patient_analysis"] = patient_analysis_obj
-            somatic_variant_instance_obj = SomaticVariantInstance.objects.create(**variant_instance_info)
-            
-            # we may have information for one or more transcripts
-            # create the Gene, Transcript and VEPAnnotations models
-            for transcript, vep_dictionary in variant_dict["vep_annotations"].items():
-                vep_annotations_info = vep_dictionary["vep_annotations"]
-                gene_obj, created = Gene.objects.get_or_create(gene=vep_annotations_info["gene"])
-                transcript_obj, created = Transcript.objects.get_or_create(transcript=transcript, gene=gene_obj)
-                vep_annotations_info["transcript"] = transcript_obj
-                vep_annotations_info.pop("gene")
-                # get the vep consequences for later then remove the field
-                vep_consequences = vep_annotations_info["consequence"].split("&")
-                vep_annotations_info.pop("consequence")
-                somatic_vep_annotations_obj, created = SomaticVEPAnnotations.objects.get_or_create(**vep_annotations_info)
-
-                # get the annotation consequences and add. these should all be in fixtures as the info is taken from VEP - something has gone very wrong if there's a novel one
-                for vep_consequence in vep_consequences:
-                    try:
-                        consequence_obj = VEPAnnotationsConsequence.objects.get(consequence=vep_consequence)
-                        somatic_vep_annotations_obj.consequence.add(consequence_obj)
-                    except ObjectDoesNotExist:
-                        # there shouldn't be VEP consequences we don't know about
-                        raise ObjectDoesNotExist("No configured VEP consequence - has VEP been updated?")
-                    except MultipleObjectsReturned:
-                        # there also shouldn't be more than one
-                        raise MultipleObjectsReturned(f"More than one configured VEP consequence for {vep_consequence}")
-
-                # get or create pubmed object(s) and add
-                pubmed_annotations = vep_dictionary["vep_annotations_pubmed"]
-                for k, v in pubmed_annotations.items():
-                    if k != "":
-                        pubmed_obj, created = VEPAnnotationsPubmed.objects.get_or_create(**v)
-                        somatic_vep_annotations_obj.pubmed_id.add(pubmed_obj)
-                        
-                # get or create existing variations object(s) and add
-                existing_variation_annotation = vep_dictionary["vep_annotations_existing_variation"]
-                for k, v in existing_variation_annotation.items():
-                    if k != "":
-                        existing_variation_obj, created = VEPAnnotationsExistingVariation.objects.get_or_create(**v)
-                        somatic_vep_annotations_obj.existing_variation.add(existing_variation_obj)
-
-                #TODO get or create cancer hotspots object(s) and add
-
-                # Add VEP annotations to germline variant instance
-                somatic_variant_instance_obj.vep_annotations.add(somatic_vep_annotations_obj)
