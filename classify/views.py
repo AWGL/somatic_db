@@ -105,7 +105,7 @@ def classify(request, classification):
     previous_class_choices = classification_obj.get_previous_classification_choices()
     classification_options = classification_obj.guideline.create_final_classification_tuple()
     context["forms"] = {
-        "select_tumour_subtype_form": TumourSubtypeForm(),
+        "select_tumour_subtype_form": TumourSubtypeForm(tumour_subtypes=[[choice.pk, choice.name] for choice in TumourSubtype.objects.all()]),
         "complete_check_info_form": CompleteCheckInfoForm(),
         "complete_previous_class_form": CompletePreviousClassificationsForm(previous_class_choices=previous_class_choices),
         "complete_classification_form": CompleteClassificationForm(classification_options=classification_options),
@@ -114,7 +114,7 @@ def classify(request, classification):
         "reopen_previous_class_form": ReopenPreviousClassificationsForm(),
         "reopen_classification_form": ReopenClassificationForm(),
         "reopen_analysis_form": ReopenAnalysisForm(),
-        "comments_form": CommentForm(),
+        "general_comments_form": CommentForm(code_answer=None),
     }
 
     # ------------------------------------------------------------------------
@@ -123,10 +123,16 @@ def classify(request, classification):
 
         # button to add a comment
         if "comment" in request.POST:
-            comment_form = CommentForm(request.POST)
+            if request.POST.get("code_answer"):
+                code_obj = ClassificationCriteriaCode.objects.get(code=request.POST.get("code_answer"))
+                code_answer_obj = CodeAnswer.objects.get(code=code_obj, check_object=current_check_obj)
+            else:
+                code_answer_obj = None
+
+            comment_form = CommentForm(request.POST, code_answer=code_answer_obj)
             if comment_form.is_valid():
                 comment_text = comment_form.cleaned_data["comment"]
-                classification_obj.add_comment(comment_text)
+                classification_obj.add_comment(comment_text, code_answer_obj)
                 return redirect("perform-classification", classification)
             
         # button to delete a comment

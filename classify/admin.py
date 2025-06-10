@@ -80,4 +80,4 @@ class FinalClassificationAdmin(admin.ModelAdmin):
 @admin.register(Comment)
 class Comment(admin.ModelAdmin):
     search_fields = ["comment_check"]
-    list_display = ["pk", "comment_check", "comment_time", "code_answer"]
+    list_display = ["pk", "comment_check", "comment_time"]

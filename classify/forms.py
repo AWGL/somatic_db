@@ -2,8 +2,6 @@ from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
-from .models import TumourSubtype
-
 
 class NewClassification(forms.Form):
     """
@@ -25,10 +23,9 @@ class TumourSubtypeForm(forms.Form):
     tumour_subtype = forms.ChoiceField()
 
     def __init__(self, *args, **kwargs):
+        self.tumour_subtypes = kwargs.pop("tumour_subtypes")
         super(TumourSubtypeForm, self).__init__(*args, **kwargs)
-        self.fields['tumour_subtype'].choices = [
-            [choice.pk, choice.name] for choice in TumourSubtype.objects.all()
-        ]
+        self.fields['tumour_subtype'].choices = self.tumour_subtypes
         self.helper = FormHelper()
         self.helper.form_method = "POST"
         self.helper.add_input(
@@ -174,6 +171,7 @@ class ReopenAnalysisForm(GenericReopenForm):
         required=True, label="Confirm that you want to reopen"
     )
 
+
 class CommentForm(forms.Form):
     """
     Form to add a comment to a check
@@ -183,10 +181,13 @@ class CommentForm(forms.Form):
         label="",
         required=True,
     )
+    code_answer = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):
+        self.code_answer = kwargs.pop("code_answer", None)
         super(CommentForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.fields['code_answer'].initial = self.code_answer
         self.helper.form_method = "POST"
         self.helper.add_input(
             Submit("submit", "Add comment", css_class="btn btn-secondary w-100")

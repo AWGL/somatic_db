@@ -198,7 +198,7 @@
 {% for k, v in classification_info.codes_by_category.items %}
     {% for code, code_details in v.codes.items %}
       <div class="modal fade" id="code-comment-{{ code }}-modal" tabindex="-1" role="dialog" aria-labelledby="code-comment-{{ code }}-modal-label" aria-hidden="true">
-        <div class="modal-dialog" style="min-width:90%;" role="document">
+        <div class="modal-dialog modal-dialog-scrollable" style="min-width:60%;" role="document">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="code-comment-{{ code }}-modal-label">{{ code }} comments</h5>
@@ -231,6 +231,7 @@
               </table>
 
               TODO - add form to add new comment here
+              {% crispy code_details.comment_form %}
             </div>
           </div>
         </div>
@@ -301,7 +302,7 @@
 
 
 <!-- gets the codes_by_category variable and wraps in a script tag that can be fetched further down -->
-{{ classification_info.codes_by_category|json_script:"codes_by_category" }}
+{{ classification_info.codes_by_category_json|json_script:"codes_by_category" }}
 
 <script>
   // function to update the css on a code based on whether a oncogenic/benign code is applied

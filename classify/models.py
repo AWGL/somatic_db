@@ -9,9 +9,12 @@ import os
 from collections import OrderedDict
 import datetime
 import re
+import copy
 
 from analysis.models import VariantPanelAnalysis
 from swgs.models import GermlineVariantInstance, SomaticVariantInstance
+
+from .forms import CommentForm
 
 
 class Guideline(models.Model):
@@ -277,7 +280,7 @@ class ClassifyVariantInstance(PolymorphicModel):
         # only pull this info if user selected full classification, otherwise code objects wont exist and it'll error
         if self.full_classification and self.get_latest_check().previous_classifications_check:
             current_score, current_class = current_check_obj.update_classification()
-            classification_info["codes_by_category"] = self.get_codes_by_category()
+            classification_info["codes_by_category"], classification_info["codes_by_category_json"] = self.get_codes_by_category()
             classification_info["current_score"] = current_score
             classification_info["final_class_overridden"] = current_check_obj.final_class_overridden
             if current_check_obj.final_class_overridden:
@@ -412,7 +415,17 @@ class ClassifyVariantInstance(PolymorphicModel):
                     "all_checks": all_checks,
                     "comments": comments,
                 }
-        return output_dict
+
+        # make a copy for JSON serialisation, this is serialised as JSON in the template and passed to the javascript to prefill dropdowns etc
+        # need to use deepcopy rather than a standard copy to make sure that it is a completely different dictionary
+        output_dict_json = copy.deepcopy(output_dict)
+
+        # add comment form to each code in the output dict
+        for section, codes in output_dict.items():
+            for code in codes["codes"].keys():
+                output_dict[section]["codes"][code]["comment_form"] = CommentForm(code_answer=code)
+
+        return output_dict, output_dict_json
 
     def get_order_info(self):
         """Get the ordered list of codes dictionary for the ajax"""
@@ -549,12 +562,15 @@ class ClassifyVariantInstance(PolymorphicModel):
         return l
 
     @transaction.atomic
-    def add_comment(self, text):
+    def add_comment(self, text, code_answer=None):
         """ add a new comment """
-        Comment.objects.create(
+        comment = Comment.objects.create(
             comment_check=self.get_latest_check(),
             comment=text,
         )
+        # TODO need to handle more than one
+        if code_answer:
+            comment.code_answer.add(code_answer)
         return True
 
     @transaction.atomic
@@ -953,9 +969,15 @@ class Comment(models.Model):
     A comment, either generic or linked to a code answer
     """
     comment = models.TextField(max_length=500)
-    code_answer = models.ForeignKey("CodeAnswer", on_delete=models.CASCADE, null=True, blank=True)
+    code_answer = models.ManyToManyField("CodeAnswer", blank=True, related_name="comments")
     comment_check = models.ForeignKey("Check", on_delete=models.CASCADE, related_name="comments")
     comment_time = models.DateTimeField(auto_now_add=True)
+
+    def get_code_answers_str(self):
+        if self.code_answer.exists():
+            return [str(c) for c in self.code_answer.all()]
+        else:
+            return None
 
     def format_as_dict(self):
         return {

@@ -82,7 +82,7 @@
 
 <!-- comments modal -->
 <div class="modal fade" id="comments-modal" tabindex="-1" role="dialog" aria-labelledby="comments-modal-label" aria-hidden="true">
-    <div class="modal-dialog" style="min-width:90%;" role="document">
+    <div class="modal-dialog modal-dialog-scrollable" style="min-width:90%;" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="comments-modal-label">Comments</h5>
@@ -103,7 +103,11 @@
                   {% for c in comments %}
                   <tr>
                     <td>
-                        <span class="badge badge-pill badge-{{ c.code_answer.get_code|colour_by_class }}">{{ c.code_answer|default_if_none:"General comment" }}</span><br>
+                        {% for code_answer in c.get_code_answers_str %}
+                        <span class="badge badge-pill badge-{{ code_answer|colour_by_class }}">{{ code_answer|default_if_none:"General comment" }}</span>
+                        {% empty %}
+                        <span class="badge badge-pill badge-secondary">General comment</span>
+                        {% endfor %}<br>
                         {{ c.comment|linebreaks }}
                     </td>
                     <td>
@@ -129,7 +133,7 @@
 
               <br><br>
               <p>Add a general comment:</p>
-              {% crispy forms.comments_form %}
+              {% crispy forms.general_comments_form %}
 
             </div>
         </div>
