@@ -562,15 +562,16 @@ class ClassifyVariantInstance(PolymorphicModel):
         return l
 
     @transaction.atomic
-    def add_comment(self, text, code_answer=None):
+    def add_comment(self, text, code_answers=None):
         """ add a new comment """
         comment = Comment.objects.create(
             comment_check=self.get_latest_check(),
             comment=text,
         )
         # TODO need to handle more than one
-        if code_answer:
-            comment.code_answer.add(code_answer)
+        if code_answers:
+            for c in code_answers:
+                comment.code_answer.add(c)
         return True
 
     @transaction.atomic

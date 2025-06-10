@@ -123,13 +123,23 @@ def classify(request, classification):
 
         # button to add a comment
         if "comment" in request.POST:
+            # get the linked code answers if they exist
             if request.POST.get("code_answer"):
-                code_obj = ClassificationCriteriaCode.objects.get(code=request.POST.get("code_answer"))
-                code_answer_obj = CodeAnswer.objects.get(code=code_obj, check_object=current_check_obj)
+                code_answers = request.POST.get("code_answer")
+                # if multiple codes are selected, split them and get the CodeAnswer objects
+                if "_" in code_answers:
+                    code_answer_obj = []
+                    for c in code_answers.split("_"):
+                        code_obj = ClassificationCriteriaCode.objects.get(code=c)
+                        code_answer_obj.append(CodeAnswer.objects.get(code=code_obj, check_object=current_check_obj))
+                # if only one code is selected, get the CodeAnswer object directly
+                else:
+                    code_obj = ClassificationCriteriaCode.objects.get(code=code_answers)
+                    code_answer_obj = [CodeAnswer.objects.get(code=code_obj, check_object=current_check_obj)]
             else:
                 code_answer_obj = None
 
-            comment_form = CommentForm(request.POST, code_answer=code_answer_obj)
+            comment_form = CommentForm(request.POST)
             if comment_form.is_valid():
                 comment_text = comment_form.cleaned_data["comment"]
                 classification_obj.add_comment(comment_text, code_answer_obj)
