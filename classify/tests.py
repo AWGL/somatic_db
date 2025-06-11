@@ -872,17 +872,20 @@ class TestModels(TestCase):
         # paired benign code
         paired_benign_obj = ClassificationCriteria.objects.get(pk=90)
         self.assertEqual(paired_benign_obj.classify_shorthand(), "O10_NA|B7_MO")
-        self.assertEqual(paired_benign_obj.pretty_print(), "B7 Moderate (-2)")
+        self.assertEqual(paired_benign_obj.pretty_print(include_score=True), "B7 Moderate (-2)")
+        self.assertEqual(paired_benign_obj.pretty_print(include_score=False), "Moderate")
 
         # unpaired oncogenic object
         unpaired_oncogenic_obj = ClassificationCriteria.objects.get(pk=73)
         self.assertEqual(unpaired_oncogenic_obj.classify_shorthand(), "O7_MO")
-        self.assertEqual(unpaired_oncogenic_obj.pretty_print(), "O7 Moderate (+2)")
+        self.assertEqual(unpaired_oncogenic_obj.pretty_print(include_score=True), "O7 Moderate (+2)")
+        self.assertEqual(unpaired_oncogenic_obj.pretty_print(include_score=False), "Moderate")
 
         # paired pathogenic object
         paired_pathogenic_obj = ClassificationCriteria.objects.get(pk=29)
         self.assertEqual(paired_pathogenic_obj.classify_shorthand(), "PM6_ST|PS2_NA")
-        self.assertEqual(paired_pathogenic_obj.pretty_print(), "PM6 Strong (+4)")
+        self.assertEqual(paired_pathogenic_obj.pretty_print(include_score=True), "PM6 Strong (+4)")
+        self.assertEqual(paired_pathogenic_obj.pretty_print(include_score=False), "Strong")
 
     def test_guideline(self):
         """
