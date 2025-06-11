@@ -25,9 +25,9 @@ def colour_by_class(value):
         css_class = "danger"
 
     elif value.startswith("tier"):
-        if value == "tier iii":
+        if value == "tier 3":
             css_class = "warning"
-        elif value == "tier iv":
+        elif value == "tier 4":
             css_class = "primary"
         else:
             css_class = "danger"

@@ -116,12 +116,15 @@ class ClassificationCriteria(models.Model):
         else:
             return f"{self.code}_{self.strength.shorthand}"
     
-    def pretty_print(self):
-        if self.strength.evidence_points > 0:
-            evidence_points = f"+{self.strength.evidence_points}"
+    def pretty_print(self, include_score):
+        if include_score:
+            if self.strength.evidence_points > 0:
+                evidence_points = f"+{self.strength.evidence_points}"
+            else:
+                evidence_points = self.strength.evidence_points
+            return f"{self.code.code} {self.strength.pretty_print()} ({evidence_points})"
         else:
-            evidence_points = self.strength.evidence_points
-        return f"{self.code.code} {self.strength.pretty_print()} ({evidence_points})"
+            return self.strength.pretty_print()
 
 
 class ClassificationCriteriaCategory(models.Model):
@@ -307,11 +310,17 @@ class ClassifyVariantInstance(PolymorphicModel):
             {"value": "|".join([f"{c}_NA" for c in code_list]), "text": "Not applied"},
         ]
 
+        # only show the point assigned to a code if the guideline scoring method is cumulative
+        show_score = True
+        if self.guideline.scoring_method == "max":
+            show_score = False
+
+        # get all strengths for the codes
         for code in code_list:
             all_strengths = self.guideline.criteria.filter(code__code=code)
             for strength in all_strengths:
                 value = strength.classify_shorthand()
-                text = strength.pretty_print()
+                text = strength.pretty_print(show_score)
                 dropdown_options.append(
                     {"value": value, "text": text}
                 )
