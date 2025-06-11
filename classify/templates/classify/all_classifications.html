@@ -36,7 +36,7 @@
           <td>{{ c.variant.gene }}</td>
           <td>{{ c.variant.hgvs_c }}<br>{{ c.variant.hgvs_p }}</td>
           <td>{{ c.tumour_subtype }}</td>
-          <td><h4><span class="badge badge-{{ c.guideline.somatic_or_germline|colour_by_guideline }}">{{ c.guideline }}</span></h4></td>
+          <td><h4><span class="badge badge-{{ c.guideline.somatic_or_germline|colour_by_guideline }} w-100">{{ c.guideline }}</span></h4></td>
           <td>
             {% if c.get_status == "Complete" %}
             <a class="btn btn-secondary w-100" href="{% url 'perform-classification' c.pk %}" role="button">Complete<br>&nbsp;</a>

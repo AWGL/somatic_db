@@ -565,7 +565,7 @@ class ClassifyVariantInstance(PolymorphicModel):
             comment_check=self.get_latest_check(),
             comment=text,
         )
-        # TODO need to handle more than one
+        # if there are any code answers, add them to the comment
         if code_answers:
             for c in code_answers:
                 comment.code_answer.add(c)
