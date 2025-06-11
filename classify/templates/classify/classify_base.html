@@ -91,7 +91,7 @@
                 </button>
             </div>
             <div class="modal-body">
-              <table class="table table-bordered table-hover" id="comments-table">
+              <table class="table table-bordered table-hover">
                 <thead>
                   <tr>
                     <th scope="col" class="col-8">Comment</th>
@@ -131,7 +131,7 @@
                 </tbody>
               </table>
 
-              <br><br>
+              <br>
               <p>Add a general comment:</p>
               {% crispy forms.general_comments_form %}
 
@@ -200,30 +200,6 @@
     $(document).ready(function(){
         $(window).scrollTop(0);
     });
-
-    $(document).ready( function() {
-
-        // Inititialise DataTable
-        $('#comments-table').DataTable({
-            paging: true,
-            columns: [
-                {orderable: false},
-                {orderable: true},
-                {orderable: true},
-            ],
-            info: true,
-            pageLength: 10,
-            searching: true,
-            aaSorting: [],
-            language: {
-                searchPlaceholder: "Search",
-                search: "",
-            },
-            initComplete: function () {
-                $('.dataTables_filter input[type="search"]').css({ 'width': '500px', 'display': 'inline-block' });
-            }
-        });
-    } );
 
     // TODO - this is not working, need to fix
     //$(".comment-delete").click(function(){

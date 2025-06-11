@@ -207,7 +207,7 @@
               </button>
             </div>
             <div class="modal-body">
-              <p>Note: only comments against {{ code }} are displayed here, to see all comments close this pop up and click 'View all comments' button at the top of the page</p>
+              <div class="alert alert-warning"><b>Note: </b>only comments against {{ code }} are displayed here, to see all comments or make a general sample comment, close this pop up and click 'View all comments' button at the top of the page</div>
               <table class="table table-bordered table-hover">
                 <thead>
                   <tr>
@@ -230,7 +230,7 @@
                 </tbody>
               </table>
 
-              TODO - add form to add new comment here
+              <p>Add a specific comment about {{ code }}:</p>
               {% crispy code_details.comment_form %}
             </div>
           </div>
