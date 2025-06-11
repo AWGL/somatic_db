@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 from .models import *
 from analysis.models import SampleAnalysis, Panel, VariantInstance
 from .test_data import expected_results
-from unittest import mock
 
 # Create your tests here.
 class TestViews(TestCase):
@@ -155,6 +154,18 @@ class TestModels(TestCase):
             final_score = 12,
             variant_instance=self.analysis_inst
         )
+        # add comment objects
+        self.comment_one = Comment.objects.create(
+            comment = "Comment 1",
+            comment_check = self.check_one,
+        )
+        self.comment_one.code_answer.add(self.pending_benign_code_answer_obj)
+        self.comment_one.code_answer.add(self.not_applied_pathogenic_code_answer_obj)
+        self.comment_two = Comment.objects.create(
+            comment = "Comment 2",
+            comment_check = self.check_two,
+        )
+        self.comment_two.code_answer.add(self.not_applied_pathogenic_code_answer_obj)
 
     def test_code_answer(self):
         """
@@ -183,6 +194,23 @@ class TestModels(TestCase):
         self.assertEqual(self.applied_oncogenic_code_answer_obj.get_code_type(), "Oncogenic")
         self.assertEqual(self.applied_oncogenic_code_answer_obj.get_score(), "+2")
         self.assertEqual(self.applied_oncogenic_code_answer_obj.get_string(), "O4 Moderate (+2)")
+
+        # test get_all_comments, convert to list to handle queryset
+        # no comments
+        self.assertEqual(list(self.applied_oncogenic_code_answer_obj.get_all_comments()), [])
+        # one comment
+        self.assertEqual(list(self.pending_benign_code_answer_obj.get_all_comments()), [self.comment_one])
+        # multiple comments
+        self.assertEqual(list(self.not_applied_pathogenic_code_answer_obj.get_all_comments()), [self.comment_one, self.comment_two])
+
+    def test_check_get_check_number(self):
+        """
+        unit tests for the Check model
+        """
+        # check number is 1 for first check
+        self.assertEqual(self.check_one.get_check_number(), 1)
+        # check number is 2 for second check
+        self.assertEqual(self.check_two.get_check_number(), 2)
 
     def test_check_update_classification(self):
         """
@@ -235,10 +263,6 @@ class TestModels(TestCase):
         self.assertFalse(o3_code_obj.applied)
         self.assertIsNone(o3_code_obj.applied_strength)
 
-    def test_check_update_codes(self):
-        """
-        unit tests for the Check model
-        """
         # test complete_info_tab
         self.assertFalse(self.check_one.info_check)
         self.check_one.complete_info_tab()
@@ -536,10 +560,9 @@ class TestModels(TestCase):
         self.check_one.create_code_answers()
         self.check_two.delete_code_answers()
         self.check_two.create_code_answers()
-        self.codes_by_category, self.codes_by_category_json = self.new_var_obj.get_codes_by_category()
-        self.assertEqual(self.codes_by_category_json, expected_results.expected_codes_by_category_json)
-        # TODO not sure how to test self.codes_by_category as it is has forms in it
-        # TODO add a comment
+        # only testing the json dict - both of these dicts are the same except that codes_by_category includes a form, which we cant test
+        codes_by_category, codes_by_category_json = self.new_var_obj.get_codes_by_category()
+        self.assertEqual(codes_by_category_json, expected_results.expected_codes_by_category_json)
 
     def test_classify_variant_instance_get_order_info(self):
         self.assertEqual(self.new_var_obj.get_order_info(), expected_results.expected_codes_order)
@@ -611,6 +634,29 @@ class TestModels(TestCase):
         self.new_var_obj2.complete_date = timezone.now() - timezone.timedelta(days=730)
         self.new_var_obj2.save()
         self.assertEqual(self.new_var_obj.get_previous_classification_choices(), (("new", "Perform full classification"),))
+
+    def test_classify_variant_instance_get_comments(self):
+        self.assertEqual(self.new_var_obj.get_comments(), [self.comment_one, self.comment_two])
+        self.comment_one.delete()
+        self.assertEqual(self.new_var_obj.get_comments(), [self.comment_two])
+        self.comment_two.delete()
+        self.assertEqual(self.new_var_obj.get_comments(), [])
+
+    def test_classify_variant_instance_add_comment(self):
+        self.comment_one.delete()
+        self.comment_two.delete()
+        self.new_var_obj.add_comment("This is a test comment")
+        self.assertEqual(self.new_var_obj.get_comments()[0].comment, "This is a test comment")
+        self.new_var_obj.add_comment("This is a test comment", [self.pending_benign_code_answer_obj])
+        self.assertEqual(
+            list(self.new_var_obj.get_comments()[1].code_answer.all()),
+            [self.pending_benign_code_answer_obj]
+        )
+        self.new_var_obj.add_comment("This is a test comment", [self.pending_benign_code_answer_obj, self.pending_oncogenic_code_answer_obj_1])
+        self.assertEqual(
+            list(self.new_var_obj.get_comments()[2].code_answer.all()),
+            [self.pending_benign_code_answer_obj, self.pending_oncogenic_code_answer_obj_1]
+        )
 
     def test_classify_variant_instance_update_tumour_type(self):
         self.assertIsNone(self.new_var_obj.tumour_subtype)
@@ -857,3 +903,22 @@ class TestModels(TestCase):
 
         self.assertEqual(self.guideline_obj.create_final_classification_ordered_dict(), expected_classification_dict)
         self.assertEqual(self.guideline_obj.create_final_classification_tuple(), expected_classification_tuple)
+
+    def test_comment_get_code_answers_str(self):
+        # test comment with one code answer
+        self.assertEqual(self.comment_two.get_code_answers_str(), ['PP3_NA'])
+        # test comment with multiple code answers
+        self.assertEqual(self.comment_one.get_code_answers_str(), ['B1_PE', 'PP3_NA'])
+        # test comment with no code answers
+        self.comment_one.code_answer.clear()
+        self.assertEqual(self.comment_one.get_code_answers_str(), None)
+
+    def test_comment_format_as_dict(self):
+        # test comment with one code answer
+        expected_dict = {
+            "comment": "Comment 1",
+            "time": self.comment_one.comment_time,
+            "user": self.user_one.username,
+            "check": 1,
+        }
+        self.assertEqual(self.comment_one.format_as_dict(), expected_dict)
