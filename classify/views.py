@@ -251,7 +251,7 @@ def ajax_classify(request):
         current_check_obj = Check.objects.get(id=check_pk)
         current_check_obj.update_codes(selections)
         score, final_class = current_check_obj.update_classification()
-        codes_by_category = current_check_obj.classification.get_codes_by_category()
+        codes_by_category, _ = current_check_obj.classification.get_codes_by_category()
 
         # empty dict for new html
         data = {}
