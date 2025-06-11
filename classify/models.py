@@ -21,8 +21,13 @@ class Guideline(models.Model):
     """
 
     SOMATIC_OR_GERMLINE_CHOICES = (
-        ("S", "somatic"),
+        ("S", "somatic_oncogenicity"),
+        ("A", "somatic_actionability"),
         ("G", "germline")
+    )
+    SCORING_CHOICES = (
+        ("max", "max"),
+        ("sum", "sum"),
     )
 
     guideline = models.CharField(max_length=200, unique=True)
@@ -31,6 +36,7 @@ class Guideline(models.Model):
     somatic_or_germline = models.CharField(max_length=1, choices=SOMATIC_OR_GERMLINE_CHOICES)
     final_classifications = models.ManyToManyField('FinalClassification', related_name="guidelines")
     signed_off_group = models.ForeignKey("auth.Group", on_delete=models.PROTECT, blank=True, null=True, related_name="guideline")
+    scoring_method = models.CharField(max_length=3, choices=SCORING_CHOICES, default="sum")
 
     def __str__(self):
         return self.guideline
@@ -54,7 +60,7 @@ class Guideline(models.Model):
             final_classification_list.append(c)
         return tuple(final_classification_list)
 
-    
+
 class FinalClassification(models.Model):
     """
     Final classification options. Minimum score set as -9999 for benign options 
@@ -741,23 +747,51 @@ class Check(models.Model):
         all_checks = self.classification.get_all_checks()
         return all_checks.filter(pk__lte=self.pk).count()
 
+
     def update_classification(self):
         """calculate the current score and classification"""
+        # calculate score based on scoring method
+        if self.classification.guideline.scoring_method == "max":
+            score = self.update_classification_max()
+        else:
+            score = self.update_classification_sum()
+        # work out class
+        classification = self.calculate_class(score)
+
+        return score, classification
+
+    def update_classification_sum(self):
+        """calculates score by adding up all the codes"""
         score_counter = 0
         codes = self.get_code_answers()
         for c in codes:
             if c.applied:
                 score_counter += c.applied_strength.evidence_points
 
-        # work out class from score counter
+        return score_counter
+
+    def update_classification_max(self):
+        """calculates score using the highest scoring code"""
+        score_counter = 0
+        codes = self.get_code_answers()
+        for c in codes:
+            if c.applied:
+                if c.applied_strength.evidence_points > score_counter:
+                    score_counter = c.applied_strength.evidence_points
+
+        return score_counter
+
+    def calculate_class(self, score_counter):
+        """work out class from score counter"""
+        # get the ordered dict of classes and scores and default to the first one
         class_dict = self.classification.guideline.create_final_classification_ordered_dict()
+        classification = next(iter(class_dict))
+
         # loop through in order until the score no longer meets the threshold
-        classification = "Benign"
         for c, score in class_dict.items():
             if score_counter >= score:
                 classification = c
-
-        return score_counter, classification
+        return classification
 
     @transaction.atomic
     def update_codes(self, selections):

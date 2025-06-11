@@ -60,7 +60,7 @@ def colour_by_guideline(value):
         return "primary"
     if value=="S":
         return "info"
-    else:
+    if value=="A":
         return "success"
 
 
