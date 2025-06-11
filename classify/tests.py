@@ -216,13 +216,19 @@ class TestModels(TestCase):
         """
         unit tests for the Check model
         """
-        
         # get code answers doesn't need testing - standard django query
-
         # test update_classification - expecting oncogenic
         score_counter, classification = self.check_one.update_classification()
         self.assertEqual(score_counter, 10)
         self.assertEqual(classification, "Oncogenic")
+
+        # change scoring method to max score, should come out with score 8 and likely oncogenic
+        self.guideline_obj.scoring_method = "max"
+        self.guideline_obj.save()
+        score_counter, classification = self.check_one.update_classification()
+        self.assertEqual(score_counter, 8)
+        self.assertEqual(classification, "Likely oncogenic")
+
 
     def test_check_update_codes(self):
         """
