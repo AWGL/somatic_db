@@ -229,7 +229,6 @@ class TestModels(TestCase):
         self.assertEqual(score_counter, 8)
         self.assertEqual(classification, "Likely oncogenic")
 
-
     def test_check_update_codes(self):
         """
         unit tests for the Check model

@@ -9,13 +9,13 @@
     <div data-bs-spy="scroll" data-bs-target="#classification-summary-box" data-bs-offset="0" class="scrollspy-example" tabindex="0">
 
       <!-- loop through each header -->
-      {% for k, v in classification_info.codes_by_category.items %}
-        <h4 id={{ v.slug }}-section>{{ k }}</h4>
+      {% for section, section_values in classification_info.codes_by_category.items %}
+        <h4 id={{ section_values.slug }}-section>{{ section }}</h4>
         <table class="table table-bordered">
           <tbody>
 
             <!-- loop through each code within the header -->
-            {% for code, code_details in v.codes.items %}
+            {% for code, code_details in section_values.codes.items %}
             <tr>
               <th class="col-1">
                 {{ code_details.list|join:"<br>" }}
@@ -25,7 +25,7 @@
                 {% for c in code_details.details %}
                   {% for k, v in c.items %}
                     {{ v.description }}&nbsp;
-                    <a class="badge badge-light" data-toggle="modal" href="#guidence-modal" role="button" aria-expanded="false" aria-controls="guidence-modal">
+                    <a class="badge badge-light" data-toggle="modal" href="#guidence-modal-{{ k }}" role="button" aria-expanded="false" aria-controls="guidence-modal">
                       More info
                     </a>
                     <br>
@@ -241,43 +241,29 @@
 
 
 <!-- guidence modal -->
-<div class="modal fade" id="guidence-modal" tabindex="-1" role="dialog" aria-labelledby="guidence-modal-label" aria-hidden="true">
-  <div class="modal-dialog" style="min-width:90%;" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="guidence-modal-label">Guidence</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="row">
-        <div class="col-2">
-          <div id="list-example" class="list-group sticky-top">
-            <a class="list-group-item list-group-item-action" href="#guidence-o1">O1</a>
-            <a class="list-group-item list-group-item-action" href="#guidence-o2">O2</a>
-            <a class="list-group-item list-group-item-action" href="#guidence-b1">B1</a>
-            <a class="list-group-item list-group-item-action" href="#guidence-b2">B2</a>
+{% for section, section_values in classification_info.codes_by_category.items %}
+  {% for code, code_details in section_values.codes.items %}
+    {% for c in code_details.details %}
+      {% for k, v in c.items %}
+        <div class="modal fade" id="guidence-modal-{{ k }}" tabindex="-1" role="dialog" aria-labelledby="guidence-modal-label" aria-hidden="true">
+          <div class="modal-dialog" style="min-width:60%;" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="guidence-modal-label">Guidence - {{ k }} - {{ v.description }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <p>{{ v.guidence }}</p>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="col-10">
-          <div data-spy="scroll" data-target="#list-example" data-offset="0" class="scrollspy-example">
-            <h4 id="guidence-o1">O1</h4>
-            <p>{% lorem 10 p random %}</p>
-            <h4 id="guidence-o2">O2</h4>
-            <p>{% lorem 10 p random %}</p>
-            <h4 id="guidence-b1">B1</h4>
-            <p>{% lorem 10 p random %}</p>
-            <h4 id="guidence-b2">B2</h4>
-            <p>{% lorem 10 p random %}</p>
-          </div>
-        </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
+      {% endfor %}
+    {% endfor %}
+  {% endfor %}
+{% endfor %}
 
 <!-- Reopen modal -->
 <div class="modal fade" id="reopen_classification_modal" tabindex="-1" aria-labelledby="reopen_classification_modal_label" aria-hidden="true">

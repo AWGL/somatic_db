@@ -148,6 +148,7 @@ class ClassificationCriteriaCode(models.Model):
     pathogenic_or_benign = models.CharField(max_length=1)
     description = models.TextField(null=True, blank=True)
     links = models.TextField(null=True, blank=True)
+    guidence = models.TextField(null=True, blank=True)
     annotations = models.CharField(max_length=50, null=True, blank=True)
     category = models.ForeignKey("ClassificationCriteriaCategory", on_delete=models.CASCADE)
     paired_criteria = models.ForeignKey("self", on_delete=models.CASCADE, null=True, blank=True)
@@ -493,6 +494,7 @@ class ClassifyVariantInstance(PolymorphicModel):
             category = code.code.category.category
             options = code.strength.shorthand
             description = code.code.description
+            guidence = code.code.guidence
             annotations = [code.code.annotations]
 
             try:
@@ -503,6 +505,7 @@ class ClassifyVariantInstance(PolymorphicModel):
                     "category": category,
                     "options": [options],
                     "description": description,
+                    "guidence": guidence,
                     "annotations": annotations
                 }
         return codes_dict
