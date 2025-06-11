@@ -22,7 +22,10 @@ class TestViews(TestCase):
 
     def test_view_classifications(self):
         '''Access view classifications page'''
-        response = self.client.get('/classify', follow=True)
+        response = self.client.get('/classify/pending', follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get('/classify/all', follow=True)
         self.assertEqual(response.status_code, 200)
 
 
@@ -437,6 +440,7 @@ class TestModels(TestCase):
         self.check_two.previous_classifications_check = True
         self.check_two.classification_check = True
         check, message = self.check_two.complete_check()
+        self.new_var_obj.complete_date = timezone.now()
         self.assertEqual(self.new_var_obj.get_status(), "Complete")
 
     def test_classify_variant_instance_get_classification_info_reuse_classification(self):
@@ -485,6 +489,7 @@ class TestModels(TestCase):
         # remove the querysets from the comparison - we know this function works from earlier tests
         del info["all_checks"]
         del info["codes_by_category"]
+        del info["codes_by_category_json"]
         self.assertEqual(info, expected_info)
 
         # check with manual override
@@ -497,6 +502,7 @@ class TestModels(TestCase):
         # remove the querysets from the comparison - we know this function works from earlier tests
         del info["all_checks"]
         del info["codes_by_category"]
+        del info["codes_by_category_json"]
         self.assertEqual(info, expected_info)
 
     def test_classify_variant_instance_get_dropdown_options(self):
@@ -530,7 +536,10 @@ class TestModels(TestCase):
         self.check_one.create_code_answers()
         self.check_two.delete_code_answers()
         self.check_two.create_code_answers()
-        self.assertEqual(self.new_var_obj.get_codes_by_category(), expected_results.expected_codes_by_category)
+        self.codes_by_category, self.codes_by_category_json = self.new_var_obj.get_codes_by_category()
+        self.assertEqual(self.codes_by_category_json, expected_results.expected_codes_by_category_json)
+        # TODO not sure how to test self.codes_by_category as it is has forms in it
+        # TODO add a comment
 
     def test_classify_variant_instance_get_order_info(self):
         self.assertEqual(self.new_var_obj.get_order_info(), expected_results.expected_codes_order)
