@@ -396,10 +396,8 @@ class ClassifyVariantInstance(PolymorphicModel):
                                 all_checks.append(code_1_display)
 
                         # get comments specific to the codes
+                        # only doing this with first code of group as all comments will be assigned to both
                         code_comments = check_code_objects.get(code__code=code_1).get_all_comments()
-                        for code_comment in code_comments:
-                            comments.append(code_comment.format_as_dict())
-                        code_comments = check_code_objects.get(code__code=code_2).get_all_comments()
                         for code_comment in code_comments:
                             comments.append(code_comment.format_as_dict())
 
