@@ -258,7 +258,8 @@ class ClassifyVariantInstance(PolymorphicModel):
         return self.get_all_checks().order_by("-pk")[0]
 
     def get_status(self):
-        if self.get_latest_check().check_complete:
+        # complete date only filled in when the whole analysis is complete
+        if self.complete_date:
             return "Complete"
         else:
             num_checks = self.get_all_checks().count()

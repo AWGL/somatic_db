@@ -6,8 +6,9 @@
 <div class="container-fluid breadcrumbs-custom">
   <div class="container">
     <ol class="breadcrumb" style="background-color: transparent;">
-      <li class="breadcrumb-item active"><a href="{% url 'home' %}"><span class="fa fa-home"></span></a></li>
-      <li class="breadcrumb-item"><a href="{% url 'view-all-classifications' %}">Classify</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'home' %}"><span class="fa fa-home"></span></a></li>
+      <li class="breadcrumb-item"><a href="{% url 'view-classifications' 'pending' %}">Classify</a></li>
+      <li class="breadcrumb-item active">{{ header }}</a></li>
     </ol>
   </div>
 </div>
@@ -15,7 +16,7 @@
 
 {% block content %}
 <div class="container">
-    <h5>Variant classification</h5>
+    <h5>{{ header }}</h5>
     <br>
     <table class="table" id="classifications-table">
       <thead>

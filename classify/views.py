@@ -14,13 +14,21 @@ import json
 
 # Create your views here.
 @login_required
-def view_classifications(request):
+def view_classifications(request, query):
     """ """
     new_classifications_form = NewClassification()
 
+    if query == 'all':
+        classifications = ClassifyVariantInstance.objects.all()
+    elif query == 'pending':
+        classifications = ClassifyVariantInstance.objects.filter(complete_date=None)
+    else:
+        return redirect('view-classifications', 'pending')
+
     context = {
-        "classifications": ClassifyVariantInstance.objects.all(),
+        "classifications": classifications,
         "new_form": new_classifications_form,
+        "header": query.capitalize() + " classifications",
     }
 
     # when buttons are pressed
@@ -221,7 +229,7 @@ def classify(request, classification):
                     current_check_obj, next_step
                 )
                 if updated:
-                    return redirect("view-all-classifications")
+                    return redirect("view-classifications", "pending")
                 else:
                     context["warning"] = [err]
 
@@ -231,7 +239,7 @@ def classify(request, classification):
             if reopen_analysis_form.is_valid():
                 updated, err = classification_obj.reopen_analysis(request.user)
                 if updated:
-                    return redirect("view-all-classifications")
+                    return redirect("view-classifications", "pending")
                 else:
                     context["warning"] = [err]
 
