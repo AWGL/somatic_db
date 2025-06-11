@@ -12,10 +12,16 @@ from analysis.models import VariantPanelAnalysis
 import json
 
 
-# Create your views here.
 @login_required
 def view_classifications(request, query):
-    """ """
+    """
+    View to display all classifications or pending classifications.
+    The query parameter determines which classifications to display:
+    - 'all': Displays all classifications.
+    - 'pending': Displays only classifications that are not yet complete.
+    If an invalid query is provided, it redirects to the pending classifications view.
+
+    """
     new_classifications_form = NewClassification()
 
     if query == 'all':
@@ -63,7 +69,12 @@ def view_classifications(request, query):
 @login_required
 def classify(request, classification):
     """
-    Page to perform classifications
+    View to perform a classification on a variant.
+    Loads the classification object and its associated check object from the database.
+    If the user is not signed off and tries to perform a classification, they will be denied permission.
+    The view handles various forms related to the classification process, including adding comments,
+    confirming information, selecting tumour subtypes, and completing the classification.
+
     """
     # load in classification and check objects from url args
     classification_obj = ClassifyVariantInstance.objects.get(id=classification)
@@ -248,8 +259,14 @@ def classify(request, classification):
 
 def ajax_classify(request):
     """
+    The function expects an AJAX request with a POST method containing the following:
+    - selections: A JSON object containing the selected codes for classification.
+    - check_pk: The primary key of the current check object.
+    It updates the current check object with the selected codes, recalculates the score and classification,
+    and returns a JSON response containing the new HTML for the classification box and code summaries.
     Generates new chunks of HTML for the classification summary boxes on the classify tab (within a div called class-box).
     Called in JS at bottom of classify_classify.html
+
     """
     if request.is_ajax():
         # get variables from AJAX input
