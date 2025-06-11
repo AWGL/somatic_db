@@ -4,8 +4,6 @@ from django.utils import timezone
 from django.template.defaultfilters import slugify
 from polymorphic.models import PolymorphicModel
 
-import yaml
-import os
 from collections import OrderedDict
 import datetime
 import re
