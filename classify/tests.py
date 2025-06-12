@@ -139,8 +139,8 @@ class TestModels(TestCase):
         )
 
         # reuse classification object
-        self.tumour_subtype_obj = TumourSubtype.objects.create(name="Lung")
-        self.tumour_subtype_obj2 = TumourSubtype.objects.create(name="Melanoma")
+        self.tumour_subtype_obj, _ = TumourSubtype.objects.get_or_create(name="lung")
+        self.tumour_subtype_obj2, _ = TumourSubtype.objects.get_or_create(name="melanoma")
         final_classification_obj, _ = FinalClassification.objects.get_or_create(
             final_classification = "Oncogenic",
             minimum_score = 10,
@@ -666,7 +666,7 @@ class TestModels(TestCase):
     def test_classify_variant_instance_update_tumour_type(self):
         self.assertIsNone(self.new_var_obj.tumour_subtype)
         self.new_var_obj.update_tumour_type(1)
-        self.assertEqual(self.new_var_obj.tumour_subtype.name, "Lung")
+        self.assertEqual(self.new_var_obj.tumour_subtype.name, "aml")
 
     def test_classify_variant_instance_make_new_check(self):
         # there's currently only 2 checks
@@ -810,7 +810,7 @@ class TestModels(TestCase):
             "sample_id": "dna_test_1",
             "worksheet_id": "dna_ws_1",
             "svd_panel": "Tumour",
-            "specific_tumour_type": "Lung"
+            "specific_tumour_type": "aml"
         }
         self.assertEqual(self.new_var_obj.get_sample_info(), expected_sample_info)
 
