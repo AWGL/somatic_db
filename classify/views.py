@@ -37,14 +37,15 @@ def view_classifications(request, query):
 
     # when buttons are pressed
     if request.POST:
+
         # button to change the specific tumour type
         if "unassign" in request.POST:
             unassign_form = UnassignForm(request.POST)
             if unassign_form.is_valid():
-                # TODO this needs plumbing in, probably need to make it one form per classification otherwise it'll need some javascript stuff
-                print(unassign_form.cleaned_data)
+                classification_obj = ClassifyVariantInstance.objects.get(pk=unassign_form.cleaned_data['unassign'])
+                classification_obj.unassign_user()
 
-        return redirect('view-classifications', 'pending')
+                return redirect('view-classifications', 'pending')
 
     return render(request, "classify/all_classifications.html", context)
 

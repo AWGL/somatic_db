@@ -11,8 +11,10 @@ class UnassignForm(forms.Form):
     unassign = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):
+        self.pk = kwargs.pop("pk", None)
         super(UnassignForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.fields['unassign'].initial = self.pk
         self.helper.form_method = 'POST'
         self.helper.add_input(
             Submit('submit', "I'm sure", css_class='btn btn-danger w-100')
@@ -31,7 +33,6 @@ class NewLinkedClassificationForm(forms.Form):
         super(NewLinkedClassificationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.fields['guideline'].initial = self.guideline
-
         self.helper.form_method = "POST"
         self.helper.add_input(Submit("submit", "Create new", css_class="btn btn-info w-100"))
 

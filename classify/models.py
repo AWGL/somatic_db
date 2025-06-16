@@ -12,7 +12,7 @@ import copy
 from analysis.models import VariantPanelAnalysis
 from swgs.models import GermlineVariantInstance, SomaticVariantInstance
 
-from .forms import CommentForm
+from .forms import CommentForm, UnassignForm
 
 
 class Guideline(models.Model):
@@ -253,6 +253,15 @@ class ClassifyVariantInstance(PolymorphicModel):
 
     def __str__(self):
         return f"{self.variant.gene} {self.variant.hgvs_c} (#{self.pk})"
+
+    def unassign_form(self):
+        return UnassignForm(pk=self.pk)
+
+    @transaction.atomic
+    def unassign_user(self):
+        latest_check = self.get_latest_check()
+        latest_check.user = None
+        latest_check.save()
 
     def is_complete(self):
         if self.complete_date is None:
