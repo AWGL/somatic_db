@@ -106,9 +106,9 @@
         <table class="table table-bordered table-hover">
           <thead>
             <tr>
-              <th scope="col" class="col-8">Comment</th>
+              <th scope="col" class="col-7">Comment</th>
               <th scope="col" class="col-2">Check/ User</th>
-              <th scope="col" class="col-2">Time</th>
+              <th scope="col" class="col-3">Time</th>
             </tr>
           </thead>
           <tbody>
@@ -130,12 +130,18 @@
               <td>
                 {{ c.comment_time|date:"Y-m-d H:i" }}
                 {% if c.comment_check == classification_info.current_check and classification_info.classification_obj.get_status != "Complete" %}
-                <form action="" method="POST">
+                <button class="btn btn-light" data-toggle="collapse" href="#collapse-delete-{{ c.id }}" role="button" aria-expanded="false" aria-controls="collapse-delete-{{ c.id }}">
+                  <span class="fa fa-trash"></span>
+                </button>
+                <div class="collapse" id="collapse-delete-{{ c.id }}">
+                  <br>
+                  <form action="" method="POST">
                     {% csrf_token %}
-                    <button class="btn btn-light comment-delete" role="button" style="float: right;" type="submit" name="delete" value="{{ c.id }}">
-                    <span class="fa fa-trash"></span>
+                    <button class="btn btn-danger w-100 comment-delete" role="button" style="float: right;" type="submit" name="delete" value="{{ c.id }}">
+                      Click to delete
                     </button>
-                </form>
+                  </form>
+                </div>
                 {% endif %}
               </td>
             </tr>
