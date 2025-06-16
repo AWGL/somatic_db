@@ -380,7 +380,8 @@
               $("#codes-summary-functional-studies").html(data.codes_summary_functional_studies);
               $("#codes-summary-allelic").html(data.codes_summary_allelic);
               $("#codes-summary-phenotype").html(data.codes_summary_phenotype);
-              $("#codes-summary-de-novo").html(data.codes_de_novo);
+              $("#codes-summary-de-novo").html(data.codes_summary_de_novo);
+              $("#codes-summary-clinical-actionability").html(data.codes_summary_clinical_actionability);
 
               $("#complete-population").html(data.complete_population);
               $("#complete-mode-of-action").html(data.complete_mode_of_action);
@@ -391,6 +392,7 @@
               $("#complete-allelic").html(data.complete_allelic);
               $("#complete-phenotype").html(data.complete_phenotype);
               $("#complete-de-novo").html(data.complete_de_novo);
+              $("#complete-clinical-actionability").html(data.complete_clinical_actionability);
               //TODO remove hardcoding?
           },
           failure: function(data) {
