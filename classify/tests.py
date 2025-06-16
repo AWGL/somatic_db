@@ -444,6 +444,10 @@ class TestModels(TestCase):
         self.new_var_obj.complete_date = timezone.now()
         self.assertTrue(self.new_var_obj.is_complete())
 
+    # TODO test_classify_variant_instance_unassign_user(self):
+    # TODO test_classify_variant_instance_get_linked_classifications(self):
+    # TODO test_classify_variant_instance_make_linked_classifications(self): (miught need to be split by polymorphic type)
+
     def test_classify_variant_instance_get_all_checks(self):
         all_checks = self.new_var_obj.get_all_checks()
         total_checks = 0
@@ -933,3 +937,6 @@ class TestModels(TestCase):
             "check": 1,
         }
         self.assertEqual(self.comment_one.format_as_dict(), expected_dict)
+
+
+# TODO class TestManagementCommands(TestCase):
