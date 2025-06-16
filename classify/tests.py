@@ -769,14 +769,15 @@ class TestModels(TestCase):
         self.check_two.complete_check()
 
         # complete analysis, two checks by the same person
-        #TODO add in this test after done with testing - currently commented out
-        #self.check_two.user = self.user_one
-        #status, message = self.new_var_obj.signoff_check(self.check_two, "complete")
-        #self.assertFalse(status)
-        #self.assertEqual(message, "Cannot complete analysis, last two checkers are the same analyst")
-        #self.check_two.user = self.user
+        self.check_two.user = self.user_one
+        self.check_two.save()
+        status, message = self.new_var_obj.signoff_check(self.check_two, "complete")
+        self.assertFalse(status)
+        self.assertEqual(message, "Cannot complete analysis, last two checkers are the same analyst")
 
         # complete analysis, last two classifications don't agree
+        self.check_two.user = self.user_two
+        self.check_two.save()
         status, message = self.new_var_obj.signoff_check(self.check_two, "complete")
         self.assertFalse(status)
         self.assertEqual(message, "Cannot complete analysis, overall classification from last two checkers dont agree")

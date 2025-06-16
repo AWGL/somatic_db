@@ -665,9 +665,9 @@ class ClassifyVariantInstance(PolymorphicModel):
             # two diagnostic checks after training cases
             elif all_checks.filter(diagnostic=True).count() < 2:
                 return False, "Cannot complete analysis, some of the checks are training checks"
-            # last two checkers were same person # TODO remove comments when testing done
-            #elif len(last_two_checkers) == 1:
-            #    return False, "Cannot complete analysis, last two checkers are the same analyst"
+            # last two checkers were same person
+            elif len(last_two_checkers) == 1:
+                return False, "Cannot complete analysis, last two checkers are the same analyst"
             # two classifications don't agree
             elif len(last_two_results) > 1:
                 return False, "Cannot complete analysis, overall classification from last two checkers dont agree"
