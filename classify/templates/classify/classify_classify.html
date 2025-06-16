@@ -1,0 +1,446 @@
+{% load custom_tags %}
+{% load crispy_forms_tags %}
+
+{% if classification_info.current_check.previous_classifications_check and classification_info.classification_obj.full_classification %}
+<div class="row">
+
+  <!-- Main area ------------------------------------------------------------------------------->
+  <div class="col-9">
+    <div data-bs-spy="scroll" data-bs-target="#classification-summary-box" data-bs-offset="0" class="scrollspy-example" tabindex="0">
+
+      <!-- loop through each header -->
+      {% for section, section_values in classification_info.codes_by_category.items %}
+        <h4 id={{ section_values.slug }}-section>{{ section }}</h4>
+        <table class="table table-bordered">
+          <tbody>
+
+            <!-- loop through each code within the header -->
+            {% for code, code_details in section_values.codes.items %}
+            <tr>
+              <th class="col-1">
+                {{ code_details.list|join:"<br>" }}
+              </th>
+
+              <th class="col-7">
+                {% for c in code_details.details %}
+                  {% for k, v in c.items %}
+                    {{ v.description }}&nbsp;
+                    <a class="badge badge-light" data-toggle="modal" href="#guidence-modal-{{ k }}" role="button" aria-expanded="false" aria-controls="guidence-modal">
+                      More info
+                    </a>
+                    <br>
+                  {% endfor %}
+                {% endfor %}
+              </th>
+              <th class="col-4">
+                <select 
+                 {% if classification_info.current_check.classification_check %}disabled{% endif %}
+                 size="1" id="code_{{ code }}"
+                 name="code_{{ code }}"
+                 class="btn btn-lg btn-block code-dropdown">
+                  {% for c in code_details.dropdown %}
+                    <option value="{{ c.value }}">{{ c.text }}</option>
+                  {% endfor %}
+                </select>
+              </th>
+            </tr>
+            <!-- TODO make this hideable? -->
+            <tr>
+              <td colspan="2">
+                <!-- TODO add annotations in here, may be a model way of doing this -->
+                {% if "gnomad" in code_details.annotations %}
+                  {% include 'classify/annotations/gnomad.html' %}
+                {% endif %}
+              </td>
+              <td colspan="1">
+                <p><b>Checks</b></p>
+                <table class="table table-sm">
+                  <tbody>
+                  {% for c in code_details.all_checks %}
+                    <tr>
+                      <td class="col-6">#{{ forloop.counter }}{% if forloop.last %} (Current){% endif %}</td>
+                      <td class="col-6"><span class="badge badge-{{ c|colour_by_class }} w-100">{{ c }}</span></td>
+                    </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+
+                <a class="btn btn-light w-100" data-toggle="modal" href="#code-comment-{{ code }}-modal" role="button" aria-expanded="false" aria-controls="code-comment-{{ code }}-modal">
+                    Comments&nbsp;<span class="badge badge-{{code_details.comments|length|colour_by_count}}">{{ code_details.comments|length }}</span>
+                </a>
+              </td>
+            </tr>
+
+            {% endfor %}
+          </tbody>
+        </table>
+        <br>
+        <br>
+      {% endfor %}
+
+    </div>
+  </div>
+
+
+  <!-- side bar -------------------------------------------------------------------->
+  <div class="col-3">
+    <div id="classification-summary-box" class="list-group sticky-top">
+
+      <div id="class-box" >
+        <button class="btn btn-block btn-lg btn-disabled btn-{{ classification_info.current_class|colour_by_class }}" type="button">
+          Current class:<br><b>{{ classification_info.current_class }}&nbsp;</b>
+          <span class="badge badge-light">
+            {{ classification_info.current_score }}
+            {% if classification_info.final_class_overridden %} - overridden{% endif %}
+        </span>
+        </button>
+      </div>
+      <p></p>
+      {% if not classification_info.current_check.classification_check %}
+      <button class="btn btn-block btn-lg btn-outline-dark calculate-class" type="button">Recalculate classification</button>
+      <p></p>
+      <p></p>
+      {% endif %}
+
+      <!-- loop through each header -->
+      {% for k, v in classification_info.codes_by_category.items %}
+      <a class="list-group-item list-group-item-action" href="#{{ v.slug }}-section">
+        <div class="row">
+          <div class="col-10">
+            {{ k }}
+            <br>
+            <div id="codes-summary-{{ v.slug }}">
+            {% for c in v.applied_codes %}
+            <span class="badge badge-pill badge-{{ c|colour_by_class }}">{{ c }}</span>
+            {% endfor %}
+            </div>
+          </div>
+          <div class="col-2">
+            <div id="complete-{{ v.slug }}">
+            {% if v.complete %}
+            <span class="fa fa-check" style="color:#1ab81a"></span>
+            {% else %}
+            <span class="fa fa-stopwatch"></span>
+            {% endif %}
+            </div>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+      <p></p>
+      <p></p>
+      {% if classification_info.classification_obj.get_status != "Complete" %}
+      {% if not classification_info.current_check.classification_check %}
+      <div class="alert alert-info">
+        <p><b>Complete?</b></p>
+        {% crispy forms.complete_classification_form %}
+      </div>
+      {% else %}
+      <div class="alert alert-success">
+        <h5>Section complete!</h5>
+        <p>
+            You have completed classification.<br>
+            <a href="" data-toggle="modal" data-target="#reopen_classification_modal">Click here to reopen</a>
+        </p>
+      </div>
+
+      {% endif %}
+      {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% elif classification_info.current_check.classification_check %}
+<div class="container">
+    <div class="alert alert-success">
+      <h5>Section complete!</h5>
+      <p>This step is not required - you have chosen to reuse this classification:</p>
+
+      <table class="table table-hover">
+        <tbody>
+          <tr>
+            <th>Classification</th>
+            <td colspan="2">
+              {{ classification_info.classification_obj.reused_classification.final_class }} 
+              ({{ classification_info.classification_obj.reused_classification.final_score }})
+            </td>
+          </tr>
+          <tr>
+            <th>Date</th>
+            <td colspan="2">{{ classification_info.classification_obj.reused_classification.complete_date }} 
+              {% if previous_classifications.recent_needs_review %}<span class="badge badge-pill badge-warning">Review needed</span>{% endif %}
+          </td>
+          </tr>
+          <tr>
+            <th class="col-4">SVD record</th>
+            <td class="col-4">#{{ classification_info.classification_obj.reused_classification.pk }}</td>
+            <td class="col-4"><a class="btn btn-info w-100" href="{% url 'perform-classification' previous_classifications.recent.pk %}" target="_blank" role="button">View (opens in new tab)</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+</div>
+
+{% else %}
+<div class="container">
+    <div class="alert alert-warning">
+    Please complete Variant details and Previous classifications tabs first
+    </div>
+</div>
+
+{% endif %}
+</div>
+
+
+<!-- code comment modals -->
+{% for k, v in classification_info.codes_by_category.items %}
+    {% for code, code_details in v.codes.items %}
+      <div class="modal fade" id="code-comment-{{ code }}-modal" tabindex="-1" role="dialog" aria-labelledby="code-comment-{{ code }}-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable" style="min-width:60%;" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="code-comment-{{ code }}-modal-label">{{ code }} comments</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="alert alert-warning"><b>Note: </b>only comments against {{ code }} are displayed here, to see all comments or make a general sample comment, close this pop up and click 'View all comments' button at the top of the page</div>
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th scope="col" class="col-8">Comment</th>
+                    <th scope="col" class="col-2">Check/ User</th>
+                    <th scope="col" class="col-2">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for c in code_details.comments %}
+                  <tr>
+                    <td>{{ c.comment|linebreaks }}</td>
+                    <td>
+                        Check {{ c.check }}<br>
+                        {{ c.user }}
+                    </td>
+                    <td>{{ c.time|date:"Y-m-d H:i" }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+              {% if classification_info.classification_obj.get_status != "Complete" %}
+              <p>Add a specific comment about {{ code }}:</p>
+              {% crispy code_details.comment_form %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+{% endfor %}
+
+
+<!-- guidence modal -->
+{% for section, section_values in classification_info.codes_by_category.items %}
+  {% for code, code_details in section_values.codes.items %}
+    {% for c in code_details.details %}
+      {% for k, v in c.items %}
+        <div class="modal fade" id="guidence-modal-{{ k }}" tabindex="-1" role="dialog" aria-labelledby="guidence-modal-label" aria-hidden="true">
+          <div class="modal-dialog" style="min-width:60%;" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="guidence-modal-label">Guidence - {{ k }} - {{ v.description }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <p>{{ v.guidence }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endfor %}
+  {% endfor %}
+{% endfor %}
+
+<!-- Reopen modal -->
+<div class="modal fade" id="reopen_classification_modal" tabindex="-1" aria-labelledby="reopen_classification_modal_label" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="reopen_classification_modal_label">Reopen?</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-danger">
+            <p><b>Warning!</b> This will reopen the Classification tab</p>
+          </div>
+          {% crispy forms.reopen_classification_form %}
+
+        </div>
+      </div>
+    </div>
+</div>
+
+
+<!-- gets the codes_by_category variable and wraps in a script tag that can be fetched further down -->
+{{ classification_info.codes_by_category_json|json_script:"codes_by_category" }}
+
+<script>
+  // function to update the css on a code based on whether a oncogenic/benign code is applied
+  function update_css(target, css_class) {
+    target.classList.remove('btn-info', 'btn-secondary', 'btn-danger', 'btn-warning');
+    target.classList.add("btn-" + css_class);
+    target_text = target.options[target.selectedIndex].text;
+
+    var row_element = target.parentElement.parentElement;
+    row_element.classList.remove('table-info', 'table-secondary', 'table-danger', 'table-warning');
+    row_element.classList.add("table-" + css_class);
+
+    // change current check button CSS here
+    var next_row = row_element.parentNode.rows[ row_element.rowIndex + 1 ].children[1].children[1].children[0];
+    var class_box = next_row.children[next_row.childElementCount - 1].children[1].children[0];
+    class_box.classList.remove('badge-info', 'badge-secondary', 'badge-danger', 'badge-warning');
+    class_box.classList.add("badge-" + css_class);
+    class_box.textContent = target_text;
+
+    // TODO - can this be done better? this function will error if the HTML format changes
+  };
+
+  // function to extract the new css class when a dropdown is changed
+  function get_new_css(value) {
+    var new_css = 'secondary'
+    var new_code = value.split('_');
+        if (new_code[1].match('NA')){
+          new_css = 'secondary';
+        } else if (new_code[1].match('PE')){
+          new_css = 'warning';
+        } else if (new_code[0][0].match('B')){
+          new_css = 'primary';
+        } else {
+          new_css = 'danger';
+        }
+    return new_css
+  }
+
+  // preset each dropdown
+  // get the all codes variable from variable called in main html
+  const initial_codes = JSON.parse(document.getElementById('codes_by_category').textContent);
+
+  // loop through each code, get the dropdown element, preselect and add css classes
+  for (const [key, c] of Object.entries(initial_codes)) {
+    for (const [key1, c1] of Object.entries(c.codes)) {
+      drop_down = document.getElementById("code_" + key1);
+      drop_down.value = c1.value;
+      new_css = get_new_css(c1.value)
+      update_css(drop_down, new_css);
+    };
+  };
+
+  $(".calculate-class").click(function(){
+    // pull out all html objects starting with code_*, these are the dropdowns
+    let codes = document.querySelectorAll('[id^="code_"]')
+
+    // get the value from each dropdown and add to array
+    var code_list = []
+    codes.forEach(code => {
+
+      // sometimes there are multiple codes split by a pipe
+      let codes_split = code.value.split('|');
+      codes_split.forEach(c => {
+        code_list.push(c)
+      });
+    });
+
+    // pass dict to JS form for AJAX POST
+    var formData = new FormData();
+      formData.append('csrfmiddlewaretoken',document.getElementsByName('csrfmiddlewaretoken')[0].value);
+      formData.append('selections', JSON.stringify(code_list));
+      formData.append('classification_pk', "{{ classification_info.classification_obj.pk }}");
+      formData.append('check_pk', "{{ classification_info.current_check.pk }}");
+
+      $.ajax({
+          url: "{% url 'ajax-classification' %}",
+          type: 'POST',
+          data: formData,
+          contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
+          processData: false, // NEEDED, DON'T OMIT THIS
+          success: function(data) {
+              $("#class-box").html(data.class_box);
+
+              $("#codes-summary-population").html(data.codes_summary_population);
+              $("#codes-summary-mode-of-action").html(data.codes_summary_mode_of_action);
+              $("#codes-summary-cancer-databases").html(data.codes_summary_cancer_databases);
+              $("#codes-summary-effect-on-protein").html(data.codes_summary_effect_on_protein);
+              $("#codes-summary-computational").html(data.codes_summary_computational);
+              $("#codes-summary-functional-studies").html(data.codes_summary_functional_studies);
+              $("#codes-summary-allelic").html(data.codes_summary_allelic);
+              $("#codes-summary-phenotype").html(data.codes_summary_phenotype);
+              $("#codes-summary-de-novo").html(data.codes_summary_de_novo);
+              $("#codes-summary-clinical-actionability").html(data.codes_summary_clinical_actionability);
+
+              $("#complete-population").html(data.complete_population);
+              $("#complete-mode-of-action").html(data.complete_mode_of_action);
+              $("#complete-cancer-databases").html(data.complete_cancer_databases);
+              $("#complete-effect-on-protein").html(data.complete_effect_on_protein);
+              $("#complete-computational").html(data.complete_computational);
+              $("#complete-functional-studies").html(data.complete_functional_studies);
+              $("#complete-allelic").html(data.complete_allelic);
+              $("#complete-phenotype").html(data.complete_phenotype);
+              $("#complete-de-novo").html(data.complete_de_novo);
+              $("#complete-clinical-actionability").html(data.complete_clinical_actionability);
+              //TODO remove hardcoding?
+          },
+          failure: function(data) {
+              alert('Got an error');
+          }
+      });
+  });
+
+
+  $(document).ready(function(){
+    // function that will happen when code change drop downs change in value (wont trigger if same value selected twice)
+    $('.code-dropdown').change(function(e){
+      // get target element
+      c = e.target;
+
+      // get new selected value
+      new_value = c.selectedOptions[0].value;
+
+      // handle when dropdown can select two different codes
+      if (new_value.includes('|')){
+        // find which code was applied
+        codes_split = new_value.split('|')
+        if (codes_split[0].split('_')[1].match('NA') && codes_split[1].split('_')[1].match('NA')) {
+          new_css = 'secondary';
+        }
+        else if (codes_split[0].split('_')[1].match('NA')) {
+          new_css = get_new_css(codes_split[1]);
+        } else {
+          new_css = get_new_css(codes_split[0]);
+        }
+
+      // handle when there is a single code per dropdown
+      } else {
+        new_css = get_new_css(new_value)
+      }
+
+      // update the css using variables from above
+      update_css(e.target, new_css);
+
+      // TODO - trigger recalculate button rather than having to rememeber to press it each time
+    });
+
+    // And now fire change event when the DOM is ready
+    $('.code-dropdown').trigger('change');
+
+  });
+
+
+</script>

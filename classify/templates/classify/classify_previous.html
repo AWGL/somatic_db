@@ -1,0 +1,248 @@
+{% load custom_tags %}
+{% load crispy_forms_tags %}
+
+<!-- if previous section not completed yet, show warning-->
+{% if not classification_info.current_check.info_check %}
+<div class="alert alert-warning">
+  Please complete the Variant details tab first
+</div>
+
+{% else %}
+
+  <!-- alert if step is complete -->
+  {% if classification_info.classification_obj.get_status != "Complete" %}
+  {% if classification_info.current_check.previous_classifications_check %}
+  <div class="alert alert-success">
+    <h5>Section complete!</h5>
+    <p>
+      {% if classification_info.classification_obj.full_classification %}
+      You have selected to perform a full classification.
+      {% else %}
+      You have selected to reuse a previous classification.
+      {% endif %}
+      <a href="" data-toggle="modal" data-target="#reopen_previous_modal">Click here to reopen</a>
+    </p>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <!-- main section - alerts on what step to do next -->
+  <h5>Most recent {{ classification_info.guidelines }} classifications in this tumour type</h5>
+  <div class="alert alert-info"><b>Note: </b>This tab only shows classifications of this variant with these specific guidelines (specific to coding change)</div>
+  {% if classification_info.classification_obj.get_status != "Complete" %}
+  {% if not classification_info.current_check.previous_classifications_check %}
+
+    {% if classification_info.all_checks|length > 1 %}
+    <div class="alert alert-warning">
+      {% if classification_info.classification_obj.full_classification %}
+      <b>The previous checker selected to perform a full classification</b>
+      <p>Please select "Perform full classification" from the dropdown below to continue, if you disagree with the previous checker then please send the check back on the Finalise tab.</p>
+      {% else %}
+      <b>The previous checker selected to reuse a previous classification</b>
+      <p>Please select "Use previous classification" from the dropdown below to continue, if you disagree with the previous checker then please send the check back on the Finalise tab.</p>
+      {% endif %}
+    </div>
+
+    {% elif previous_classifications.recent %}
+
+      {% if previous_classifications.recent_needs_review %}
+      <div class="alert alert-warning">
+        <b>There is an expired previous classification of this variant in this tumour type</b>
+        <p>Please select "Perform full classification" from the dropdown below.</p>
+      </div>
+
+      {% else %}
+      <div class="alert alert-success">
+        <b>There is a recent previous classification of this variant in this tumour type</b>
+        <p>Unless there is a specific reason to carry out a full classification, please select "Use previous classification" from the dropdown below.</p>
+      </div>
+      {% endif %}
+
+    {% else %}
+    <div class="alert alert-warning">
+      <b>There are no recent classifications of this variant within this tumour type</b>
+      <p>Please select "Perform full classification" from the dropdown below.</p>
+    </div>
+
+    {% endif %}
+
+  {% endif %}
+  {% endif %}
+
+  <!-- main section - table with previous classification or saying there isnt one -->
+  {% if previous_classifications.recent %}
+  <table class="table table-hover">
+    <tbody>
+      <tr>
+        <th>Classification</th>
+        <td colspan="2">
+          {{ previous_classifications.recent.final_class }} 
+          ({{ previous_classifications.recent.final_score }}) 
+          {% if previous_classifications.recent.final_class_overridden %}<span class="badge badge-pill badge-warning">Overridden</span>{% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th>Date</th>
+        <td colspan="2">{{ previous_classifications.recent.complete_date }} 
+          {% if previous_classifications.recent_needs_review %}<span class="badge badge-pill badge-warning">Review needed</span>{% endif %}
+      </td>
+      </tr>
+      <tr>
+        <th class="col-4">SVD record</th>
+        <td class="col-4">#{{ previous_classifications.recent.pk }}</td>
+        <td class="col-4"><a class="btn btn-info w-100" href="{% url 'perform-classification' previous_classifications.recent.pk %}" target="_blank" role="button">View (opens in new tab)</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% else %}
+  <table class="table table-hover">
+    <tbody>
+      <tr>
+          <td colspan="3"><b>There are no recent classifications of this variant within this tumour type</b></td>
+      </tr>
+    </tbody>
+  </table>
+  {% endif %}
+  <br>
+  <br>
+
+
+  <!-- main section - link to modal of all instances of this variant -->
+  <div class="row">
+    <div class="col-6"><h5>All classifications of this variant across all tumour types</h5></div>
+    <div class="col-6">
+      <a class="btn btn-light w-100" data-toggle="modal" href="#previous-modal" role="button" aria-expanded="false" aria-controls="previous-modal">
+        View <span class="badge badge-pill badge-{{ previous_classifications|length|colour_by_count }}">{{ previous_classifications.all|length }}</span>
+      </a>
+    </div>
+  </div>
+  <br>
+  <br>
+
+
+  <!-- form to complete section-->
+  {% if classification_info.classification_obj.get_status != "Complete" %}
+    {% if not classification_info.current_check.previous_classifications_check %}
+    <div class="alert alert-info">
+      <h5>Pick next step</h5>
+      {% crispy forms.complete_previous_class_form %}
+    </div>
+    {% endif %}
+  {% endif %}
+
+{% endif %}
+
+
+<!-- previous modal -->
+<div class="modal fade" id="previous-modal" tabindex="-1" role="dialog" aria-labelledby="previous-modal-label" aria-hidden="true">
+  <div class="modal-dialog" style="min-width:90%;" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="previous-modal-label">Previous classifications</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-hover" id="previous-table">
+            <thead>
+              <tr>
+                <th class="col-1">ID</th>
+                <th class="col-2">Sample</th>
+                <th class="col-2">Worksheet</th>
+                <th class="col-2">Tumour type</th>
+                <th class="col-1">Signoff date</th>
+                <th class="col-1">Full classification?</th>
+                <th class="col-3">Class</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for c in previous_classifications.all %}
+              <tr>
+                <td>
+                {% if c == classification_info.classification_obj %}
+                  #{{ c.pk }}&nbsp;<span class="badge badge-pill badge-warning">Current</span>
+                {% else %}
+                  <a href="{% url 'perform-classification' c.pk %}" target="_blank">#{{ c.pk }}</a>
+                {% endif %}
+                </td>
+                <td>{{ c.get_sample_info.sample_id }}</td>
+                <td>{{ c.get_sample_info.worksheet_id }}</td>
+                <td>{{ c.tumour_subtype }}</td>
+                {% if c.is_complete %}
+
+                <td>{{ c.complete_date|date:"Y-m-d H:i" }}</td>
+                <td>
+                    {{ c.full_classification }}
+                    {% if c.final_class_overridden %}<span class="badge badge-pill badge-warning">Overridden</span>{% endif %}
+                </td>
+                <td><span class="btn btn-{{ c.final_class|colour_by_class }} w-100">{{ c.final_class }} ({{ c.final_score }})</span></td>
+
+                {% else %}
+                <td></td>
+                <td></td>
+                <td>Pending</td>
+
+                {% endif %}
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Reopen modal -->
+<div class="modal fade" id="reopen_previous_modal" tabindex="-1" aria-labelledby="reopen_previous_modal_label" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="reopen_previous_modal_label">Reopen?</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-danger">
+            <p><b>Warning!</b> This will remove any interpretation work you've done</p>
+          </div>
+          {% crispy forms.reopen_previous_class_form %}
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+$(document).ready( function() {
+
+    // Inititialise DataTable
+    $('#previous-table').DataTable({
+        paging: true,
+        columns: [
+            {orderable: true},
+            {orderable: true},
+            {orderable: true},
+            {orderable: true},
+            {orderable: true},
+            {orderable: true},
+            {orderable: true}
+        ],
+        info: true,
+        pageLength: 10,
+        searching: true,
+        aaSorting: [],
+        language: {
+            searchPlaceholder: "Search",
+            search: "",
+        },
+        initComplete: function () {
+            $('.dataTables_filter input[type="search"]').css({ 'width': '500px', 'display': 'inline-block' });
+        }
+    });
+} );
+</script>

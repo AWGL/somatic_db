@@ -1,0 +1,228 @@
+{% extends 'analysis/base.html' %}
+{% load custom_tags %}
+{% load crispy_forms_tags %}
+
+{% block breadcrumbs %}
+<div class="container-fluid breadcrumbs-custom">
+    <div class="container">
+        <ol class="breadcrumb" style="background-color: transparent;">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}"><span class="fa fa-home"></span></a></li>
+            <li class="breadcrumb-item"><a href="{% url 'view-classifications' 'pending' %}">Classify</a></li>
+            <li class="breadcrumb-item active">{{ classification_info.classification_obj }}</li>
+        </ol>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <h5>Classification details</h5>
+  <table class="table table-bordered table-sm">
+    <tr>
+      <th class="col-2">Sample</th>
+      <td class="col-3">{{ sample_info.sample_id }}</td>
+      <th class="col-2">HGVS p.</th>
+      <td class="col-5">{{ variant_info.hgvs_p }}</td>
+    </tr>
+    <tr>
+      <th>Worksheet</th>
+      <td>{{ sample_info.worksheet_id }}</td>
+      <th>HGVS c.</th>
+      <td>{{ variant_info.hgvs_c }}</td>
+    </tr>
+    <tr>
+      <th>Referral</th>
+      <td>{{ sample_info.svd_panel }} - {{ classification_info.classification_obj.tumour_subtype }}</td>
+      <th>Gene</th>
+      <td>{{ variant_info.gene }}</td>
+    </tr>
+    <tr>
+      <th>Guidelines</th>
+      <td>{{ classification_info.guidelines }}</td>
+      <th>Status</th>
+      <td>{{ classification_info.classification_obj.get_status }}</td>
+    </tr>
+  </table>
+
+  <div class="row">
+    <div class="col-9">
+      <button class="btn btn-block btn-lg btn-disabled btn-{{ classification_info.somatic_or_germline|colour_by_guideline }}" type="button">
+        {{ classification_info.guidelines }}
+      </button>
+    </div>
+    <div class="col-3">
+      <a class="btn btn-block btn-lg btn-light" data-toggle="modal" href="#comments-modal" role="button" aria-expanded="false" aria-controls="comments-modal">
+        Comments&nbsp;<span class="badge badge-{{comments|length|colour_by_count}}">{{ comments|length }}</span>
+      </a>
+    </div>
+  </div>
+
+</div>
+<br>
+
+<div class="container-fluid">
+  <ul class="nav nav-tabs nav-justified">
+
+    <li class="nav-item">
+      <a class="nav-link section-button active" href="#details" data-target="details">Variant details</a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link section-button" href="#previous" data-target="previous">Previous classifications</a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link section-button" href="#classify" data-target="classify">Classification</a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link section-button" href="#finalise" data-target="finalise">Finalise</a>
+    </li>
+
+  </ul>
+</div>
+<br>
+
+
+<!-- load in each section from template -->
+<div class="container" id="details">{% include 'classify/classify_info.html' %}</div>
+<div class="container" id="previous">{% include 'classify/classify_previous.html' %}</div>
+<div class="container-fluid" id="classify">{% include 'classify/classify_classify.html' %}</div>
+<div class="container" id="finalise">{% include 'classify/classify_finalise.html' %}</div>
+
+
+<!-- comments modal -->
+<div class="modal fade" id="comments-modal" tabindex="-1" role="dialog" aria-labelledby="comments-modal-label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable" style="min-width:60%;" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="comments-modal-label">Comments</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th scope="col" class="col-7">Comment</th>
+              <th scope="col" class="col-2">Check/ User</th>
+              <th scope="col" class="col-3">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in comments %}
+            <tr>
+              <td>
+                {% for code_answer in c.get_code_answers_str %}
+                <span class="badge badge-pill badge-{{ code_answer|colour_by_class }}">{{ code_answer|default_if_none:"General comment" }}</span>
+                {% empty %}
+                <span class="badge badge-pill badge-secondary">General comment</span>
+                {% endfor %}<br>
+                {{ c.comment|linebreaks }}
+              </td>
+              <td>
+                Check {{ c.comment_check.get_check_number }}&nbsp;
+                {% if c.comment_check == classification_info.current_check %}<span class="badge badge-pill badge-warning">Current</span>{% endif %}<br>
+                {{ c.comment_check.user }}
+              </td>
+              <td>
+                {{ c.comment_time|date:"Y-m-d H:i" }}
+                {% if c.comment_check == classification_info.current_check and classification_info.classification_obj.get_status != "Complete" %}
+                <button class="btn btn-light" data-toggle="collapse" href="#collapse-delete-{{ c.id }}" role="button" aria-expanded="false" aria-controls="collapse-delete-{{ c.id }}">
+                  <span class="fa fa-trash"></span>
+                </button>
+                <div class="collapse" id="collapse-delete-{{ c.id }}">
+                  <br>
+                  <form action="" method="POST">
+                    {% csrf_token %}
+                    <button class="btn btn-danger w-100 comment-delete" role="button" style="float: right;" type="submit" name="delete" value="{{ c.id }}">
+                      Click to delete
+                    </button>
+                  </form>
+                </div>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <br>
+        {% if classification_info.classification_obj.get_status != "Complete" %}
+        <p>Add a general comment:</p>
+        {% crispy forms.general_comments_form %}
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--------------------------------------------------------------------------------------- 
+    Javascript
+---------------------------------------------------------------------------------------->
+<script>
+
+    // function to clear all sections
+    function clear_sections(sections) {
+        var i;
+        for (i=0; i<sections.length; i++) {
+            $(sections[i]).hide();
+        };
+    };
+
+
+    // function to show specific section
+    function show_section(target, sections) {
+        // clear all sections content
+        clear_sections(sections);
+        // get button for section
+        for (i=0; i<$('.section-button').length; i++) {
+            var temp = '#' + $('.section-button')[i].dataset.target;
+            if ( target == temp ) {
+                var section_button = $('.section-button')[i];
+            };
+        };
+        // clear active class from all, then add to current button
+        $('.section-button').removeClass('active');
+        $(section_button).addClass('active');
+        // add section content
+        $(target).fadeIn(200);
+    };
+
+
+    // get a list of section buttons
+    var i; var sections_list = [];
+    for (i=0; i<$('.section-button').length; i++) {
+        sections_list.push('#' + $('.section-button')[i].dataset.target);
+    };
+
+
+    // page loadup - load section after hash otherwise load overview
+    clear_sections(sections_list);
+    if ( sections_list.includes(window.location.hash)) {
+        show_section(window.location.hash, sections_list);
+    } else {
+        $("#details").fadeIn(200)
+    };
+
+
+    // handler for section button click
+    $('.section-button').click(function() {
+        var target = '#' + $(this).data('target');
+        show_section(target, sections_list);
+        $(window).scrollTop(0); //TODO - doesnt work
+    });
+
+    // TODO this only works on page load, needs to run every tab change
+    $(document).ready(function(){
+        $(window).scrollTop(0);
+    });
+
+</script>
+
+
+
+{% endblock %}

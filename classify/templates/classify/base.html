@@ -1,0 +1,119 @@
+{% load static %}
+
+<!DOCTYPE html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SVD</title>
+    <link rel=icon href="{% static 'fontawesome-5.15.4/svgs/solid/dna.svg' %}">
+
+    <!--Datatables and plugins packaged into one file-->
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap-4.6.2/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'DataTables/datatables.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'fontawesome-5.15.4/css/all.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'jquery-ui-1.13.2/jquery-ui.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'custom/css/custom.css' %}">
+
+    <script src="{% static 'DataTables/datatables.min.js' %}"></script>
+    <script src="{% static 'popper.js-1.14.3/popper.min.js' %}"></script>
+    <script src="{% static 'bootstrap-4.6.2/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'fontawesome-5.15.4/js/all.js' %}"></script>
+    <script src="{% static 'jquery-ui-1.13.2/jquery-ui.js' %}"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Top navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+      <div class="container">
+        <span class="navbar-brand">Somatic variant database</span>
+        <ul class="navbar-nav ml-auto">
+
+          {% if request.user.is_authenticated %}
+          <li class="nav-item">
+            <span class="navbar-text">{{request.user}}</span>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'logout' %}">logout</a>
+          </li>
+
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'login' %}">login</a>
+          </li>
+
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+
+
+    <!-- insert breadcrumb section from child template -->
+    {% block breadcrumbs %}
+    <div class="container-fluid breadcrumbs-custom">
+      <div class="container">
+        <ol class="breadcrumb" style="background-color: transparent;">
+          <li class="breadcrumb-item active"><a href="{% url 'home' %}"><span class="fa fa-home"></span></a></li>
+        </ol>
+      </div>
+    </div>
+    {% endblock %}
+
+    <!-- display success/ warnings -->
+    <div class="container-fluid">
+    {% if success %}
+      {% for s in success %}
+      <div class="alert alert-success alert-dismissible">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <strong>Success!</strong> {{ s }}
+      </div>
+      {% endfor %}
+    {% endif %}
+
+    {% if warning %}
+      {% for w in warning %}
+      <div class="alert alert-danger alert-dismissible">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <strong>Warning:</strong> {{ w }}
+      </div>
+      {% endfor %}
+    {% endif %}
+    </div>
+
+    <!-- Block -->
+    {% block content %}
+    {% endblock %}
+    <br>
+    <br>
+
+    <!-- Bottom navbar -->
+    <footer class="footer">
+      <nav class="navbar navbar-light bg-light border-top border-thick">
+        <div class="container">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item" style="text-align:left">
+              <a class="navbar-item navbar-text" href="{% url 'view_polys' %}"><span class="fa fa-tools" style="width:30px;color:grey"></span><small>Poly list</small></a>
+            </li>
+            <li class="nav-item" style="text-align:left">
+              <a class="navbar-item navbar-text" href="http://127.0.0.1:8000/admin/" target="_blank"><span class="fa fa-user-shield" style="width:30px;color:grey"></span><small>Admin</small></a>
+            </li>
+          </ul>
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item" style="text-align:right">
+              <a class="navbar-item navbar-text" href="#" target="_blank"><!--<span class="fa fa-question" style="width:30px;color:grey"></span><small>User guide</small>--></a>
+            </li>
+            <li class="nav-item" style="text-align:right">
+              <a class="navbar-item navbar-text" href="mailto: bioinformatics.team@wales.nhs.uk"><span class="fa fa-exclamation-circle" style="width:30px;color:grey"></span><small>Issues: <b>bioinformatics.team@wales.nhs.uk</b></small></a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </footer>
+
+
+  </body>
+  
+</html>

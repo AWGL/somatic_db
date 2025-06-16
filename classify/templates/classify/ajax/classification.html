@@ -1,0 +1,5 @@
+{% load custom_tags %}
+
+<button class="btn btn-block btn-lg btn-disabled btn-{{ current_class|colour_by_class }}" id="class-box" type="button">
+  Current class:<br><b>{{ current_class }}  </b><span class="badge badge-light">{{ current_score }}</span>
+</button>

@@ -1,0 +1,193 @@
+{% load custom_tags %}
+{% load crispy_forms_tags %}
+
+<h5>Checks summary</h5>
+<table class="table table-sm table-hover">
+  <thead>
+    <tr>
+      <th class="col-1">Check</th>
+      <th class="col-2">Full/ reused classification?</th>
+      <th class="col-2">Class</th>
+      <th class="col-4">User</th>
+      <th class="col-3">Date</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for c in classification_info.all_checks %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>
+        {% if c.classification.full_classification %}
+        Full classification
+        {% else %}
+        Reuse previous
+        {% endif %}
+      </td>
+      <td>
+        {% if c.final_class %}
+        <span class="badge badge-pill badge-{{ c.final_class|colour_by_class }}">{{ c.final_class }} ({{ c.final_score }})</span>
+        {% if c.final_class_overridden %}<span class="badge badge-pill badge-warning">Overridden</span>{% endif %}
+        {% else %}
+        Pending
+        {% endif %}
+      </td>
+      <td>{{ c.user }}</td>
+      <td>
+        {{ c.signoff_time|default_if_none:"Current check" }}
+        {% if c.diagnostic == False %}
+        <span class="badge badge-pill badge-warning">Training</span>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<br>
+<br>
+
+
+<div class="card-body bg-light">
+  <h5>Linked classifications</h5>
+  <div class="alert alert-info"><b>Note: </b>This shows only classifications of this specific instance of this variant,
+    i.e. this specific variant within this specific patient on this specific time running the assay.
+    Not all variants require interpretation with all guidelines, see SOP for details.
+  </div>
+
+  <table class="table table-sm table-hover">
+    <thead>
+      <tr>
+        <th class="col-4">Guideline</th>
+        <th class="col-5">Classifications</th>
+        <th class="col-3"></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for name, values in linked_classifications.items %}
+      <tr>
+        <td>{{ name }}</td>
+        {% if values.classifications %}
+        <td>
+          {{ values.classifications.latest.get_status }}
+          {% if values.classifications.latest.get_status == "Complete" %}
+          &nbsp;-&nbsp;{{ values.classifications.latest.final_class }}
+          {% endif %}
+          &nbsp;(<a href="{% url 'perform-classification' values.classifications.latest.pk %}" target="_blank">#{{ values.classifications.latest.pk }}</a>)
+        </td>
+        <td>
+          <a class="btn btn-info w-100" data-toggle="modal" href="#linked-classifications-modal-{{ name }}" role="button" aria-expanded="false" aria-controls="linked-classifications-modal-{{ name }}">
+            View all&nbsp;<span class="badge badge-light">{{ values.classifications|length }}</span>
+          </a>
+        </td>
+        {% else %}
+          <td>None</td>
+          <td>{% crispy values.form %}</td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+<br>
+<br>
+
+
+{% if classification_info.classification_obj.get_status != "Complete" %}
+
+  <div class="card-body bg-light">
+    <h5>Finalise check</h5>
+    {% crispy forms.complete_analysis_form %}
+  </div>
+
+{% else %}
+  <h5>Final classification</h5>
+  <button class="btn btn-block btn-lg btn-disabled btn-{{ classification_info.current_check.final_class|colour_by_class }}" type="button">
+    <b>{{ classification_info.current_check.final_class }}</b>&nbsp;
+    <span class="badge badge-light">
+        {{ classification_info.current_check.final_score }}
+        {% if classification_info.current_check.final_class_overridden %} - overridden{% endif %}
+    </span>
+  </button>
+  <br>
+  <br>
+
+  <div class="alert alert-warning">
+    <h5>Analysis complete!</h5>
+    <p>
+      Analysis for this variant has been completed. <a href="" data-toggle="modal" data-target="#reopen_analysis_modal">Click here to reopen</a>
+    </p>
+  </div>
+
+{% endif %}
+
+
+
+<!-- Reopen modal -->
+<div class="modal fade" id="reopen_analysis_modal" tabindex="-1" aria-labelledby="reopen_analysis_modal_label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reopen_analysis_modal_label">Reopen?</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {% if classification_info.reused %}
+        <div class="alert alert-danger">
+          <p><b>Warning!</b> This analysis has been reused by another analysis since being closed and therefore cannot be reopened.</p>
+          <p>If you need to reclassify then please start a new analysis</p>
+        </div>
+
+        {% else %}
+        <div class="alert alert-danger">
+          <p><b>Warning!</b> Analysis for this variant is complete, this will reopen analysis from the finalise tab of the last checker</p>
+        </div>
+        {% crispy forms.reopen_analysis_form %}
+
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- linked classifications modal -->
+{% for name, values in linked_classifications.items %}
+<div class="modal fade" id="linked-classifications-modal-{{ name }}" tabindex="-1" aria-labelledby="linked-classifications-modal-{{ name }}_label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable" style="min-width:60%;" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="linked-classifications-modal-{{ name }}_label">Linked {{ name }} classifications</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Upload date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for v in values.classifications %}
+            <tr>
+              <td>{{ v.pk }}</td>
+              <td>{{ v.upload_date|date:"Y-m-d H:i"  }}</td>
+              <td>
+                {{ values.classifications.latest.get_status }}
+                {% if values.classifications.latest.get_status == "Complete" %}
+                &nbsp;-&nbsp;{{ values.classifications.latest.final_class }}
+               {% endif %}
+               &nbsp;(<a href="{% url 'perform-classification' values.classifications.latest.pk %}" target="_blank">#{{ values.classifications.latest.pk }}</a>)
+             </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
