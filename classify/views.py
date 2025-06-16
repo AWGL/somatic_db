@@ -97,7 +97,10 @@ def classify(request, classification):
     # get any classifications on the same variant but with different guidelines
     linked_classifications = {}
     for guideline in classification_obj.guideline.linked_guidelines.all():
-        linked_classifications[guideline.guideline] = classification_obj.get_linked_classifications(guideline=guideline)
+        linked_classifications[guideline.guideline] = {
+            "classifications": classification_obj.get_linked_classifications(guideline=guideline),
+            "form": NewLinkedClassificationForm(guideline=guideline.guideline)
+        }
     context["linked_classifications"] = linked_classifications
 
     # assign user
@@ -250,6 +253,18 @@ def classify(request, classification):
                     return redirect("view-classifications", "pending")
                 else:
                     context["warning"] = [err]
+
+        # button to open a classification on the same variant with different guidelines
+        if "guideline" in request.POST:
+            linked_classification_form = NewLinkedClassificationForm(request.POST)
+            if linked_classification_form.is_valid():
+
+                # extract info and make new classification object
+                new_guideline = Guideline.objects.get(guideline=linked_classification_form.cleaned_data['guideline'])
+                classification_obj.make_linked_classification(new_guideline)
+
+                # redirect
+                return redirect("perform-classification", classification)
 
     return render(request, "classify/classify_base.html", context)
 

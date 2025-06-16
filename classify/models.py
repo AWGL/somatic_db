@@ -699,6 +699,15 @@ class AnalysisVariantInstance(ClassifyVariantInstance):
             guideline=guideline
         )
 
+    def make_linked_classification(self, guideline):
+        new_obj = AnalysisVariantInstance.objects.create(
+            variant=self.variant,
+            variant_instance=self.variant_instance,
+            guideline=guideline,
+            tumour_subtype=self.tumour_subtype
+        )
+        new_obj.make_new_check()
+
 
 class SWGSGermlineVariantInstance(ClassifyVariantInstance):
     """
@@ -780,6 +789,15 @@ class ManualVariantInstance(ClassifyVariantInstance):
             variant_instance=self.variant_instance,
             guideline=guideline
         )
+
+    def make_linked_classification(self, guideline):
+        new_obj = ManualVariantInstance.objects.create(
+            variant=self.variant,
+            variant_instance=self.variant_instance,
+            guideline=guideline,
+            tumour_subtype=self.tumour_subtype
+        )
+        new_obj.make_new_check()
 
 
 class Check(models.Model):

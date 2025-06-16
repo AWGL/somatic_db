@@ -62,25 +62,25 @@
       </tr>
     </thead>
     <tbody>
-    {% for name, classifications in linked_classifications.items %}
+    {% for name, values in linked_classifications.items %}
       <tr>
         <td>{{ name }}</td>
-        {% if classifications %}
+        {% if values.classifications %}
         <td>
-          <a href="{% url 'perform-classification' classifications.latest.pk %}" target="_blank">#{{ classifications.latest.pk }}</a>&nbsp;
-          {{ classifications.latest.get_status }}
-          {% if classifications.latest.get_status == "Complete" %}
-          &nbsp;-&nbsp;{{ classifications.latest.final_class }}
+          {{ values.classifications.latest.get_status }}
+          {% if values.classifications.latest.get_status == "Complete" %}
+          &nbsp;-&nbsp;{{ values.classifications.latest.final_class }}
           {% endif %}
+          &nbsp;(<a href="{% url 'perform-classification' values.classifications.latest.pk %}" target="_blank">#{{ values.classifications.latest.pk }}</a>)
         </td>
         <td>
           <a class="btn btn-info w-100" data-toggle="modal" href="#linked-classifications-modal-{{ name }}" role="button" aria-expanded="false" aria-controls="linked-classifications-modal-{{ name }}">
-            View all&nbsp;<span class="badge badge-light">{{ classifications|length }}</span>
+            View all&nbsp;<span class="badge badge-light">{{ values.classifications|length }}</span>
           </a>
         </td>
         {% else %}
           <td>None</td>
-          <td><a class="btn btn-info w-100" role="button">Create new TODO</a></td>
+          <td>{% crispy values.form %}</td>
         {% endif %}
       </tr>
     {% endfor %}
@@ -151,7 +151,7 @@
 </div>
 
 <!-- linked classifications modal -->
-{% for name, classifications in linked_classifications.items %}
+{% for name, values in linked_classifications.items %}
 <div class="modal fade" id="linked-classifications-modal-{{ name }}" tabindex="-1" aria-labelledby="linked-classifications-modal-{{ name }}_label" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">

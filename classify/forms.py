@@ -15,6 +15,23 @@ class NewClassification(forms.Form):
         self.helper.add_input(Submit("submit", "New", css_class="btn btn-info w-100"))
 
 
+class NewLinkedClassificationForm(forms.Form):
+    """
+    Button to open a new classifiaction on the same variant with different guidelines
+
+    """
+    guideline = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+    def __init__(self, *args, **kwargs):
+        self.guideline = kwargs.pop("guideline", None)
+        super(NewLinkedClassificationForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.fields['guideline'].initial = self.guideline
+
+        self.helper.form_method = "POST"
+        self.helper.add_input(Submit("submit", "Create new", css_class="btn btn-info w-100"))
+
+
 class TumourSubtypeForm(forms.Form):
     """
     Form to select a tumour subtype
