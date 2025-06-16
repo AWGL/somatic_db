@@ -27,7 +27,8 @@
   {% endif %}
 
   <!-- main section - alerts on what step to do next -->
-  <h5>Most recent classification in this tumour type</h5>
+  <h5>Most recent {{ classification_info.guidelines }} classifications in this tumour type</h5>
+  <div class="alert alert-info"><b>Note: </b>This tab only shows classifications of this variant with these specific guidelines (specific to coding change)</div>
   {% if classification_info.classification_obj.get_status != "Complete" %}
   {% if not classification_info.current_check.previous_classifications_check %}
 
