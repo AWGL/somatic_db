@@ -3,6 +3,22 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
 
+class UnassignForm(forms.Form):
+    """
+    Unassign yourself/ someone else from a classification
+
+    """
+    unassign = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(UnassignForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.add_input(
+            Submit('submit', "I'm sure", css_class='btn btn-danger w-100')
+        )
+
+
 class NewLinkedClassificationForm(forms.Form):
     """
     Button to open a new classifiaction on the same variant with different guidelines

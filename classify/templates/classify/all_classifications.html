@@ -47,9 +47,29 @@
             {% elif c.get_latest_check.user == None %}
             <a class="btn btn-primary w-100" href="{% url 'perform-classification' c.pk %}" role="button">{{ c.get_status }}<br>Pending - Assign to me</a>
             {% elif c.get_latest_check.user == request.user %}
-            <a class="btn btn-primary w-100" href="{% url 'perform-classification' c.pk %}" role="button">{{ c.get_status }}<br>Assigned to me</a>
+            <div class="btn-group btn-block">
+              <a class="btn btn-primary btn-block" href="{% url 'perform-classification' c.pk %}" role="button">{{ c.get_status }}<br>Assigned to me</a>
+              <button type="button btn-block" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="sr-only">Toggle Dropdown</span>
+              </button>
+              <div class="dropdown-menu dropdown-menu-right">
+                <a class="dropdown-item" data-toggle="modal" data-target="#unassign-modal-{{ c.pk }}">
+                  Unassign
+                </a>
+              </div>
+            </div>
             {% else %}
-            <a class="btn btn-primary w-100 disabled" href="{% url 'perform-classification' c.pk %}" role="button">{{ c.get_status }}<br>Assigned to {{ c.get_latest_check.user }}</a>
+            <div class="btn-group btn-block">
+              <a class="btn btn-primary btn-block disabled" href="{% url 'perform-classification' c.pk %}" role="button">{{ c.get_status }}<br>Assigned to {{ c.get_latest_check.user }}</a>
+              <button type="button btn-block" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="sr-only">Toggle Dropdown</span>
+              </button>
+              <div class="dropdown-menu dropdown-menu-right">
+                <a class="dropdown-item" data-toggle="modal" data-target="#unassign-modal-{{ c.pk }}">
+                  Unassign
+                </a>
+              </div>
+            </div>
             {% endif %}
           </td>
         </tr>
@@ -59,6 +79,57 @@
     <br>
     <br>
 </div>
+
+
+<!-- Unassign modal -->
+{% for c in classifications %}
+<div class="modal fade" id="unassign-modal-{{ c.pk }}" tabindex="-1" role="dialog" aria-labelledby="unassign-modal-label-{{ c.pk }}" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="unassign-modal-label-{{ c.pk }}">Unassign analysis</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger">
+          <strong>Warning!</strong> Are you sure you want to continue?<br>
+          Unassigning a user will reset any decisions and comments from the current check 
+        </div>
+
+        <table class="table table-sm table-striped table-hover">
+          <tbody>
+            <tr>
+              <th>ID</td>
+              <td>{{ c.pk }}</td>
+            </tr>
+            <tr>
+              <th>Variant</td>
+              <td>{{ c.variant.hgvs_c }} / {{ c.variant.hgvs_p }}</td>
+            </tr>
+            <tr>
+              <th>Cancer type</td>
+              <td>{{ c.tumour_subtype }}</td>
+            </tr>
+            <tr>
+              <th>Guidelines</td>
+              <td>{{ c.guideline }}</td>
+            </tr>
+            <tr>
+              <th>Assigned to</td>
+              <td>{{ c.get_latest_check.user }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {% crispy unassign_form %}
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
 
 
 <script>
