@@ -37,6 +37,7 @@ class Guideline(models.Model):
     final_classifications = models.ManyToManyField('FinalClassification', related_name="guidelines")
     signed_off_group = models.ForeignKey("auth.Group", on_delete=models.PROTECT, blank=True, null=True, related_name="guideline")
     scoring_method = models.CharField(max_length=3, choices=SCORING_CHOICES, default="sum")
+    linked_guidelines = models.ManyToManyField("self", blank=True, symmetrical=False, related_name="linked")
 
     def __str__(self):
         return self.guideline
@@ -692,6 +693,12 @@ class AnalysisVariantInstance(ClassifyVariantInstance):
             sample_info["specific_tumour_type"] = None
         return sample_info
 
+    def get_linked_classifications(self, guideline):
+        return AnalysisVariantInstance.objects.filter(
+            variant_instance=self.variant_instance,
+            guideline=guideline
+        )
+
 
 class SWGSGermlineVariantInstance(ClassifyVariantInstance):
     """
@@ -708,6 +715,13 @@ class SWGSGermlineVariantInstance(ClassifyVariantInstance):
             "specific_tumour_type": "TODO",
         }
         return sample_info
+
+    def get_linked_classifications(self, guideline):
+        # TODO - may need tweaking relative to SWGS app
+        return SWGSGermlineVariantInstance.objects.filter(
+            variant_instance=self.variant_instance,
+            guideline=guideline
+        )
 
 
 class SWGSSomaticVaraintInstance(ClassifyVariantInstance):
@@ -726,20 +740,46 @@ class SWGSSomaticVaraintInstance(ClassifyVariantInstance):
         }
         return sample_info
 
+    def get_linked_classifications(self, guideline):
+        # TODO - may need tweaking relative to SWGS app
+        return SWGSSomaticVaraintInstance.objects.filter(
+            variant_instance=self.variant_instance,
+            guideline=guideline
+        )
+
+
+class ManualVariant(models.Model):
+    """
+    Equivelent of variant instance from analysis/ SWGS app but for manually added variants
+    """
+    sample_id = models.CharField(max_length=50)
+    panel = models.CharField(max_length=50)
+    worksheet = models.CharField(max_length=50, null=True, blank=True)
+
 
 class ManualVariantInstance(ClassifyVariantInstance):
     """
     Variants added manually directly to classify
     """
+    variant_instance = models.ForeignKey(ManualVariant, on_delete=models.CASCADE)
+
     def get_sample_info(self):
-        # TODO - these will need coding relative to manual variant, probably within this model if theyre needed
         sample_info = {
-            "sample_id": "TODO",
-            "worksheet_id": "TODO",
-            "svd_panel": "TODO",
-            "specific_tumour_type": "TODO",
+            "sample_id": self.variant_instance.sample_id,
+            "worksheet_id": self.variant_instance.worksheet,
+            "svd_panel": self.variant_instance.panel,
         }
+        try:
+            sample_info["specific_tumour_type"] = self.tumour_subtype.name
+        except AttributeError:
+            sample_info["specific_tumour_type"] = None
         return sample_info
+
+    def get_linked_classifications(self, guideline):
+        return ManualVariantInstance.objects.filter(
+            variant_instance=self.variant_instance,
+            guideline=guideline
+        )
 
 
 class Check(models.Model):

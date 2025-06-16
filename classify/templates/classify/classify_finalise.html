@@ -48,19 +48,40 @@
 
 <div class="card-body bg-light">
   <h5>Linked classifications</h5>
+  <div class="alert alert-info">This shows only classifications of this specific instance of this variant,
+    i.e. this specific variant within this specific patient on this specific time running the assay.
+    Not all variants require interpretation with all guidelines, see SOP for details.
+  </div>
 
   <table class="table table-sm table-hover">
     <thead>
       <tr>
         <th class="col-4">Guideline</th>
-        <th class="col-8">Classifications</th>
+        <th class="col-5">Classifications</th>
+        <th class="col-3"></th>
       </tr>
     </thead>
     <tbody>
     {% for name, classifications in linked_classifications.items %}
       <tr>
         <td>{{ name }}</td>
-        <td>{{ classifications }}</td>
+        {% if classifications %}
+        <td>
+          <a href="{% url 'perform-classification' classifications.latest.pk %}" target="_blank">#{{ classifications.latest.pk }}</a>&nbsp;
+          {{ classifications.latest.get_status }}
+          {% if classifications.latest.get_status == "Complete" %}
+          &nbsp;-&nbsp;{{ classifications.latest.final_class }}
+          {% endif %}
+        </td>
+        <td>
+          <a class="btn btn-info w-100" data-toggle="modal" href="#linked-classifications-modal-{{ name }}" role="button" aria-expanded="false" aria-controls="linked-classifications-modal-{{ name }}">
+            View all&nbsp;<span class="badge badge-light">{{ classifications|length }}</span>
+          </a>
+        </td>
+        {% else %}
+          <td>None</td>
+          <td><a class="btn btn-info w-100" role="button">Create new TODO</a></td>
+        {% endif %}
       </tr>
     {% endfor %}
     </tbody>
@@ -128,3 +149,23 @@
     </div>
   </div>
 </div>
+
+<!-- linked classifications modal -->
+{% for name, classifications in linked_classifications.items %}
+<div class="modal fade" id="linked-classifications-modal-{{ name }}" tabindex="-1" aria-labelledby="linked-classifications-modal-{{ name }}_label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="linked-classifications-modal-{{ name }}_label">Linked {{ name }} classifications</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        test {{ name }}
+        TODO
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
