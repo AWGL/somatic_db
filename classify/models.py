@@ -731,7 +731,15 @@ class ManualVariantInstance(ClassifyVariantInstance):
     """
     Variants added manually directly to classify
     """
-    pass
+    def get_sample_info(self):
+        # TODO - these will need coding relative to manual variant, probably within this model if theyre needed
+        sample_info = {
+            "sample_id": "TODO",
+            "worksheet_id": "TODO",
+            "svd_panel": "TODO",
+            "specific_tumour_type": "TODO",
+        }
+        return sample_info
 
 
 class Check(models.Model):
