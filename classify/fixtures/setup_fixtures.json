@@ -2088,21 +2088,119 @@
     "model": "classify.tumoursubtype",
     "pk": 1,
     "fields": {
-        "name": "CLL"
+        "name": "aml"
     }
 },
 {
     "model": "classify.tumoursubtype",
     "pk": 2,
     "fields": {
-        "name": "MPN"
+        "name": "breast"
     }
 },
 {
     "model": "classify.tumoursubtype",
     "pk": 3,
     "fields": {
-        "name": "Lung"
+        "name": "cholangiocarcinoma"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 4,
+    "fields": {
+        "name": "cll"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 5,
+    "fields": {
+        "name": "colorectal"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 6,
+    "fields": {
+        "name": "endometrial"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 7,
+    "fields": {
+        "name": "gist"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 8,
+    "fields": {
+        "name": "glioma"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 9,
+    "fields": {
+        "name": "lymphoma"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 10,
+    "fields": {
+        "name": "lung"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 11,
+    "fields": {
+        "name": "mcl"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 12,
+    "fields": {
+        "name": "melanoma"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 13,
+    "fields": {
+        "name": "mpn"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 14,
+    "fields": {
+        "name": "myeloid"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 15,
+    "fields": {
+        "name": "prostate"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 16,
+    "fields": {
+        "name": "thyroid"
+    }
+},
+{
+    "model": "classify.tumoursubtype",
+    "pk": 17,
+    "fields": {
+        "name": "urothelial"
     }
 }
 ]
