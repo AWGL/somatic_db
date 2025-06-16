@@ -153,7 +153,7 @@
 <!-- linked classifications modal -->
 {% for name, values in linked_classifications.items %}
 <div class="modal fade" id="linked-classifications-modal-{{ name }}" tabindex="-1" aria-labelledby="linked-classifications-modal-{{ name }}_label" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-scrollable" style="min-width:60%;" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="linked-classifications-modal-{{ name }}_label">Linked {{ name }} classifications</h5>
@@ -162,8 +162,30 @@
         </button>
       </div>
       <div class="modal-body">
-        test {{ name }}
-        TODO
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Upload date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for v in values.classifications %}
+            <tr>
+              <td>{{ v.pk }}</td>
+              <td>{{ v.upload_date|date:"Y-m-d H:i"  }}</td>
+              <td>
+                {{ values.classifications.latest.get_status }}
+                {% if values.classifications.latest.get_status == "Complete" %}
+                &nbsp;-&nbsp;{{ values.classifications.latest.final_class }}
+               {% endif %}
+               &nbsp;(<a href="{% url 'perform-classification' values.classifications.latest.pk %}" target="_blank">#{{ values.classifications.latest.pk }}</a>)
+             </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
