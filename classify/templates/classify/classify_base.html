@@ -144,8 +144,10 @@
         </table>
 
         <br>
+        {% if classification_info.classification_obj.get_status != "Complete" %}
         <p>Add a general comment:</p>
         {% crispy forms.general_comments_form %}
+        {% endif %}
 
       </div>
     </div>

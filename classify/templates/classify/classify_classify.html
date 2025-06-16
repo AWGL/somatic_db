@@ -230,8 +230,10 @@
                 </tbody>
               </table>
 
+              {% if classification_info.classification_obj.get_status != "Complete" %}
               <p>Add a specific comment about {{ code }}:</p>
               {% crispy code_details.comment_form %}
+              {% endif %}
             </div>
           </div>
         </div>
