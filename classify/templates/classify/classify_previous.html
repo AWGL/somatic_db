@@ -159,7 +159,13 @@
             <tbody>
             {% for c in previous_classifications.all %}
               <tr>
-                <td>#{{ c.pk }} {% if c == classification_info.classification_obj %}<span class="badge badge-pill badge-warning">Current</span>{% endif %}</td>
+                <td>
+                {% if c == classification_info.classification_obj %}
+                  #{{ c.pk }}&nbsp;<span class="badge badge-pill badge-warning">Current</span>
+                {% else %}
+                  <a href="{% url 'perform-classification' c.pk %}" target="_blank">#{{ c.pk }}</a>
+                {% endif %}
+                </td>
                 <td>{{ c.get_sample_info.sample_id }}</td>
                 <td>{{ c.get_sample_info.worksheet_id }}</td>
                 <td>{{ c.tumour_subtype }}</td>
