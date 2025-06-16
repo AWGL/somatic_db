@@ -243,6 +243,7 @@ class ClassifyVariantInstance(PolymorphicModel):
     final_class = models.ForeignKey("FinalClassification", on_delete=models.CASCADE, null=True, blank=True)
     final_score = models.IntegerField(blank=True, null=True)
     final_class_overridden = models.BooleanField(default=False)
+    upload_date = models.DateTimeField(auto_now=True)
     complete_date = models.DateTimeField(blank=True, null=True)
     full_classification = models.BooleanField(default=False)
     reused_classification = models.ForeignKey('self', on_delete=models.PROTECT, null=True, blank=True, related_name="original_classification")
@@ -685,7 +686,8 @@ class AnalysisVariantInstance(ClassifyVariantInstance):
         sample_info = {
             "sample_id": self.variant_instance.sample_analysis.sample.sample_id,
             "worksheet_id": self.variant_instance.sample_analysis.worksheet.ws_id,
-            "svd_panel": self.variant_instance.sample_analysis.panel.panel_name
+            "svd_panel": self.variant_instance.sample_analysis.panel.panel_name,
+            "source": "SVD"
         }
         try:
             sample_info["specific_tumour_type"] = self.tumour_subtype.name
@@ -722,6 +724,7 @@ class SWGSGermlineVariantInstance(ClassifyVariantInstance):
             "worksheet_id": "TODO",
             "svd_panel": "TODO",
             "specific_tumour_type": "TODO",
+            "source": "SWGS"
         }
         return sample_info
 
@@ -746,6 +749,7 @@ class SWGSSomaticVaraintInstance(ClassifyVariantInstance):
             "worksheet_id": "TODO",
             "svd_panel": "TODO",
             "specific_tumour_type": "TODO",
+            "source": "SWGS"
         }
         return sample_info
 
@@ -777,6 +781,7 @@ class ManualVariantInstance(ClassifyVariantInstance):
             "sample_id": self.variant_instance.sample_id,
             "worksheet_id": self.variant_instance.worksheet,
             "svd_panel": self.variant_instance.panel,
+            "source": "Manual"
         }
         try:
             sample_info["specific_tumour_type"] = self.tumour_subtype.name

@@ -22,8 +22,6 @@ def view_classifications(request, query):
     If an invalid query is provided, it redirects to the pending classifications view.
 
     """
-    new_classifications_form = NewClassification()
-
     if query == 'all':
         classifications = ClassifyVariantInstance.objects.all()
     elif query == 'pending':
@@ -33,36 +31,8 @@ def view_classifications(request, query):
 
     context = {
         "classifications": classifications,
-        "new_form": new_classifications_form,
         "header": query.capitalize() + " classifications",
     }
-
-    # when buttons are pressed
-    if request.method == "POST":
-
-        # only one button at the mo
-        new_classifications_form = NewClassification(request.POST)
-        if new_classifications_form.is_valid():
-            # get variant instance
-            var_inst = VariantPanelAnalysis(id=60)  # TODO this is hardcoded for testing
-            var, _ = ClassifyVariant.objects.get_or_create(
-                gene = "TET2",
-                hgvs_c = "NM_001127208.3:c.4139A>G",
-                hgvs_p = "NP_001120680.1:p.His1380Arg",
-                genomic_coords = "4:105269704A>G",
-                genome_build = 38,
-            )
-            guideline_obj = Guideline.objects.get(pk=2) #TODO hardcoded for testing
-            new_var_obj = AnalysisVariantInstance(
-                variant=var,
-                variant_instance=var_inst,
-                guideline=guideline_obj
-            )
-            new_var_obj.save()
-            new_var_obj.make_new_check()
-
-            context["classifications"] = ClassifyVariantInstance.objects.all()
-
     return render(request, "classify/all_classifications.html", context)
 
 

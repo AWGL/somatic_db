@@ -799,6 +799,7 @@ class TestModels(TestCase):
         # check sample info when tumour type not assigned
         expected_sample_info = {
             "sample_id": "dna_test_1",
+            "source": "SVD",
             "worksheet_id": "dna_ws_1",
             "svd_panel": "Tumour",
             "specific_tumour_type": None
@@ -808,6 +809,7 @@ class TestModels(TestCase):
         self.new_var_obj.update_tumour_type(1)
         expected_sample_info = {
             "sample_id": "dna_test_1",
+            "source": "SVD",
             "worksheet_id": "dna_ws_1",
             "svd_panel": "Tumour",
             "specific_tumour_type": "Lung"
@@ -823,7 +825,7 @@ class TestModels(TestCase):
         pass
 
     def test_manual_variant_instance_get_sample_info(self):
-        #TODO write this code first
+        #TODO this is written now, also add in new functions & update fixtures
         pass
 
     def test_classify_variant(self):
