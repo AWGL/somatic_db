@@ -3,6 +3,19 @@ This format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added
+
+- Update to SWGS app, including display of coverage, CNVs, SVs, fusions
+
+## [v1.6.3] - 24/04/2025
+
+### Added
+- New breast panel for ctDNA (ESR1 only)
+- Copy and paste button for HGVS c. and p,
+
+### Changed
+- Update panel fixtures
+
 ## [v1.6.2] - 31/03/2025
 
 ### Fixed

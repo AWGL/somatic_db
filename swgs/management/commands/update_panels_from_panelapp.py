@@ -44,7 +44,8 @@ def get_panel_information(panel_json, expected_panel_name):
     if panel_name != expected_panel_name:
         raise Exception(f"Expected panel name {expected_panel_name} but got {panel_name} from API")
     
-    # the signed off tag is deep in a lit of dictionaries
+    panel_name = expected_panel_name.split(" ")[0]
+    # the signed off tag is deep in a list of dictionaries
     # obtain the list of types dictionaries
     panel_types_info = panel_json["results"][0]["types"]
     # loop through these dictionaries, we're looking for key/value pair 'slug': 'gms-signed-off'

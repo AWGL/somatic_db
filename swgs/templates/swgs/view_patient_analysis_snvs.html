@@ -1,0 +1,337 @@
+{% load crispy_forms_tags %}
+
+<br>
+
+<div class="container">
+  <h3>Variants for tumour sample {{ patient_analysis.tumour_sample.sample_id }} and germline sample {{ patient_analysis.germline_sample.sample_id }}</h3>
+  <h5>Variants have been filtered in the following way:</h5>
+  <ul>
+    <li>Variants with a VAF of >5% in GnomAD have been removed</li>
+    <li>Variants are excluded if their most severe consequence is a MODIFIER strength - see <a href="https://www.ensembl.org/info/genome/variation/prediction/predicted_data.html", target="_blank">VEP Documentation</a></li>
+    <li>Variants flagged as "Possible MNV - Check IGV" have been included irrespective of gnomAD VAF as the MNV may have different consequences than the multiple SNVs</li>
+  </ul>
+  <br>
+  <h5>Download SNVs for this patient in a CSV:</h5>
+  {% crispy form %}
+  <br>
+  <br>
+  <div class="float-right">
+    <button type="button" class="btn btn-success snv-submit" id = "snv-submit">Submit Checks</button>
+  </div>
+  <br>
+  <br>
+  <h4>Somatic SNVs</h4>
+  <h5>Domain 1</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-4">Variant</th>
+        <th class="col-md-4">HGVSc / HGVSp</th>
+        <th class="col-md-1">Gene</th>
+        <th class="col-md-1">VAF</th>
+        <th class="col-md-2">GnomAD</th>
+        <th class="col-md-4">Checks</th>
+        <th class="col-md-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in somatic_snvs_tier_one %}
+      <tr>
+        <td class="variant-id" style="display:none">{{ v.id }}</td>
+        <td class="var-type" style="display:none">{{ v.var_type }}</td>
+        {% if v.force_display %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</br><span class="badge badge-warning badge-pill">Possible MNV - Check IGV</span></td>
+        {% else %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</td>
+        {% endif %}
+        <td>{{ v.hgvsc }}</br>{{ v.hgvsp }}</td>
+        <td>
+          {% for gene in v.gene %}
+          <a class="badge badge-info">
+            {{ gene }}
+          </a>
+          {% endfor %}
+        </td>
+        <td>{{ v.vaf }}%</td>
+        <td>{{ v.gnomad }}</td>
+        
+        {% if v.checks|length > 0 %}
+        <td>
+        {% for check in v.checks %}
+        {{ forloop.counter }}: {{ check.decision }} {{ check.user }}
+        {% endfor %}
+        </td>
+        {% else %}
+        <td>1: Pending</td>
+        {% endif %}
+        
+        {% if v.status == 'Complete' %}
+        <td>{{ v.status }}</td>
+        {% else %}
+        <td class=genuine-dropdown>
+          <select name = "variant" id="variant">
+            {% for option in check_options %}
+            <option value="{{ option.0 }}">{{ option.1 }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        {% endif %}
+
+      </tr>
+      {% endfor %}
+      {% if somatic_snvs_tier_one|length == 0 %}
+        <td>No variants in somatic tier 1</td>
+      {% endif %}
+    </tbody>
+  </table>
+  <br>
+  <h5>Domain 2</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-4">Variant</th>
+        <th class="col-md-4">HGVSc / HGVSp</th>
+        <th class="col-md-1">Gene</th>
+        <th class="col-md-1">VAF</th>
+        <th class="col-md-2">GnomAD</th>
+        <th class="col-md-4">Checks</th>
+        <th class="col-md-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in somatic_snvs_tier_two %}
+      <tr>
+        <td class="variant-id" style="display:none">{{ v.id }}</td>
+        <td class="var-type" style="display:none">{{ v.var_type }}</td>
+        {% if v.force_display %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</br><span class="badge badge-warning badge-pill">Possible MNV - Check IGV</span></td>
+        {% else %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</td>
+        {% endif %}
+        <td>{{ v.hgvsc }}</br>{{ v.hgvsp }}</td>
+        <td>
+          {% for gene in v.gene %}
+          <a class="badge badge-info">
+            {{ gene }}
+          </a>
+          {% endfor %}
+        </td>
+        <td>{{ v.vaf }}%</td>
+        <td>{{ v.gnomad }}</td>
+
+        {% if v.checks|length > 0 %}
+        <td>
+        {% for check in v.checks %}
+        {{ forloop.counter }}: {{ check.decision }} {{ check.user }}
+        {% endfor %}
+        </td>
+        {% else %}
+        <td>1: Pending</td>
+        {% endif %}
+
+        {% if v.status == 'Complete' %}
+        <td>{{ v.status }}</td>
+        {% else %}
+        <td class=genuine-dropdown>
+          <select name = "variant" id="variant">
+            {% for option in check_options %}
+            <option value="{{ option.0 }}">{{ option.1 }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        {% endif %}
+
+      </tr>
+      {% endfor %}
+      {% if somatic_snvs_tier_two|length == 0 %}
+        <td>No variants in somatic tier 2</td>
+      {% endif %}
+    </tbody>
+  </table>
+  <br>
+  <br>
+  <h4>Germline SNVs</h4>
+  <h5>Tier 1</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-4">Variant</th>
+        <th class="col-md-4">HGVSc / HGVSp</th>
+        <th class="col-md-1">Gene</th>
+        <th class="col-md-1">VAF</th>
+        <th class="col-md-2">GnomAD</th>
+        <th class="col-md-4">Checks</th>
+        <th class="col-md-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in germline_snvs_tier_one %}
+      <tr>
+        <td class="variant-id" style="display:none">{{ v.id }}</td>
+        <td class="var-type" style="display:none">{{ v.var_type }}</td>
+        {% if v.force_display %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</br><span class="badge badge-warning badge-pill">Possible MNV - Check IGV</span></td>
+        {% else %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</td>
+        {% endif %}
+        <td>{{ v.hgvsc }}</br>{{ v.hgvsp }}</td>
+        <td>
+          {% for gene in v.gene %}
+          <a class="badge badge-info">
+            {{ gene }}
+          </a>
+          {% endfor %}
+        </td>
+        <td>{{ v.vaf }}</td>
+        <td>{{ v.gnomad }}</td>
+
+        {% if v.checks|length > 0 %}
+        <td>
+        {% for check in v.checks %}
+        {{ forloop.counter }}: {{ check.decision }} {{ check.user }}
+        {% endfor %}
+        </td>
+        {% else %}
+        <td>1: Pending</td>
+        {% endif %}
+
+        {% if v.status == 'Complete' %}
+        <td>{{ v.status }}</td>
+        {% else %}
+        <td class=genuine-dropdown>
+          <select name = "variant" id="variant">
+            {% for option in check_options %}
+            <option value="{{ option.0 }}">{{ option.1 }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        {% endif %}
+
+      </tr>
+      {% endfor %}
+      {% if germline_snvs_tier_one|length == 0 %}
+        <td>No variants in germline tier 1</td>
+      {% endif %}
+    </tbody>
+  </table>
+  <br>
+  <h5>Tier 3</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-4">Variant</th>
+        <th class="col-md-4">HGVSc / HGVSp</th>
+        <th class="col-md-1">Gene</th>
+        <th class="col-md-1">VAF</th>
+        <th class="col-md-2">GnomAD</th>
+        <th class="col-md-4">Checks</th>
+        <th class="col-md-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in germline_snvs_tier_three %}
+      <tr>
+        <td class="variant-id" style="display:none">{{ v.id }}</td>
+        <td class="var-type" style="display:none">{{ v.var_type }}</td>
+        {% if v.force_display %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</br><span class="badge badge-warning badge-pill">Possible MNV - Check IGV</span></td>
+        {% else %}
+          <td>{{ v.pk }}</br>{{ v.consequence }}</td>
+        {% endif %}
+        <td>{{ v.hgvsc }}</br>{{ v.hgvsp }}</td>
+        <td>
+          {% for gene in v.gene %}
+          <a class="badge badge-info">
+            {{ gene }}
+          </a>
+          {% endfor %}
+        </td>
+        <td>{{ v.vaf }}%</td>
+        <td>{{ v.gnomad }}</td>
+
+        {% if v.checks|length > 0 %}
+        <td>
+        {% for check in v.checks %}
+        {{ forloop.counter }}: {{ check.decision }} {{ check.user }}
+        {% endfor %}
+        </td>
+        {% else %}
+        <td>1: Pending</td>
+        {% endif %}
+
+        {% if v.status == 'Complete' %}
+        <td>{{ v.status }}</td>
+        {% else %}
+        <td class=genuine-dropdown>
+          <select name = "variant" id="variant">
+            {% for option in check_options %}
+            <option value="{{ option.0 }}">{{ option.1 }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        {% endif %}
+        
+      </tr>
+      {% endfor %}
+      {% if germline_snvs_tier_three|length == 0 %}
+        <td>No variants in germline tier 3</td>
+      {% endif %}
+    </tbody>
+  </table>
+  <br>
+  <br>
+
+  <div class="float-right">
+    <button type="button" class="btn btn-success snv-submit" id = "snv-submit">Submit Checks</button>
+  </div>
+  <br>
+  <br>
+
+</div>
+
+<script>
+  // ajax code to gather selections from dropdown
+  $(".snv-submit").click(function(){
+      var rows = $("table").children("tbody").children();
+      var selection_dict = {};
+
+      for (var i=0; i<rows.length; i++){
+        // extract required variables
+        var pk = $(rows[i]).children("td.variant-id").text();
+        var type = $(rows[i]).children("td.var-type").text();
+        var genuine_selection = $(rows[i]).children("td.genuine-dropdown").children().val();
+        // compile into dictionary for individual variant
+        var d = {};
+        if (genuine_selection) {
+          d['genuine_dropdown'] = genuine_selection;
+        }
+        // add to dictionary if it's not empty, allowing for a mixture of complete and incomplete variants
+        if (Object.keys(d).length > 0){
+          selection_dict[pk] = [type,d];
+        }
+      }
+
+      // pass dict to JS form for AJAX POST
+      var formData = new FormData();
+      formData.append('csrfmiddlewaretoken',document.getElementsByName('csrfmiddlewaretoken')[0].value);
+      formData.append('selections', JSON.stringify(selection_dict));
+      formData.append('patient_analysis_pk', "{{ patient_analysis.pk }}");
+      formData.append('variant_type', "snv");
+
+      $.ajax({
+          url: "{% url 'ajax' %}",
+          type: 'POST',
+          data: formData,
+          contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
+          processData: false, // NEEDED, DON'T OMIT THIS
+          success: function(data) {
+              if (data.redirect_url){
+                window.location.href = data.redirect_url;
+              }
+          },
+          failure: function(data) {
+              alert('Got an error');
+          }
+      });
+    })
+  </script>

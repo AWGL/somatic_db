@@ -1,0 +1,474 @@
+{% load crispy_forms_tags %}
+
+<br>
+
+<div class="container">
+  <h3>CNVs for tumour sample {{ patient_analysis.tumour_sample.sample_id }} and germline sample {{ patient_analysis.germline_sample.sample_id }}</h3>
+  <h5>CNVs and SVs have been filtered and displayed in the following way:</h5>
+  <ul>
+    <li>This page contains both large CNVs called by the Dragen and smaller SVs called by Manta.</li>
+    <li>If a CNV overlaps with at least one in-panel gene, it is displayed</li>
+    <li>Only the gene names for the in-panel genes are displayed, but large CNVs contain many genes.</li>
+    <li>
+      Where whole chromosome changes are suspected (e.g. 70% or more of the high confidence region is covered by the same kind of CNV), 
+      that chromosome is displayed in the 'ploidy' section. CNVs of other types for that chromosome will be displayed as normal in the tiered tables.
+    </li>
+  </ul>
+  <!-- <br>
+  <br>
+  <div class="float-right">
+    <button type="button" class="btn btn-success snv-submit" id = "snv-submit">Submit Checks</button>
+  </div> -->
+  <br>
+  <br>
+  <h4>Ploidy Estimates</h4>
+  <h5>
+    The following chromosomes are majority covered by the same kind of CNV, indicative of whole chromosome ploidy or whole chromosome CNLOH.
+    <br><a class="badge badge-warning">Check in IGV</a>
+  </h5>
+  {% for p in somatic_ploidy_estimates %}
+  <div id="accordion">
+    <div class="card">
+      <div class="card-header" id="heading-{{ p.chrom }}">
+        <h5 class="mb-0">
+          <button class="btn btn-link" data-toggle="collapse" data-target="#{{ p.chrom }}" aria-expanded="true" aria-controls="{{ p.chrom }}">
+            {{ p.chrom }}
+          </button>
+        </h5>
+      </div>
+    </div>
+    <div id="{{ p.chrom }}" class="collapse" aria-labelledby="heading-{{ p.chrom }}" data-parent="#accordion">
+      <table class="table">
+        <thead>
+          <tr>
+            <th class="col-md-1">Chromosome</th>
+            <th class="col-md-5">Messages</th>
+            <th class="col-md-5">Clinically Relevant Genes</th>
+            <th class="col-md-4">Checks</th>
+            <th class="col-md-2">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ p.chrom }}</td>
+            <td>
+              {{ p.proportion_message }}
+              <br>
+              {{ p.chrom_message }}<a class="badge badge-warning"> Check IGV</a>
+              <br>
+              {{ p.distribution_message }}
+            </td>
+            <td>
+              Domain one genes:
+              <br>
+              {% for gene in p.domain_one_genes %}
+                <a class="badge badge-info">
+                  {{ gene }}
+                </a>
+              {% endfor %}
+              <br>
+              Domain two genes:
+              <br>
+              {% for gene in p.domain_two_genes %}
+                <a class="badge badge-info">
+                  {{ gene }}
+                </a>
+              {% endfor %}
+            </td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+  <br>
+  <br>
+  <h4>Somatic CNVs</h4>
+  <h5>Domain 1</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-4">Variant</th>
+        <th class="col-md-5">Genes</th>
+        <th class="col-md-3">Call Information</th>
+        <th class="col-md-4">Checks</th>
+        <th class="col-md-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in somatic_cnvs_domain_one %}
+      <tr>
+        <!-- <td class="variant-id" style="display:none">{{ v.id }}</td>
+        <td class="var-type" style="display:none">{{ v.var_type }}</td> -->
+        <td>{{ v.pk }}<a class="badge badge-success"{{ v.cnv_type }}></a></br>{{ v.consequence }}</td>
+        <td>
+          {% if v.genes_domain_one|length == 0 %}
+            No in-panel genes
+          {% else %}
+            {% for gene in v.genes_domain_one %}
+            <a class="badge badge-info">
+              {{ gene }}
+            </a>
+            {% endfor %}
+          {% endif %}
+          <br>
+          {{ v.cytobands }}
+        </td>
+        <td>
+          <table>
+            <tbody>
+            <tr><strong>Caller: </strong>{{ v.caller }}</tr><br>
+            <tr><strong>SVLEN: </strong>{{ v.svlen }}</tr><br>
+            {% if v.cnv_or_sv == "cnv" %}
+              <tr><strong>MAF: </strong>{{ v.maf }}</tr><br>
+              <tr><strong>Genotype: </strong>{{ v.gt }}</tr><br>
+              <tr><strong>Copy Number: </strong>{{ v.cn }}</tr><br>
+            {% else %}
+              <tr><strong>Paired Reads: </strong>{{ v.pr }}</tr><br>
+              <tr><strong>Spanning Reads: </strong>{{ v.sr }}</tr><br>
+              <tr><strong>Variant Fragments: </strong>{{ v.vf }}</tr><br>
+              <tr><strong>Imprecise: </strong>{{ v.imprecise }}</tr><br>
+              <tr><strong>Somatic Score: </strong>{{ v.somatic_score}}</tr><br>
+            {% endif %}
+          </tbody>
+          </table>
+        </td>
+
+        <!-- {% if v.checks|length > 0 %}
+        <td>
+        {% for check in v.checks %}
+        {{ forloop.counter }}: {{ check.decision }} {{ check.user }}
+        {% endfor %}
+        </td>
+        {% else %}
+        <td>1: Pending</td>
+        {% endif %}
+
+        {% if v.status == 'Complete' %}
+        <td>{{ v.status }}</td>
+        {% else %}
+        <td class=genuine-dropdown>
+          <select name = "variant" id="variant">
+            {% for option in check_options %}
+            <option value="{{ option.0 }}">{{ option.1 }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        {% endif %} -->
+
+      </tr>
+      {% endfor %}
+      {% if somatic_cnvs_domain_one|length == 0 %}
+        <td>No CNVs in somatic domain 1</td>
+      {% endif %}
+    </tbody>
+  </table>
+  <br>
+  <h5>Domain 2</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-4">Variant</th>
+        <th class="col-md-5">Genes</th>
+        <th class="col-md-3">Call Information</th>
+        <th class="col-md-4">Checks</th>
+        <th class="col-md-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in somatic_cnvs_domain_two %}
+      <tr>
+        <!-- <td class="variant-id" style="display:none">{{ v.id }}</td>
+        <td class="var-type" style="display:none">{{ v.var_type }}</td> -->
+        <td>{{ v.pk }}<a class="badge badge-success"{{ v.cnv_type }}></a></br>{{ v.consequence }}</td>
+        <td>
+            {% if v.genes_domain_two|length == 0 %}
+                No in-panel genes
+            {% else %}
+                {% for gene in v.genes_domain_two %}
+                <a class="badge badge-info">
+                    {{ gene }}
+                </a>
+                {% endfor %}
+            {% endif %}
+            <br>
+            {{ v.cytobands }}
+            </td>
+            <td>
+              <table>
+                <tbody>
+                  <tr><strong>Caller: </strong>{{ v.caller }}</tr><br>
+                  <tr><strong>SVLEN: </strong>{{ v.svlen }}</tr><br>
+                  {% if v.cnv_or_sv == "cnv" %}
+                    <tr><strong>MAF: </strong>{{ v.maf }}</tr><br>
+                    <tr><strong>Genotype: </strong>{{ v.gt }}</tr><br>
+                    <tr><strong>Copy Number: </strong>{{ v.cn }}</tr><br>
+                  {% else %}
+                    <tr><strong>Paired Reads: </strong>{{ v.pr }}</tr><br>
+                    <tr><strong>Spanning Reads: </strong>{{ v.sr }}</tr><br>
+                    <tr><strong>Variant Fragments: </strong>{{ v.vf }}</tr><br>
+                    <tr><strong>Imprecise: </strong>{{ v.imprecise }}</tr><br>
+                    <tr><strong>Somatic Score: </strong>{{ v.somatic_score}}</tr><br>
+                  {% endif %}
+                </tbody>
+              </table>
+            </td>
+
+        <!-- {% if v.checks|length > 0 %}
+        <td>
+        {% for check in v.checks %}
+        {{ forloop.counter }}: {{ check.decision }} {{ check.user }}
+        {% endfor %}
+        </td>
+        {% else %}
+        <td>1: Pending</td>
+        {% endif %}
+
+        {% if v.status == 'Complete' %}
+        <td>{{ v.status }}</td>
+        {% else %}
+        <td class=genuine-dropdown>
+          <select name = "variant" id="variant">
+            {% for option in check_options %}
+            <option value="{{ option.0 }}">{{ option.1 }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        {% endif %} -->
+        
+      </tr>
+      {% endfor %}
+      {% if somatic_cnvs_domain_two|length == 0 %}
+        <td>No CNVs in somatic domain 2</td>
+      {% endif %}
+    </tbody>
+  </table>
+  <br>
+  <br>
+
+  <!-- <div class="float-right">
+    <button type="button" class="btn btn-success snv-submit" id = "snv-submit">Submit Checks</button>
+  </div>
+  <br>
+  <br> -->
+
+  <h4>Germline CNVs</h4>
+  <h5>Tier 1</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-4">Variant</th>
+        <th class="col-md-5">Genes</th>
+        <th class="col-md-3">Call Information</th>
+        <th class="col-md-4">Checks</th>
+        <th class="col-md-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in germline_cnvs_tier_one %}
+      <tr>
+        <!-- <td class="variant-id" style="display:none">{{ v.id }}</td>
+        <td class="var-type" style="display:none">{{ v.var_type }}</td> -->
+        <td>{{ v.pk }}<a class="badge badge-success"{{ v.cnv_type }}></a></br>{{ v.consequence }}</td>
+        <td>
+          {% if v.genes_tier_one|length == 0 %}
+            No in-panel genes
+          {% else %}
+            {% for gene in v.genes_tier_one %}
+            <a class="badge badge-info">
+              {{ gene }}
+            </a>
+            {% endfor %}
+          {% endif %}
+          <br>
+          {{ v.cytobands }}
+        </td>
+        <td>
+          <table>
+            <tbody>
+              <tr><strong>Caller: </strong>{{ v.caller }}</tr><br>
+              <tr><strong>SVLEN: </strong>{{ v.svlen }}</tr><br>
+              {% if v.cnv_or_sv == "cnv" %}
+                <tr><strong>MAF: </strong>{{ v.maf }}</tr><br>
+                <tr><strong>Genotype: </strong>{{ v.gt }}</tr><br>
+                <tr><strong>Copy Number: </strong>{{ v.cn }}</tr><br>
+              {% else %}
+                <tr><strong>Paired Reads: </strong>{{ v.pr }}</tr><br>
+                <tr><strong>Spanning Reads: </strong>{{ v.sr }}</tr><br>
+                <tr><strong>Variant Fragments: </strong>{{ v.vf }}</tr><br>
+                <tr><strong>Imprecise: </strong>{{ v.imprecise }}</tr><br>
+                <tr><strong>Somatic Score: </strong>{{ v.somatic_score}}</tr><br>
+              {% endif %}
+            </tbody>
+          </table>
+        </td>
+
+        <!-- {% if v.checks|length > 0 %}
+        <td>
+        {% for check in v.checks %}
+        {{ forloop.counter }}: {{ check.decision }} {{ check.user }}
+        {% endfor %}
+        </td>
+        {% else %}
+        <td>1: Pending</td>
+        {% endif %}
+
+        {% if v.status == 'Complete' %}
+        <td>{{ v.status }}</td>
+        {% else %}
+        <td class=genuine-dropdown>
+          <select name = "variant" id="variant">
+            {% for option in check_options %}
+            <option value="{{ option.0 }}">{{ option.1 }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        {% endif %} -->
+
+      </tr>
+      {% endfor %}
+      {% if germline_cnvs_tier_one|length == 0 %}
+        <td>No CNVs in germline tier 1</td>
+      {% endif %}
+    </tbody>
+  </table>
+  <br>
+  <h5>Tier 3</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="col-md-4">Variant</th>
+        <th class="col-md-5">Genes</th>
+        <th class="col-md-3">Call Information</th>
+        <th class="col-md-4">Checks</th>
+        <th class="col-md-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in germline_cnvs_tier_three %}
+      <tr>
+        <!-- <td class="variant-id" style="display:none">{{ v.id }}</td>
+        <td class="var-type" style="display:none">{{ v.var_type }}</td> -->
+        <td>{{ v.pk }}<a class="badge badge-success"{{ v.cnv_type }}></a></br>{{ v.consequence }}</td>
+        <td>
+          {% if v.genes_tier_three|length == 0 %}
+            No in-panel_genes
+          {% else %}
+            {% for gene in v.genes_tier_three %}
+            <a class="badge badge-info">
+              {{ gene }}
+            </a>
+            {% endfor %}
+          {% endif %}
+          <br>
+          {{ v.cytobands }}
+        </td>
+        <td>
+          <table>
+            <tbody>
+              <tr><strong>Caller: </strong>{{ v.caller }}</tr><br>
+              <tr><strong>SVLEN: </strong>{{ v.svlen }}</tr><br>
+              {% if v.cnv_or_sv == "cnv" %}
+                <tr><strong>MAF: </strong>{{ v.maf }}</tr><br>
+                <tr><strong>Genotype: </strong>{{ v.gt }}</tr><br>
+                <tr><strong>Copy Number: </strong>{{ v.cn }}</tr><br>
+              {% else %}
+                <tr><strong>Paired Reads: </strong>{{ v.pr }}</tr><br>
+                <tr><strong>Spanning Reads: </strong>{{ v.sr }}</tr><br>
+                <tr><strong>Variant Fragments: </strong>{{ v.vf }}</tr><br>
+                <tr><strong>Imprecise: </strong>{{ v.imprecise }}</tr><br>
+                <tr><strong>Somatic Score: </strong>{{ v.somatic_score}}</tr><br>
+              {% endif %}
+            </tbody>
+          </table>
+        </td>
+
+        <!-- {% if v.checks|length > 0 %}
+        <td>
+        {% for check in v.checks %}
+        {{ forloop.counter }}: {{ check.decision }} {{ check.user }}
+        {% endfor %}
+        </td>
+        {% else %}
+        <td>1: Pending</td>
+        {% endif %}
+
+        {% if v.status == 'Complete' %}
+        <td>{{ v.status }}</td>
+        {% else %}
+        <td class=genuine-dropdown>
+          <select name = "variant" id="variant">
+            {% for option in check_options %}
+            <option value="{{ option.0 }}">{{ option.1 }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        {% endif %} -->
+        
+      </tr>
+      {% endfor %}
+      {% if germline_cnvs_tier_three|length == 0 %}
+        <td>No CNVs in germline tier 3</td>
+      {% endif %}
+    </tbody>
+  </table>
+  <br>
+  <br>
+  </div>
+
+  <!-- <div class="float-right">
+    <button type="button" class="btn btn-success snv-submit" id = "snv-submit">Submit Checks</button>
+  </div>
+  <br>
+  <br> -->
+
+</div>
+
+<!-- <script>
+  // ajax code to gather selections from dropdown
+  $(".snv-submit").click(function(){
+      var rows = $("table").children("tbody").children();
+      var selection_dict = {};
+
+      for (var i=0; i<rows.length; i++){
+        // extract required variables
+        var pk = $(rows[i]).children("td.variant-id").text();
+        var type = $(rows[i]).children("td.var-type").text();
+        var genuine_selection = $(rows[i]).children("td.genuine-dropdown").children().val();
+        // compile into dictionary for individual variant
+        var d = {};
+        if (genuine_selection) {
+          d['genuine_dropdown'] = genuine_selection;
+        }
+        // add to dictionary if it's not empty, allowing for a mixture of complete and incomplete variants
+        if (Object.keys(d).length > 0){
+          selection_dict[pk] = [type,d];
+        }
+      }
+
+      // pass dict to JS form for AJAX POST
+      var formData = new FormData();
+      formData.append('csrfmiddlewaretoken',document.getElementsByName('csrfmiddlewaretoken')[0].value);
+      formData.append('selections', JSON.stringify(selection_dict));
+      formData.append('patient_analysis_pk', "{{ patient_analysis.pk }}");
+      formData.append('variant_type', "snv");
+
+      $.ajax({
+          url: "{% url 'ajax' %}",
+          type: 'POST',
+          data: formData,
+          contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
+          processData: false, // NEEDED, DON'T OMIT THIS
+          success: function(data) {
+              if (data.redirect_url){
+                window.location.href = data.redirect_url;
+              }
+          },
+          failure: function(data) {
+              alert('Got an error');
+          }
+      });
+    })
+  </script> -->

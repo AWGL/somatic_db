@@ -2,3 +2,5 @@ db.sqlite3
 *__pycache__*
 password.txt
 *migrations*
+temp/
+swgs/test_data

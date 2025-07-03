@@ -24,6 +24,11 @@ To set up initial somatic panels, run the following:
 python manage.py update_panels_from_csv --panel_csv swgs/panels/somatic_panels/*.csv
 ```
 
+To load data, run the following, where directory refers the the 'database' directory containing the upload jsons:
+```
+python manage.py import_wgs --directory /path/to/database/dir
+```
+
 ## Setting Up Indications
 Set up indications by going to the Django admin page and adding new indications from within the Indications model. Panels can be added and removed through selecting them and using the arrows in the widget.
 

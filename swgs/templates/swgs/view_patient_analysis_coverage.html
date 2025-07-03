@@ -1,0 +1,74 @@
+<h1>Coverage</h1>
+<p> 
+    This page contains coverage information at the gene level: average (mean) depth, and percentage of the gene covered at the germline 
+    threshold ({{ germline_coverage_threshold }}x) and somatic threshold ({{ somatic_coverage_threshold }}x). If you require more detailed
+    coverage information, the coverage bed files produced by mosdepth are provided in post_processing/results/coverage/mosdepth_output 
+    and can be loaded in to IGV
+</p>
+
+<br>
+
+<div class="container">
+    <table class="table", id="coverage_table">
+        <thead>
+            <tr>
+                <th scope="col">Gene</th>
+                <th scope="col">Germline Average Depth</th>
+                <th scope="col">Germline Gene Coverage</th>
+                <th scope="col">Tumour Average Depth</th>
+                <th scope="col">Tumour Gene Coverage</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for coverage_dict in coverage %}
+                <tr>
+                    <td>{{ coverage_dict.gene }}</td>
+                    <td>{{ coverage_dict.germline_average_depth }}</td>
+                    {% if coverage_dict.germline_gene_coverage < 100 and coverage_dict.germline_gene_coverage >= 95 %}
+                        <td class="table-warning">{{ coverage_dict.germline_gene_coverage }}%</td>
+                    {% elif coverage_dict.germline_gene_coverage < 95 %}
+                        <td class="table-danger">{{ coverage_dict.germline_gene_coverage }}%</td>
+                    {% else %}
+                        <td>{{ coverage_dict.germline_gene_coverage }}%</td>
+                    {% endif %}
+                    <td>{{ coverage_dict.somatic_average_depth }}</td>
+                    {% if coverage_dict.somatic_gene_coverage < 100 and coverage_dict.somatic_gene_coverage >= 95 %}
+                        <td class="table-warning">{{ coverage_dict.somatic_gene_coverage }}%</td>
+                    {% elif coverage_dict.somatic_gene_coverage < 95 %}
+                        <td class="table-danger">{{ coverage_dict.somatic_gene_coverage }}%</td>
+                    {% else %}
+                        <td>{{ coverage_dict.somatic_gene_coverage }}%</td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $(document).ready( function() {
+
+        // Inititialise DataTable
+        $('#coverage_table').DataTable({
+            paging: true,
+            columns: [
+                {orderable: true},
+                {orderable: true},
+                {orderable: true},
+                {orderable: true},
+                {orderable: true},
+            ],
+            info: true,
+            pageLength: 10,
+            searching: true,
+            aaSorting: [],
+            language: {
+                searchPlaceholder: "Search by gene",
+                search: "",
+            },
+            initComplete: function () {
+                $('.dataTables_filter input[type="search"]').css({ 'width': '500px', 'display': 'inline-block' });
+            }
+        });
+    } );
+</script>

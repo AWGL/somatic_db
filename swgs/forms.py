@@ -15,3 +15,49 @@ class DownloadCsvForm(forms.Form):
         self.helper.add_input(
             Submit("submit", "Download CSV", css_class="btn btn-info w-100")
             )
+
+class UpdatePanelNotesForm(forms.Form):
+    """
+    Update the notes for a panel
+    """
+    panel_notes = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 15}),
+        required=False,
+        label='Panel update notes:'
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.panel_notes = kwargs.pop("panel_notes")
+
+        super(UpdatePanelNotesForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_id = "update-panel-notes-form"
+        self.helper.form_method = "POST"
+        self.fields["panel_notes"].initial = self.panel_notes
+        self.helper.add_input(
+            Submit("submit", "Submit", css_class="btn btn-info w-25")
+        )
+
+class UpdateMDTNotesForm(forms.Form):
+    """
+    Add MDT notes
+    """
+    mdt_notes = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 15}),
+        required=False,
+        label='MDT notes:'
+    )
+    mdt_date = forms.DateField(
+        widget=forms.TextInput(     
+            attrs={'type': 'date'} 
+        )
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super(UpdateMDTNotesForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_id = "update-mdt-notes-form"
+        self.helper.form_method = "POST"
+        self.helper.add_input(
+            Submit("submit", "Submit", css_class="btn btn-info w-25")
+        )
