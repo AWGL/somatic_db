@@ -130,6 +130,9 @@
           <tr>
             <th scope="col">Gene</th>
             <th scope="col">Average coverage</th>
+            {% if '100' in coverage_data.depth_cutoffs %}
+            <th scope="col">Percent 100X</th>
+            {% endif %}
             {% if '135' in coverage_data.depth_cutoffs %}
             <th scope="col">Percent 135X</th>
             {% endif %}
@@ -150,6 +153,9 @@
           <tr>
             <td>{{ gene }}</td>
             <td>{{ values.av_coverage }}</td>
+            {% if '100' in coverage_data.depth_cutoffs %}
+            <td>{{ values.percent_100x }}%</td>
+            {% endif %}
             {% if '135' in coverage_data.depth_cutoffs %}
             <td>{{ values.percent_135x }}%</td>
             {% endif %}
@@ -211,7 +217,38 @@
     <!-- hotspot gaps for non-myeloid referrals -->
     {% else %}
     <div class="col-7">
+      {% if '100' in coverage_data.depth_cutoffs %}
+      <h5>Hotspot gaps 100X</h5>
+      <table class="table table-sm table-striped table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Gap</th>
+            <th scope="col">Percent COSMIC</th>
+            <th scope="col">Counts COSMIC</th>
+          </tr>
+        </thead>
 
+        <tbody>
+        {% if coverage_data.gaps_present_100 %}
+          {% for gene, values in coverage_data.regions.items %}
+            {% if values.gaps_100 %}
+              {% for gap in values.gaps_100 %}
+              <tr>
+                <td>{{ gap.gene }} {{ gap.hgvs_c }}</td>
+                <td>{{ gap.percent_cosmic }}</td>
+                <td>{{ gap.counts_cosmic }}</td>
+              </tr>
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="3">No hotspot gaps</td></tr>
+        {% endif %}
+        </tbody>
+      </table>
+      <br>
+
+      {% endif %}
       {% if '135' in coverage_data.depth_cutoffs %}
       <h5>Hotspot gaps 135X</h5>
       <table class="table table-sm table-striped table-hover">

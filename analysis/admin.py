@@ -41,8 +41,8 @@ admin.site.register(Worksheet, WorksheetAdmin)
 
 
 class SampleAdmin(admin.ModelAdmin):
-    list_display = ('sample_id', 'sample_name',)
-    search_fields = ['sample_id', 'sample_name',]
+    list_display = ('sample_id', 'sample_name', 'tumour_content')
+    search_fields = ['sample_id', 'sample_name', 'tumour_content']
 
 admin.site.register(Sample, SampleAdmin)
 
@@ -140,15 +140,15 @@ admin.site.register(Gene, GeneAdmin)
 
 
 class GeneCoverageAnalysisAdmin(admin.ModelAdmin):
-    list_display = ('id', 'sample', 'gene', 'av_coverage', 'percent_135x', 'percent_270x', 'percent_500x', 'percent_1000x')
-    search_fields = ['id', 'sample__id', 'gene__gene', 'av_coverage', 'percent_135x', 'percent_270x', 'percent_500x', 'percent_1000x']
+    list_display = ('id', 'sample', 'gene', 'av_coverage', 'percent_100x', 'percent_135x', 'percent_270x', 'percent_500x', 'percent_1000x')
+    search_fields = ['id', 'sample__id', 'gene__gene', 'av_coverage', 'percent_100x', 'percent_135x', 'percent_270x', 'percent_500x', 'percent_1000x']
 
 admin.site.register(GeneCoverageAnalysis, GeneCoverageAnalysisAdmin )
 
 
 class RegionCoverageAnalysisAdmin(admin.ModelAdmin):
-    list_display = ('id', 'gene', 'hgvs_c', 'genomic', 'average_coverage', 'percent_135x', 'percent_270x', 'percent_500x', 'percent_1000x')
-    search_fields = ['id', 'gene__id', 'hgvs_c', 'average_coverage', 'percent_135x', 'percent_270x', 'percent_500x', 'percent_1000x']
+    list_display = ('id', 'gene', 'hgvs_c', 'genomic', 'average_coverage', 'percent_100x', 'percent_135x', 'percent_270x', 'percent_500x', 'percent_1000x')
+    search_fields = ['id', 'gene__id', 'hgvs_c', 'average_coverage', 'percent_100x', 'percent_135x', 'percent_270x', 'percent_500x', 'percent_1000x']
     # cant search by genomic as its a class function
 
 admin.site.register(RegionCoverageAnalysis, RegionCoverageAnalysisAdmin)

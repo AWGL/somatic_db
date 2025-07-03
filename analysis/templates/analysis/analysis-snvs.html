@@ -173,6 +173,14 @@
         <span class="badge badge-secondary">{{ variant_data.poly_count }}</span>
         {% endif %}
 
+        {% if variant_data.brca_filtered_count > 0 %}
+
+        &nbsp;&nbsp;BRCA filtered list
+
+        <span class="badge badge-warning">{{ variant_data.brca_filtered_count }}</span>
+
+        {% endif %}
+
         &nbsp;&nbsp;<button class="btn btn-outline-dark" data-toggle="collapse" data-target="#artefacts" aria-expanded="true" aria-controls="artefacts"><span class="fa fa-search"></span> Show/ hide</button>
         </p>
       </h5>
@@ -191,7 +199,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for var, variant_type in variant_data.filtered_calls %}
+            {% for var, filter_reasons in variant_data.filtered_calls %}
             <tr>
               <td>
                 {{ var.genomic }}<br>
@@ -200,11 +208,17 @@
                 {% elif var.genome_build == 38 %}
                 <span class="badge badge-success badge-pill">GRCh{{ var.genome_build }}</span>
                 {% endif %}
-                {% if variant_type == 'Poly' %}
-                <span class="badge badge-primary badge-pill">{{ variant_type }}</span>
-                {% else %}
-                <span class="badge badge-secondary badge-pill">{{ variant_type }}</span>
-                {% endif %}
+                {% for reason in filter_reasons %}
+                  {% if reason == 'Poly' %}
+                  <span class="badge badge-primary badge-pill">{{ reason }}</span>
+                  {% elif 'Poly in BRCA' in reason %}
+                  <span class="badge badge-primary badge-pill">{{ reason }}</span>
+                  {% elif 'BRCA' in reason %}
+                  <span class="badge badge-success badge-pill">{{ reason }}</span>
+                  {% else %}
+                  <span class="badge badge-secondary badge-pill">{{ reason }}</span>
+                  {% endif %}
+                {% endfor %}
               </td>
               <td>{{ var.gene }}<br>{{ var.exon }}</td>
               <td>{{ var.hgvs_c }}<br>{{ var.hgvs_p}}</td>

@@ -112,6 +112,7 @@ class Command(BaseCommand):
         """
         Add specific regions (e.g. exons or codons) and their associated coverages
         """
+        percent_100x = region.get('percent_100', None)
         percent_135x = region.get('percent_135', None)
         percent_270x = region.get('percent_270', None)
         percent_500x = region.get('percent_500', None)
@@ -126,6 +127,7 @@ class Command(BaseCommand):
             pos_end = region['pos_end'],
             hotspot = hotspot,
             average_coverage = region['average_coverage'],
+            percent_100x = percent_100x,
             percent_135x = percent_135x,
             percent_270x = percent_270x,
             percent_500x = percent_500x,
@@ -322,8 +324,10 @@ class Command(BaseCommand):
                     variant_as_bed=f"{v['chr'].strip('chr')}\t{int(v['pos']) -1}\t{v['pos']}"
                     variant_bed_region = pybedtools.BedTool(variant_as_bed, from_string=True)
 
-                    # boolean if variant overlaps with panel
+                    # boolean if variant overlaps with panel - do not do this check for BRCA
                     overlaps_panel = len(panel_bed.intersect(variant_bed_region)) > 0
+                    if assay == "GeneRead_BRCA" and panel == "brca":
+                        overlaps_panel = True
 
                     # if both booleans true, enter loop
                     if overlaps_panel and above_vaf_threshold:
@@ -402,6 +406,7 @@ class Command(BaseCommand):
                 gene, created = Gene.objects.get_or_create(gene=g)
 
                 # get the coverage values, if they're missing default to none
+                percent_100x = values.get('percent_100', None)
                 percent_135x = values.get('percent_135', None)
                 percent_270x = values.get('percent_270', None)
                 percent_500x = values.get('percent_500', None)
@@ -412,6 +417,7 @@ class Command(BaseCommand):
                     sample=new_sample_analysis,
                     gene=gene,
                     av_coverage=values['average_depth'],
+                    percent_100x=percent_100x,
                     percent_135x=percent_135x,
                     percent_270x=percent_270x,
                     percent_500x=percent_500x,
@@ -439,6 +445,11 @@ class Command(BaseCommand):
 
                         elif isinstance(r, dict):
                             self.add_regions_from_dict(r, 'H', new_gene_coverage_obj)
+
+                    # gaps 100x
+                    if '100' in coverage_thresholds:
+                        for gap in values['gaps_100']:
+                            self.add_gaps_from_dict(gap, '100', new_gene_coverage_obj)
 
                     # gaps 135x
                     if '135' in coverage_thresholds:

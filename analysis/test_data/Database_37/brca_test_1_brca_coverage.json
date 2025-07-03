@@ -1,0 +1,572 @@
+{
+    "BRCA2": {
+        "average_depth": 60000.0,
+        "percent_500": 99.6,
+        "percent_100": 99.6,
+        "average_ntc": 10,
+        "percent_ntc": 0,
+        "hotspot_regions": [
+            {
+                "chr": 13,
+                "pos_start": 32890577,
+                "pos_end": 32890684,
+                "hgvs_c": "BRCA2(NM_000059.3):c.-20_67+20",
+                "average_coverage": 20000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32893193,
+                "pos_end": 32893482,
+                "hgvs_c": "BRCA2(NM_000059.3):c.68-20_316+20",
+                "average_coverage": 50000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32899192,
+                "pos_end": 32899341,
+                "hgvs_c": "BRCA2(NM_000059.3):c.317-20_425+20",
+                "average_coverage": 950000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 1,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32900217,
+                "pos_end": 32900307,
+                "hgvs_c": "BRCA2(NM_000059.3):c.426-20_475+20",
+                "average_coverage": 49573.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32900358,
+                "pos_end": 32900439,
+                "hgvs_c": "BRCA2(NM_000059.3):c.476-20_516+20",
+                "average_coverage": 20000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32900615,
+                "pos_end": 32900770,
+                "hgvs_c": "BRCA2(NM_000059.3):c.517-20_631+20",
+                "average_coverage": 50000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32903559,
+                "pos_end": 32903649,
+                "hgvs_c": "BRCA2(NM_000059.3):c.632-20_681+20",
+                "average_coverage": 5000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32905035,
+                "pos_end": 32905187,
+                "hgvs_c": "BRCA2(NM_000059.3):c.682-20_793+20",
+                "average_coverage": 70000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32906388,
+                "pos_end": 32907534,
+                "hgvs_c": "BRCA2(NM_000059.3):c.794-20_1909+10",
+                "average_coverage": 50000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 36,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32910381,
+                "pos_end": 32915353,
+                "hgvs_c": "BRCA2(NM_000059.3):c.1910-20_6841+20",
+                "average_coverage": 60000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32918674,
+                "pos_end": 32918810,
+                "hgvs_c": "BRCA2(NM_000059.3):c.6842-20_6937+20",
+                "average_coverage": 39000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 43,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32920943,
+                "pos_end": 32921053,
+                "hgvs_c": "BRCA2(NM_000059.3):c.6938-20_7007+20",
+                "average_coverage": 110000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32928977,
+                "pos_end": 32929445,
+                "hgvs_c": "BRCA2(NM_000059.3):c.7008-20_7435+20",
+                "average_coverage": 85000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32930544,
+                "pos_end": 32930766,
+                "hgvs_c": "BRCA2(NM_000059.3):c.7436-20_7617+20",
+                "average_coverage": 120000.0,
+                "percent_500": 78.4,
+                "percent_100": 78.4,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32931858,
+                "pos_end": 32932086,
+                "hgvs_c": "BRCA2(NM_000059.3):c.7618-20_7805+20",
+                "average_coverage": 45000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32936639,
+                "pos_end": 32936850,
+                "hgvs_c": "BRCA2(NM_000059.3):c.7806-20_7976+20",
+                "average_coverage": 45000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 42,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32937295,
+                "pos_end": 32937690,
+                "hgvs_c": "BRCA2(NM_000059.3):c.7977-20_8331+20",
+                "average_coverage": 90000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 145,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32944518,
+                "pos_end": 32944714,
+                "hgvs_c": "BRCA2(NM_000059.3):c.8332-20_8487+20",
+                "average_coverage": 30000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32945072,
+                "pos_end": 32945257,
+                "hgvs_c": "BRCA2(NM_000059.3):c.8488-20_8632+20",
+                "average_coverage": 100000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32950786,
+                "pos_end": 32950948,
+                "hgvs_c": "BRCA2(NM_000059.3):c.8633-20_8754+20",
+                "average_coverage": 80000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32953433,
+                "pos_end": 32953672,
+                "hgvs_c": "BRCA2(NM_000059.3):c.8755-20_8953+20",
+                "average_coverage": 35000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32953866,
+                "pos_end": 32954070,
+                "hgvs_c": "BRCA2(NM_000059.3):c.8954-20_9117+20",
+                "average_coverage": 60000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32954123,
+                "pos_end": 32954302,
+                "hgvs_c": "BRCA2(NM_000059.3):c.9118-20_9256+20",
+                "average_coverage": 35000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32968805,
+                "pos_end": 32969090,
+                "hgvs_c": "BRCA2(NM_000059.3):c.9257-20_9501+20",
+                "average_coverage": 70000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 3,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32971014,
+                "pos_end": 32971201,
+                "hgvs_c": "BRCA2(NM_000059.3):c.9502-20_9648+20",
+                "average_coverage": 90000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 13,
+                "pos_start": 32972278,
+                "pos_end": 32972927,
+                "hgvs_c": "BRCA2(NM_000059.3):c.9649-20_*20",
+                "average_coverage": 50000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            }
+        ],
+        "gaps_500": [
+            {
+                "chr": 13,
+                "pos_start": 32930544,
+                "pos_end": 32930592,
+                "hgvs_c": "BRCA2(NM_000059.3):c.7436-20_7463",
+                "gene": "BRCA2",
+                "counts_cosmic": NaN,
+                "percent_cosmic": NaN
+            }
+        ],
+        "gaps_100": [
+            {
+                "chr": 13,
+                "pos_start": 32930544,
+                "pos_end": 32930592,
+                "hgvs_c": "BRCA2(NM_000059.3):c.7436-20_7463",
+                "gene": "BRCA2",
+                "counts_cosmic": NaN,
+                "percent_cosmic": NaN
+            }
+        ]
+    },
+    "BRCA1": {
+        "average_depth": 80000.0,
+        "percent_500": 100.0,
+        "percent_100": 100.0,
+        "average_ntc": 2,
+        "percent_ntc": 0,
+        "hotspot_regions": [
+            {
+                "chr": 17,
+                "pos_start": 41197674,
+                "pos_end": 41197839,
+                "hgvs_c": "BRCA1(NM_007294.4):c.5468-20_*20",
+                "average_coverage": 200000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41199639,
+                "pos_end": 41199740,
+                "hgvs_c": "BRCA1(NM_007294.4):c.5407-20_5467+20",
+                "average_coverage": 50000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41201117,
+                "pos_end": 41201231,
+                "hgvs_c": "BRCA1(NM_007294.4):c.5333-20_5406+20",
+                "average_coverage": 130000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41203059,
+                "pos_end": 41203154,
+                "hgvs_c": "BRCA1(NM_007294.4):c.5278-20_5332+20",
+                "average_coverage": 30000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41209048,
+                "pos_end": 41209172,
+                "hgvs_c": "BRCA1(NM_007294.4):c.5194-20_5277+20",
+                "average_coverage": 100000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41215329,
+                "pos_end": 41215410,
+                "hgvs_c": "BRCA1(NM_007294.4):c.5153-20_5193+20",
+                "average_coverage": 20000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41215870,
+                "pos_end": 41215988,
+                "hgvs_c": "BRCA1(NM_007294.4):c.5075-20_5152+20",
+                "average_coverage": 250000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 1,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41219604,
+                "pos_end": 41219732,
+                "hgvs_c": "BRCA1(NM_007294.4):c.4987-20_5074+20",
+                "average_coverage": 120000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41222924,
+                "pos_end": 41223275,
+                "hgvs_c": "BRCA1(NM_007294.4):c.4676-20_4986+20",
+                "average_coverage": 120000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41226327,
+                "pos_end": 41226558,
+                "hgvs_c": "BRCA1(NM_007294.4):c.4485-20_4675+20",
+                "average_coverage": 120000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 19,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41228484,
+                "pos_end": 41228651,
+                "hgvs_c": "BRCA1(NM_007294.4):c.4358-20_4484+20",
+                "average_coverage": 140000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41234400,
+                "pos_end": 41234612,
+                "hgvs_c": "BRCA1(NM_007294.4):c.4186-20_4357+20",
+                "average_coverage": 190000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41242940,
+                "pos_end": 41243069,
+                "hgvs_c": "BRCA1(NM_007294.4):c.4097-20_4185+20",
+                "average_coverage": 120000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41243431,
+                "pos_end": 41246897,
+                "hgvs_c": "BRCA1(NM_007294.4):c.671-20_4096+20",
+                "average_coverage": 55000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41247842,
+                "pos_end": 41247959,
+                "hgvs_c": "BRCA1(NM_007294.4):c.594-20_670+20",
+                "average_coverage": 100000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 97,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41249240,
+                "pos_end": 41249326,
+                "hgvs_c": "BRCA1(NM_007294.4):c.548-20_593+20",
+                "average_coverage": 90000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41251771,
+                "pos_end": 41251917,
+                "hgvs_c": "BRCA1(NM_007294.4):c.442-20_547+20",
+                "average_coverage": 70000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41256118,
+                "pos_end": 41256298,
+                "hgvs_c": "BRCA1(NM_007294.4):c.302-20_441+20",
+                "average_coverage": 60000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41256864,
+                "pos_end": 41256993,
+                "hgvs_c": "BRCA1(NM_007294.4):c.213-20_301+20",
+                "average_coverage": 50000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41258452,
+                "pos_end": 41258570,
+                "hgvs_c": "BRCA1(NM_007294.4):c.135-20_212+20",
+                "average_coverage": 20000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41267722,
+                "pos_end": 41267816,
+                "hgvs_c": "BRCA1(NM_007294.4):c.81-20_134+20",
+                "average_coverage": 120000.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            },
+            {
+                "chr": 17,
+                "pos_start": 41276013,
+                "pos_end": 41276133,
+                "hgvs_c": "BRCA1(NM_007294.4):c.-19-1_80+20",
+                "average_coverage": 8500.0,
+                "percent_500": 100.0,
+                "percent_100": 100.0,
+                "ntc_coverage": 0,
+                "percent_ntc": 0
+            }
+        ],
+        "gaps_500": [],
+        "gaps_100": []
+    }
+}

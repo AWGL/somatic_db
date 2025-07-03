@@ -1,0 +1,12 @@
+gene	chr	pos	ref	alt	vaf	depth	hgvs_p	hgvs_c	consequence	exon	alt_reads	in_ntc	ntc_vaf	ntc_depth	ntc_alt_reads	gnomad_popmax_AF
+BRCA2	chr13	32893197	AT	A	0.234	47500		NM_000059.3:c.68-7del	intron_variant		6000	False				0.002017339924350381
+BRCA2	chr13	32900363	CT	C	0.012	29000		NM_000059.3:c.476-9del	intron_variant		350	False				-1.0
+BRCA2	chr13	32907420	GA	G	0.025	9000	p.Ile605TyrfsTer9	NM_000059.3:c.1813del	frameshift_variant	10/27	240	False				0.00011160699796164408
+BRCA2	chr13	32912299	T	C	0.708	90000	p.Val1269=	NM_000059.3:c.3807T>C	synonymous_variant	11/27	65000	False				0.19621700048446655
+BRCA2	chr13	32972897	A	AT	0.036	1100	p.Lys3416AsnfsTer22	NM_000059.3:c.10247_10248insT	frameshift_variant	27/27	39	False				-1.0
+BRCA2	chr13	32972903	T	C	0.041	1100	p.Ile3418Thr	NM_000059.3:c.10253T>C	missense_variant	27/27	40	False				-1.0
+BRCA1	chr17	41228656	T	C	0.114	50000		NM_007294.3:c.4358-2721A>G	intron_variant		700	False				-1.0
+BRCA1	chr17	41228657	CTACTT	C	0.435	50000		NM_007294.4:c.4358-31_4358-27del	intron_variant		22000	False				5.6779499573167413e-05
+BRCA1	chr17	41246588	T	C	0.011	120000	p.Arg320=	NM_007294.3:c.960A>G	synonymous_variant	10/23	1250	False				-1.0
+BRCA1	chr17	41249286	T	G	0.036	150000	p.Thr190Pro	NM_007294.3:c.568A>C	missense_variant	8/23	5000	False				-1.0
+BRCA1	chr17	41256121	G	A	0.978	360		NM_007294.3:c.441+18C>T	intron_variant		351	False				0.0012755099451169372
