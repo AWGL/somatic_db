@@ -802,6 +802,7 @@ class SomaticVariantInstance(AbstractSnvInstance):
     Somatic SNV or small indel
     """
     vep_annotations = models.ManyToManyField("SomaticVEPAnnotations")
+    gt = models.CharField(max_length=10, null=True, blank=True)
     is_domain_zero = models.BooleanField(null=True, blank=True)
     is_domain_one = models.BooleanField(null=True, blank=True)
     is_domain_two = models.BooleanField(null=True, blank=True)
