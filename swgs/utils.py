@@ -94,7 +94,7 @@ def germline_snv_tiering(germline_snvs_query):
     for v in germline_snvs_query:
         variant = v.variant.variant
         gnomad = v.gnomad_popmax_af
-        vaf = float(v.af) * 100
+        vaf = v.display_gt(v.gt)
         all_vep_annotations = v.vep_annotations.all()
         all_hgvsc = []
         all_hgvsp = []
@@ -129,7 +129,7 @@ def germline_snv_tiering(germline_snvs_query):
         variant_dict = {
                 "pk": variant,
                 "gnomad": gnomad_formatted,
-                "vaf": f"{vaf:.2f}",
+                "vaf": vaf,
                 "hgvsc": hgvsc_formatted,
                 "hgvsp": hgvsp_formatted,
                 "gene": list(set(all_gene)),

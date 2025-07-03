@@ -21,7 +21,7 @@
   <br>
   <br>
   <h4>Somatic SNVs</h4>
-  <h5>Tier 1</h5>
+  <h5>Domain 1</h5>
   <table class="table">
     <thead>
       <tr>
@@ -85,7 +85,7 @@
     </tbody>
   </table>
   <br>
-  <h5>Tier 2</h5>
+  <h5>Domain 2</h5>
   <table class="table">
     <thead>
       <tr>
@@ -182,7 +182,7 @@
           </a>
           {% endfor %}
         </td>
-        <td>{{ v.vaf }}%</td>
+        <td>{{ v.vaf }}</td>
         <td>{{ v.gnomad }}</td>
 
         {% if v.checks|length > 0 %}
