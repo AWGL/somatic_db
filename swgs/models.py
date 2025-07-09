@@ -1280,9 +1280,9 @@ class GeneCoverageInstance(models.Model):
 
 
 
-##############
-### Checks ###
-##############
+######################
+### Variant Checks ###
+######################
 
 class AbstractVariantChecks(models.Model):
     """
@@ -1316,5 +1316,45 @@ class SomaticIGVCheck(AbstractVariantChecks):
 
     variant_instance = models.ForeignKey(SomaticVariantInstance, on_delete=models.CASCADE)
 
+#######################
+### Analysis Checks ###
+#######################
+
+class AbstractAnalysisChecks(models.Model):
+    """
+    Abstract class for analysis checks. Common fields
+    """
+
+    complete = models.BooleanField()
+    comment = models.CharField(max_length=3000)
+    user = models.ForeignKey('auth.User', on_delete=models.PROTECT, blank=True, null=True)
+    check_date = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        abstract = True
+
+class QCAnalysisCheck(AbstractAnalysisChecks):
+    """
+    Completion of all QC checks
+    """
+
+    patient_analysis = models.ForeignKey(PatientAnalysis, on_delete=models.CASCADE)
+
+class CoverageAnalysisCheck(AbstractAnalysisChecks):
+    """
+    Completion of coverage checks
+    """
+
+    patient_analysis = models.ForeignKey(PatientAnalysis, on_delete=models.CASCADE)
+
+class Comments(models.Model):
+    """
+    Model for holding general comments
+    """
+
+    patient_analysis = models.ForeignKey(PatientAnalysis, on_delete=models.CASCADE)
+    comment = models.CharField(max_length=3000)
+    user = models.ForeignKey('auth.User', on_delete=models.PROTECT, blank=True, null=True)
+    comment_date = models.DateTimeField(blank=True, null=True)
 
 

@@ -1,1 +1,46 @@
-<h1>Checks</h1>
+{% load crispy_forms_tags %}
+
+<br>
+
+<h1>Finalise Patient Checks</h1>
+
+<br>
+
+<h2>General Comments</h2>
+
+<br>
+<div>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Checker</th>
+                <th>Date</th>
+                <th>Comment</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for comment in general_comments %}
+            <tr>
+                <td>{{comment.user}}</td>
+                <td>{{comment.comment_date}}</td>
+                <td>{{comment.comment}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+{% crispy general_comment_form %}
+
+
+
+
+Finalise Sample
+
+Next Step
+- Sample passed check
+- Sample passed, send for extra check
+- Sample failed
+CONFIRM 
+SUBMIT

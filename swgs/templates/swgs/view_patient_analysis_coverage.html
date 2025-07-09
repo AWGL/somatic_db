@@ -1,3 +1,5 @@
+{% load crispy_forms_tags %}
+
 <h1>Coverage</h1>
 <p> 
     This page contains coverage information at the gene level: average (mean) depth, and percentage of the gene covered at the germline 
@@ -44,6 +46,33 @@
         </tbody>
     </table>
 </div>
+
+<br>
+<br>
+<h2>Checks</h2>
+<div>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Checker</th>
+                <th>Date</th>
+                <th>Comment</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for check in coverage_checks %}
+            <tr>
+                <td>{{check.user}}</td>
+                <td>{{check.check_date}}</td>
+                <td>{{check.comment}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<br>
+{% crispy coverage_check_form %}
 
 <script>
     $(document).ready( function() {

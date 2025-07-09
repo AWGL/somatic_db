@@ -61,3 +61,51 @@ class UpdateMDTNotesForm(forms.Form):
         self.helper.add_input(
             Submit("submit", "Submit", css_class="btn btn-info w-25")
         )
+
+class AbstractCheckForm(forms.Form):
+    """
+    Base form for completing a check
+    """
+
+    complete = forms.BooleanField(required=True, initial=False)
+    comment = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4}),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(AbstractCheckForm, self).__init__(*args, **kwargs)
+        self.fields["complete"].label = "This check is complete"
+        self.helper = FormHelper()
+        self.helper.form_method = "POST"
+        self.helper.add_input(Submit("submit","Submit", css_class="btn-success"))
+
+class QCCheckForm(AbstractCheckForm):
+    """
+    Form to say that QC checks are complete
+    """
+
+    qc_check = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+class CoverageCheckForm(AbstractCheckForm):
+    """
+    Form to say that coverage checks are complete
+    """
+
+    coverage_check = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+class GeneralCommentForm(forms.Form):
+    """
+    Form for a generic comment to attach to a patient analysis
+    """
+    
+    comment = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4}),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(GeneralCommentForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = "POST"
+        self.helper.add_input(Submit("submit","Submit", css_class="btn-success"))

@@ -153,6 +153,9 @@ def view_patient_analysis(request, patient_analysis_id):
     # Set up forms
     download_csv_form = DownloadCsvForm()
     mdt_notes_form = UpdateMDTNotesForm()
+    qc_check_form = QCCheckForm(prefix='qc')
+    coverage_check_form = CoverageCheckForm(prefix='coverage')
+    general_comment_form = GeneralCommentForm()
 
     # Get patient analysis by ID
     patient_analysis_obj = PatientAnalysis.objects.get(id=patient_analysis_id)
@@ -208,9 +211,17 @@ def view_patient_analysis(request, patient_analysis_id):
     mdt_notes_query = MDTNotes.objects.filter(patient_analysis=patient_analysis_obj)
     mdt_notes = display_mdt_notes(mdt_notes_query)
 
+    #Analysis checks
+    qc_checks = QCAnalysisCheck.objects.filter(patient_analysis=patient_analysis_obj)
+    coverage_checks = CoverageAnalysisCheck.objects.filter(patient_analysis=patient_analysis_obj)
+    comments = Comments.objects.filter(patient_analysis=patient_analysis_obj)
+
     context = {
         "form": download_csv_form,
         "mdt_notes_form": mdt_notes_form,
+        "qc_check_form": qc_check_form,
+        "coverage_check_form": coverage_check_form,
+        "general_comment_form": general_comment_form,
         "patient_analysis": patient_analysis_obj,
         "patient_analysis_info_dict": patient_analysis_info_dict,
         "patient_analysis_qc_dict": patient_analysis_qc_dict,
@@ -229,7 +240,10 @@ def view_patient_analysis(request, patient_analysis_id):
         "germline_cnvs_tier_one": germline_cnvs_tier_one,
         "germline_cnvs_tier_three": germline_cnvs_tier_three,
         "check_options": check_options,
-        "mdt_notes": mdt_notes
+        "mdt_notes": mdt_notes,
+        "qc_checks": qc_checks,
+        "coverage_checks": coverage_checks,
+        "general_comments": comments,
     }
 
     # Download a csv
@@ -257,7 +271,7 @@ def view_patient_analysis(request, patient_analysis_id):
 
             return response
     
-        if "mdt_notes" in request.POST:
+        elif "mdt_notes" in request.POST:
 
             mdt_form = UpdateMDTNotesForm(request.POST)
             if mdt_form.is_valid():
@@ -270,7 +284,55 @@ def view_patient_analysis(request, patient_analysis_id):
                     user = request.user
                 )
 
-            return redirect('view_patient_analysis', patient_analysis_id)
+            return redirect("view_patient_analysis", patient_analysis_id)
+        
+        elif "qc-qc_check" in request.POST:
+
+            qc_check_form = QCCheckForm(request.POST, prefix="qc")
+            if qc_check_form.is_valid():
+                comment = qc_check_form.cleaned_data["comment"]
+                #Add check, reload page
+                QCAnalysisCheck.objects.create(
+                    patient_analysis = patient_analysis_obj,
+                    complete = True,
+                    comment = comment, 
+                    user = request.user,
+                    check_date = datetime.datetime.now()
+                )
+
+            return redirect("view_patient_analysis", patient_analysis_id)
+        
+        elif "coverage-coverage_check" in request.POST:
+
+            coverage_check_form = CoverageCheckForm(request.POST, prefix="coverage")
+            if coverage_check_form.is_valid():
+                comment = coverage_check_form.cleaned_data["comment"]
+                #Add check, reload page
+                CoverageAnalysisCheck.objects.create(
+                    patient_analysis = patient_analysis_obj,
+                    complete = True,
+                    comment = comment, 
+                    user = request.user,
+                    check_date = datetime.datetime.now()
+                )
+
+            return redirect("view_patient_analysis", patient_analysis_id)
+        
+        elif "comment" in request.POST:
+
+            general_comment_form = GeneralCommentForm(request.POST)
+            if general_comment_form.is_valid():
+                comment = general_comment_form.cleaned_data["comment"]
+                #Add comment, reload page
+                Comments.objects.create(
+                    patient_analysis = patient_analysis_obj,
+                    comment = comment, 
+                    user = request.user,
+                    comment_date = datetime.datetime.now()
+                )
+
+            return redirect("view_patient_analysis", patient_analysis_id)
+
 
     return render(request, "swgs/view_patient_analysis.html", context)
 

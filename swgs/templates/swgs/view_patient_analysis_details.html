@@ -78,3 +78,31 @@
         </tbody>
     </table>
 </div>
+
+<br>
+<br>
+<h2>Checks</h2>
+<div>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Checker</th>
+                <th>Date</th>
+                <th>Comment</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for check in qc_checks %}
+            <tr>
+                <td>{{check.user}}</td>
+                <td>{{check.check_date}}</td>
+                <td>{{check.comment}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<br>
+{% crispy qc_check_form %}
+
