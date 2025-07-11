@@ -116,6 +116,7 @@ class Panel(models.Model):
     manual_review_desc = models.CharField(max_length=200, blank=True, null=True) # pipe seperated, no spaces
     bed_file = models.FileField(upload_to=make_bedfile_path, blank=True, null=True)
     report_snv_vaf = models.BooleanField(default=False)
+    show_msi = models.BooleanField(default=False)
 
     # fusion settings
     show_fusions = models.BooleanField()
@@ -145,6 +146,7 @@ class SampleAnalysis(models.Model):
     total_reads_ntc = models.IntegerField(blank=True, null=True)
     genome_build = models.IntegerField(default=37)
     upload_time = models.DateTimeField(blank=True, null=True)
+    msi = models.DecimalField(decimal_places=2, max_digits=5, blank=True, null=True)
 
 
     def percent_reads_ntc(self):

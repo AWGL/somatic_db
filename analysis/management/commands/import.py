@@ -148,6 +148,7 @@ class Command(BaseCommand):
         # SNV/ indel only
         parser.add_argument('--snvs', nargs=1, type=str, required=False, help='Path to SNVs CSV file')
         parser.add_argument('--snv_coverage', nargs=1, type=str, required=False, help='Path to coverage JSON file')
+        parser.add_argument('--msi', nargs=1, type=str, required=False, help='Path to MSI txt file')
 
         # fusion only
         parser.add_argument('--fusions', nargs=1, type=str, required=False, help='Path to fusions CSV file')
@@ -383,8 +384,31 @@ class Command(BaseCommand):
 
             # logging
             print(f'INFO\t{datetime.now()}\timport.py\tFinished uploading SNVs successfully - added {snv_counter} variant(s)')
-            print(f'INFO\t{datetime.now()}\timport.py\tUploading coverage data...')
+            print(f'INFO\t{datetime.now()}\timport.py\tUploading MSI data...')
 
+            # ---------------------------------------------------------------------------------------------------------
+            # MSI
+            # ---------------------------------------------------------------------------------------------------------
+
+            #MSI file path
+            msi_file = options['msi'][0]
+            
+            #Only upload for panels where MSI is displayed and has been calculated 
+            if panel_obj.show_msi and os.path.isfile(msi_file):
+
+                #Parse the MSI file, only two lines header and values
+                with open(msi_file) as f:
+                    reader = csv.DictReader(f, delimiter='\t')
+
+                    for line in reader:
+
+                        msi_value = line['%']
+
+                new_sample_analysis.msi = msi_value                           
+                new_sample_analysis.save()
+
+            print(f'INFO\t{datetime.now()}\timport.py\tFinished uploading MSI successfully')
+            print(f'INFO\t{datetime.now()}\timport.py\tUploading coverage data...')
 
             # ---------------------------------------------------------------------------------------------------------
             # Coverage

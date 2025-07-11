@@ -318,6 +318,7 @@ def get_sample_info(sample_obj):
         'checks': sample_obj.get_checks(),
         'genome_build': sample_obj.genome_build,
         'test_code': sample_obj.panel.lims_test_code,
+        'msi': sample_obj.msi
     }
     return sample_data
 

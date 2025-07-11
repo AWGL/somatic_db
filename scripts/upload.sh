@@ -60,6 +60,7 @@ for s in $(cat $1); do
       --snv_coverage "$data_folder"/"$sample_id"_"$referral"_coverage.json \
       --fusions "$data_folder"/"$sample_id"_fusion_check.csv \
       --fusion_coverage "$cov","$ntc_cov" \
+      --msi "$data_folder"/"$sample_id"_msi.txt \
       --debug False
 
     echo "------------------------------------------------------------------------------------------------------------"
