@@ -11,10 +11,12 @@ from django.shortcuts import get_object_or_404
 from .forms import (NewVariantForm, SubmitForm, VariantCommentForm, UpdatePatientName, 
     CoverageCheckForm, FusionCommentForm, SampleCommentForm, UnassignForm, PaperworkCheckForm, 
     ConfirmPolyForm, ConfirmArtefactForm, AddNewPolyForm, AddNewArtefactForm, AddNewFusionArtefactForm, 
-    ManualVariantCheckForm, ReopenForm, ChangeLimsInitials, EditedPasswordChangeForm, EditedUserCreationForm, NewFusionForm)
+    ManualVariantCheckForm, ReopenForm, ChangeLimsInitials, EditedPasswordChangeForm, EditedUserCreationForm, 
+    NewFusionForm, UpdateSampleDueDateForm, ClassifyVariantsForm)
 from .utils import (get_samples, unassign_check, reopen_check, signoff_check, make_next_check, 
     get_variant_info, get_coverage_data, get_sample_info, get_fusion_info, get_poly_list, get_fusion_list, 
-    create_myeloid_coverage_summary, variant_format_check, breakpoint_format_check, lims_initials_check, validate_variant)
+    create_myeloid_coverage_summary, variant_format_check, breakpoint_format_check, lims_initials_check, 
+    validate_variant, create_classify_instance)
 from .models import *
 
 import csv
@@ -462,6 +464,7 @@ def analysis_sheet(request, sample_id):
         'manual_check_form': ManualVariantCheckForm(regions=sample_data['panel_manual_regions']),
         'submit_form': SubmitForm(),
         'update_name_form': UpdatePatientName(),
+        'update_due_date_form': UpdateSampleDueDateForm(),
         'sample_comment_form': SampleCommentForm(
             comment=current_step_obj.overall_comment,
             info_check=current_step_obj.patient_info_check,
@@ -472,6 +475,7 @@ def analysis_sheet(request, sample_id):
             comment=current_step_obj.coverage_comment,
             ntc_check=current_step_obj.coverage_ntc_check,
         ),
+        'classify_variants_form': ClassifyVariantsForm(),
     }
 
     # pull out coverage summary for myeloid, otherwise return false
@@ -530,6 +534,7 @@ def analysis_sheet(request, sample_id):
             return response
 
         if 'download-xml' in request.GET:
+            print(request.GET)
             # create XML from template and context info
             filename = f"{context['sample_data']['worksheet_id']}_{context['sample_data']['sample_id']}_{context['sample_data']['panel']}.xml"
             template = get_template('analysis/lims_xml.xml')
@@ -543,6 +548,9 @@ def analysis_sheet(request, sample_id):
 
     # submit buttons
     if request.method == 'POST':
+
+        print(request.POST)
+
         # patient name input form
         if 'name' in request.POST:
             update_name_form = UpdatePatientName(request.POST)
@@ -551,6 +559,15 @@ def analysis_sheet(request, sample_id):
                 new_name = update_name_form.cleaned_data['name']
                 Sample.objects.filter(pk=sample_obj.sample.pk).update(sample_name=new_name)
                 sample_obj = SampleAnalysis.objects.get(pk = sample_id)
+                context['sample_data'] = get_sample_info(sample_obj)
+
+        # sample due date form 
+        if 'due_date_day' in request.POST:
+            update_due_date_form = UpdateSampleDueDateForm(request.POST)
+            if update_due_date_form.is_valid():
+                due_date = update_due_date_form.cleaned_data['due_date']           
+                sample_obj.due_date = due_date
+                sample_obj.save()
                 context['sample_data'] = get_sample_info(sample_obj)
 
         # comments submit button
@@ -779,6 +796,9 @@ def analysis_sheet(request, sample_id):
                 if sample_data['sample_name'] == None:
                     context['warning'].append('Did not finalise check - input patient name before continuing')
 
+                if sample_data['due_date'] ==  None:
+                    context['warning'].append('Did not finalise check - add sample due date before continuing')
+
                 if (sample_data['panel_obj'].show_snvs == True) and (current_step_obj.coverage_ntc_check == False) and (next_step != "Fail sample"):
                     context['warning'].append('Did not finalise check - check NTC before continuing')
 
@@ -862,8 +882,23 @@ def analysis_sheet(request, sample_id):
                             return redirect('view_ws_samples', sample_data['worksheet_id'])
 
 
+        # if classify variants button is submitted
+        if 'classify_variants' in request.POST:
+            #Variants classified as Genuine overall
+            # loop through and create a classify instance for each via the utils command
+            all_genuine_variants = VariantPanelAnalysis.objects.filter(
+                sample_analysis=sample_obj,
+                variant_instance__final_decision='G'
+            )
+            for variant_obj in all_genuine_variants:
+                create_classify_instance(variant_obj)
+            # http response 204 says not to change the page content
+            #return HttpResponse(status=204)
+            context['success'].append('Variants sent for classification')
+
     # render the pages
     return render(request, 'analysis/analysis_sheet.html', context)
+
 
 
 def ajax(request):

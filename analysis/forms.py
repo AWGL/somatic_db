@@ -234,6 +234,27 @@ class UpdatePatientName(forms.Form):
         )
 
 
+class UpdateSampleDueDateForm(forms.Form):
+    """
+    Add a due date to a SampleAnalysis object
+    """
+    due_date = forms.DateField(
+        widget=forms.SelectDateWidget
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(UpdateSampleDueDateForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.fields['due_date'].widget.attrs.update({
+            'require_all_fields': True
+        })
+        self.helper.form_id = 'update-sample-date-form'
+        self.helper.form_method = 'POST'
+        self.helper.add_input(
+            Submit('submit', 'Submit', css_class='btn btn-info w-25')
+        )
+
+
 class CoverageCheckForm(forms.Form):
     """
     Confirm that coverage has been checked and add a comment 
@@ -456,4 +477,20 @@ class EditedUserCreationForm(UserCreationForm):
         self.helper.form_method = 'POST'
         self.helper.add_input(
             Submit('submit', 'Submit', css_class='btn btn-info w-100')
+        )
+
+
+class ClassifyVariantsForm(forms.Form):
+    """
+    Send all 'Genuine' variants for classification
+
+    """
+    classify_variants = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(ClassifyVariantsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.add_input(
+            Submit('submit', "Send variants for classification", css_class='btn btn-success w-100')
         )

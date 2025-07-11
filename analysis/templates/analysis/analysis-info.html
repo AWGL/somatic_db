@@ -18,6 +18,15 @@
       </td>
     </tr>
     <tr>
+      <td><b>Due Date</b></td>
+      <td>
+        {{ sample_data.due_date }}
+        {% if sample_data.checks.current_status != 'Complete' and sample_data.checks.current_status != 'Fail'%}
+        <button type="button" style="float: right;" class="btn btn-sm btn-warning w-25" data-toggle="modal" data-target="#update-due-date">Update</button>
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
       <td><b>Worksheet</b></td>
       <td>{{ sample_data.worksheet_id }}</td>
     </tr>
@@ -60,6 +69,26 @@
       <div class="modal-body">
 
         {% crispy update_name_form %}
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Sample Due Date Modal -->
+<div class="modal fade" id="update-due-date" tabindex="-1" role="dialog" aria-labelledby="update-due-date-label" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="update-due-date-label">Update Due Date</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+        {% crispy update_due_date_form %}
 
       </div>
 

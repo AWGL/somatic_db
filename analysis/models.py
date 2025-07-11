@@ -145,7 +145,7 @@ class SampleAnalysis(models.Model):
     total_reads_ntc = models.IntegerField(blank=True, null=True)
     genome_build = models.IntegerField(default=37)
     upload_time = models.DateTimeField(blank=True, null=True)
-
+    due_date = models.DateField(blank=True, null=True)
 
     def percent_reads_ntc(self):
         """
