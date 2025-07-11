@@ -24,11 +24,12 @@
           <th class="col-1">ID</th>
           <th class="col-1">Source</th>
           <th class="col-1">Uploaded</th>
+          <th class="col-1">Due Date</th>
           <th class="col-1">Gene</th>
           <th class="col-3">Variant</th>
           <th class="col-1">Tumour type</th>
           <th class="col-1">Guidelines</th>
-          <th class="col-3">Status</th>
+          <th class="col-2">Status</th>
         </tr>
       </thead>
       <tbody>
@@ -37,6 +38,7 @@
           <td>{{ c.pk }}</td>
           <td><h4><span class="badge badge-secondary">{{ c.get_sample_info.source }}</span></h4></td>
           <td>{{ c.upload_date|date:"Y-m-d H:i" }}</td>
+          <td>{{ c.due_date }}</td>
           <td>{{ c.variant.gene }}</td>
           <td>{{ c.variant.hgvs_c }}<br>{{ c.variant.hgvs_p }}</td>
           <td>{{ c.tumour_subtype }}</td>
@@ -139,6 +141,7 @@
         $('#classifications-table').DataTable({
             paging: true,
             columns: [
+                {orderable: true},
                 {orderable: true},
                 {orderable: true},
                 {orderable: true},

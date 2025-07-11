@@ -244,6 +244,7 @@ class ClassifyVariantInstance(PolymorphicModel):
     final_score = models.IntegerField(blank=True, null=True)
     final_class_overridden = models.BooleanField(default=False)
     upload_date = models.DateTimeField(auto_now=True)
+    due_date = models.DateField(null=True, blank=True)
     complete_date = models.DateTimeField(blank=True, null=True)
     full_classification = models.BooleanField(default=False)
     reused_classification = models.ForeignKey('self', on_delete=models.PROTECT, null=True, blank=True, related_name="original_classification")
