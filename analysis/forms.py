@@ -3,6 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit
 from crispy_forms.bootstrap import Field, FieldWithButtons, StrictButton
 from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
+from datetime import datetime as dt
 
 
 class UnassignForm(forms.Form):
@@ -228,6 +229,27 @@ class UpdatePatientName(forms.Form):
             'autocomplete': 'off'
         })
         self.helper.form_id = 'update-name-form'
+        self.helper.form_method = 'POST'
+        self.helper.add_input(
+            Submit('submit', 'Submit', css_class='btn btn-info w-25')
+        )
+
+
+class UpdateSampleDueDateForm(forms.Form):
+    """
+    Add a due date to a SampleAnalysis object
+    """
+    due_date = forms.DateField(
+        widget=forms.SelectDateWidget
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(UpdateSampleDueDateForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.fields['due_date'].widget.attrs.update({
+            'require_all_fields': True
+        })
+        self.helper.form_id = 'update-sample-date-form'
         self.helper.form_method = 'POST'
         self.helper.add_input(
             Submit('submit', 'Submit', css_class='btn btn-info w-25')
