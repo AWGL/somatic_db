@@ -479,3 +479,19 @@ class EditedUserCreationForm(UserCreationForm):
         self.helper.add_input(
             Submit('submit', 'Submit', css_class='btn btn-info w-100')
         )
+
+
+class ClassifyVariantsForm(forms.Form):
+    """
+    Send all 'Genuine' variants for classification
+
+    """
+    classify_variants = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(ClassifyVariantsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.add_input(
+            Submit('submit', "Send variants for classification", css_class='btn btn-success w-100')
+        )

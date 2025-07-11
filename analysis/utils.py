@@ -9,6 +9,8 @@ import re
 import requests
 import csv
 
+from classify.models import ClassifyVariant, Guideline, AnalysisVariantInstance
+
 def get_samples(samples):
     """
     Create context dictionary of all sample analyses for rendering the worksheet page
@@ -1266,3 +1268,39 @@ def validate_variant(chrm, position, ref, alt, build):
     # If json file had some sort of unexpected structure, return this so we can investigate
     else:
         return 'Unexpected Error, contact Bioinformatics'
+
+
+@transaction.atomic
+def create_classify_instance(variant_panel_analysis_obj: VariantPanelAnalysis):
+    print(variant_panel_analysis_obj)
+    # Get the info needed to make a ClassifyVariantInstance
+    gene = variant_panel_analysis_obj.variant_instance.gene
+    hgvs_c = variant_panel_analysis_obj.variant_instance.hgvs_c
+    hgvs_p = variant_panel_analysis_obj.variant_instance.hgvs_p
+    genomic_coords = variant_panel_analysis_obj.variant_instance.variant.variant
+    genome_build = variant_panel_analysis_obj.variant_instance.variant.genome_build
+
+    # get or create a ClassifyVariant object
+    classify_variant_obj, created = ClassifyVariant.objects.get_or_create(
+        gene=gene,
+        hgvs_c=hgvs_c,
+        hgvs_p=hgvs_p,
+        genomic_coords=genomic_coords,
+        genome_build=genome_build
+    )
+    
+    # get the SVIG guidelines - all variants from Analysis need SVIG oncogenicity
+    svig_guideline_obj = Guideline.objects.get(guideline="svig_2024")
+
+    # create a classification instance
+    analysis_classification_instance_obj, created = AnalysisVariantInstance.objects.get_or_create(
+        variant=classify_variant_obj,
+        guideline=svig_guideline_obj,
+        variant_instance=variant_panel_analysis_obj,
+        due_date=variant_panel_analysis_obj.sample_analysis.due_date
+    )
+    print(variant_panel_analysis_obj.sample_analysis.due_date)
+    print(analysis_classification_instance_obj.due_date)
+
+    # create a check object
+    analysis_classification_instance_obj.make_new_check()
